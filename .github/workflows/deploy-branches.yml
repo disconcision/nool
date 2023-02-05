@@ -26,7 +26,8 @@ jobs:
       #  uses: lhotari/action-upterm@v1
       - name: Install dependencies and build nool # STEP 3
         run: |
-          cd source
+          pwd
+          ls
           node --version
           curl -fsSL https://get.pnpm.io/install.sh | sh -
           source /home/runner/.bashrc
