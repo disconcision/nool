@@ -29,7 +29,7 @@ jobs:
           pwd
           ls
           node --version
-          curl -fsSL https://get.pnpm.io/install.sh | sh -
+          curl -fsSL https://get.pnpm.io/install.sh | sh - || true
           source /home/runner/.bashrc
           pnpm install
           pnpm run build
