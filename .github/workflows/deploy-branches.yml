@@ -24,12 +24,13 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('./source/pnp-lock.yaml') }}
       #- name: Debugging with ssh
       #  uses: lhotari/action-upterm@v1
+      #curl -fsSL https://get.pnpm.io/install.sh | sh - || true
       - name: Install dependencies and build nool # STEP 3
         run: |
           pwd
           ls
           node --version
-          curl -fsSL https://get.pnpm.io/install.sh | sh - || true
+          npm install --global pnpm && SHELL=bash pnpm setup && source /root/.bashrc
           source /home/runner/.bashrc
           pnpm install
           pnpm run build
