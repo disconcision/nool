@@ -1,6 +1,7 @@
 import type { Component } from 'solid-js';
 import { createSignal, For } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import logo from './assets/nooltext.png'
 
 const App: Component = () => {
   type Task = {
@@ -38,7 +39,7 @@ const App: Component = () => {
   return (
     <div class="container mt-5 text-center">
       {/*<h1 class="mb-4">nool</h1>*/}
-      <img src='src/assets/nooltext.png' alt='nool text' style='width: 8em; margin: 3em' />
+      <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
 
       <form class="mb-5 row row-cols-2 justify-content-center" onSubmit={addTask}>
         <input type="text" class="input-group-text p-1 w-25" placeholder="wat do.." id="taskInput" required />
