@@ -25,12 +25,13 @@ jobs:
       #- name: Debugging with ssh
       #  uses: lhotari/action-upterm@v1
       #curl -fsSL https://get.pnpm.io/install.sh | sh - || true
+      #sudo -s && source /root/.bashrc
       - name: Install dependencies and build nool # STEP 3
         run: |
           pwd
           ls
           node --version
-          npm install --global pnpm && SHELL=bash pnpm setup && sudo source /root/.bashrc
+          npm install --global pnpm && SHELL=bash pnpm setup
           source /home/runner/.bashrc
           pnpm install
           pnpm run build
