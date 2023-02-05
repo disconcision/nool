@@ -1,7 +1,43 @@
 import type { Component } from 'solid-js';
-import { createSignal, For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext.png'
+
+
+type Node = { t: 'Atom', s: string} | {t: 'Comp', s:string, kids: Node[]};
+
+let atom = (s: string): Node => ({t: 'Atom', s});
+let comp = (s: string, kids: Node[]): Node => ({t: 'Comp', s, kids});
+
+let tree = comp('+', [atom('1'), comp('+', [comp('*', [atom('2'), atom('3')]), atom('3')])]);
+
+let depth = (node: Node):number  => {switch(node.t){
+  case 'Atom': return 0;
+  case 'Comp': return 1 + Math.max(...node.kids.map(depth));
+}};
+
+
+const Node: Component<{node: Node, parity: boolean}> = (props) => {
+  switch(props.node.t) {
+    case 'Atom':
+      return (
+        <div class='node atom'>{props.node.s}</div>
+      );
+    case 'Comp':
+      return (
+        <div class={`node comp`}>
+          {props.node.s}
+          <div style={`display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
+          <For each={props.node.kids}>
+            {kid => <Node node={kid} parity={(depth(kid)<2)?!props.parity:props.parity}/>}
+          </For>
+          </div>
+          
+        </div>
+      );
+  }
+  
+};
 
 const App: Component = () => {
   type Task = {
@@ -10,9 +46,11 @@ const App: Component = () => {
     completed: boolean
   }
 
-  const [taskList, setTaskList] = createStore([] as Task[])
+  const [node, setNode] = createSignal(tree);
 
-  const addTask= (e: Event) => {
+  /*const [taskList, setTaskList] = createStore([] as Task[])
+
+  /*const addTask= (e: Event) => {
     e.preventDefault()
     const taskInput= document.querySelector('#taskInput') as HTMLInputElement
     const newTask: Task = {
@@ -33,14 +71,20 @@ const App: Component = () => {
       task => task.id ===taskId,
       'completed',
       completed => !completed)
-  }
+  }*/
 
 
   return (
-    <div class="container mt-5 text-center">
+    <div id='main'>
       {/*<h1 class="mb-4">nool</h1>*/}
       <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
 
+      <div class='node-container'>
+        {Node({node: node(), parity: true})}
+      </div>
+      
+
+      {/*
       <form class="mb-5 row row-cols-2 justify-content-center" onSubmit={addTask}>
         <input type="text" class="input-group-text p-1 w-25" placeholder="wat do.." id="taskInput" required />
 
@@ -48,6 +92,8 @@ const App: Component = () => {
           taskify
         </button>
       </form>
+
+      
 
       <div>
         <h4 class="text-muted mb-4">tasks</h4>
@@ -63,7 +109,8 @@ const App: Component = () => {
         </div>
         )}
         </For>
-      </div>
+      </div> 
+      */}
     </div>
   )
 }
