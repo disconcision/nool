@@ -49,7 +49,7 @@ jobs:
         run: |
           mkdir "./server/nool/${BRANCH_NAME}" &&
           cp -r "./source/dist"/* "./server/nool/${BRANCH_NAME}" &&
-          if [ "${BRANCH_NAME}" == "plus" ]
+          if [ "${BRANCH_NAME}" == "main" ]
           then
             cp -r "./source/dist"/* "./server/nool"
           fi
