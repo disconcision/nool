@@ -30,7 +30,7 @@ jobs:
           pwd
           ls
           node --version
-          sudo npm install --global pnpm && SHELL=bash pnpm setup && source /root/.bashrc
+          npm install --global pnpm && SHELL=bash pnpm setup && sudo source /root/.bashrc
           source /home/runner/.bashrc
           pnpm install
           pnpm run build
