@@ -22,16 +22,16 @@ jobs:
         with:
           path: '/home/runner/.opam/'
           key: ${{ runner.os }}-modules-${{ hashFiles('./source/pnp-lock.yaml') }}
-      - name: Debugging with ssh
-        uses: lhotari/action-upterm@v1
+      #- name: Debugging with ssh
+      #  uses: lhotari/action-upterm@v1
       - name: Install dependencies and build nool # STEP 3
         run: |
-          sudo apt --assume-yes install opam
-          export OPAMYES=1
-          opam init --compiler=ocaml-base-compiler.4.08.1
-          eval $(opam env)
-          make deps
-          make release
+          cd source
+          node --version
+          curl -fsSL https://get.pnpm.io/install.sh | sh -
+          source /home/runner/.bashrc
+          pnpm install
+          pnpm run build
         working-directory: ./source
       - name: Checkout website build artifacts repo # STEP 4
         uses: actions/checkout@v2
