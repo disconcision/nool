@@ -2,14 +2,12 @@ import type { Component } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext.png'
+import { Node, comp, atom} from './Node';
+import { FlatTree } from './FlatTree';
 
+let guy: FlatTree = {root:0, nodes:[]};
 
-type Node = { t: 'Atom', s: string} | {t: 'Comp', s:string, kids: Node[]};
-
-let atom = (s: string): Node => ({t: 'Atom', s});
-let comp = (s: string, kids: Node[]): Node => ({t: 'Comp', s, kids});
-
-let tree = comp('+', [atom('1'), comp('+', [comp('*', [atom('2'), atom('3')]), atom('3')])]);
+let tree:Node = comp('➕', [atom('🌕'), comp('➕', [comp('✖️', [atom('🌘'), atom('🌕')]), atom('🌘')])]);
 
 let depth = (node: Node):number  => {switch(node.t){
   case 'Atom': return 0;
@@ -17,7 +15,7 @@ let depth = (node: Node):number  => {switch(node.t){
 }};
 
 
-const Node: Component<{node: Node, parity: boolean}> = (props) => {
+const NodeC: Component<{node: Node, parity: boolean}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
       return (
@@ -29,7 +27,7 @@ const Node: Component<{node: Node, parity: boolean}> = (props) => {
           {props.node.s}
           <div style={`display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
           <For each={props.node.kids}>
-            {kid => <Node node={kid} parity={(depth(kid)<2)?!props.parity:props.parity}/>}
+            {kid => <NodeC node={kid} parity={(depth(kid)<2)?!props.parity:props.parity}/>}
           </For>
           </div>
           
@@ -80,7 +78,7 @@ const App: Component = () => {
       <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
 
       <div class='node-container'>
-        {Node({node: node(), parity: true})}
+        {NodeC({node: node(), parity: true})}
       </div>
       
 
