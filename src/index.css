@@ -25,7 +25,10 @@ code {
 .node.atom {
   background-color: #5e9bde;
   color: white;
-  width:fit-content;
+  width: fit-content;
+  border-radius: 2em;
+  padding: 0 0.25em;
+  justify-content: center;
 }
 .node {
   display: flex;
