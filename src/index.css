@@ -53,3 +53,11 @@ code {
     text-shadow: 0 0 0 #50b0ff;
   background-color: #005bff26;
 }
+.head {
+  background-color: #273b82;
+  color: transparent;
+  text-shadow: 0.2px 0.5px 0.5px rgb(147 173 244);
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+}

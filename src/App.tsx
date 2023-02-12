@@ -2,11 +2,11 @@ import type { Component } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext6.png'
-import {Exp, comp, atom, depth} from './Tree';
+import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp} from './Tree';
 //import { FlatTree } from './FlatTree';
 //let guy: FlatTree = {root:0, nodes:[]};
 
-let tree:Exp = comp([
+let exp:Exp = comp([
   atom('➕'),
   atom('🌕'),
   comp([
@@ -22,7 +22,7 @@ const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
       return (
-        <div class={`${props.parity?'':'node atom'}`}>{props.node.sym}</div>
+        <div class={`${props.parity?'head':'node atom'}`}>{props.node.sym}</div>
       );
     case 'Comp':
       return (
@@ -47,7 +47,7 @@ const App: Component = () => {
     completed: boolean
   }
 
-  const [node, setNode] = createSignal(tree);
+  const [node, setNode] = createSignal(exp);
 
   /*const [taskList, setTaskList] = createStore([] as Task[])
 
@@ -74,13 +74,26 @@ const App: Component = () => {
       completed => !completed)
   }*/
 
+  const commute_root = (exp:Exp):TransformResult =>
+  transform(
+    exp,
+    p_comp([p_const('➕'), p_var('a'), p_var('b')]),
+    p_comp([p_const('➕'), p_var('b'), p_var('a')]));
+
+  const updateNode = (_:string) => {
+    console.log('updateNode');
+    let result = commute_root(node());
+    if (result!='NoMatch') setNode(result);
+  };
+
+
 
   return (
     <div id='main'>
       {/*<h1 class="mb-4">nool</h1>*/}
       <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
 
-      <div class='node-container'>
+      <div class='node-container' onclick = {_ => updateNode("")}>
         {NodeC({node: node(), parity: false})}
       </div>
       
