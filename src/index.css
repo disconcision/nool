@@ -23,7 +23,7 @@ code {
 }
 
 .node.atom {
-  background-color: #5e9bde;
+  background-color: #af90f5;
   color: white;
   width: fit-content;
   border-radius: 2em;
@@ -37,12 +37,19 @@ code {
   margin: 0.2em;
   align-items: center;
   cursor: pointer;
+  box-shadow: 4px 4px 8px #773fcc40;
+  border-bottom: 0.3px solid rgba(13, 0, 95, 22);
+  border-top: 0.3px solid rgba(255, 255, 255, 66);
 }
 .node:hover {
-  outline: 0.3px solid rgb(187, 0, 255);
-  /*color: rgb(187, 0, 255);*/
+  filter: brightness(1.1);
+  border-bottom: 0.3px solid rgb(187, 0, 255);
+  border-top: 0.3px solid rgb(255, 100, 212);
+  /*background-color: #af90f5;*/
 }
 .node.comp {
   /* display: flex; */
+  color: transparent;
+    text-shadow: 0 0 0 #50b0ff;
   background-color: #005bff26;
 }

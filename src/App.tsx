@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import logo from './assets/nooltext.png'
+import logo from './assets/nooltext6.png'
 import { Node, comp, atom} from './Node';
 import { FlatTree } from './FlatTree';
 
