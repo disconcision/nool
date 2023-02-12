@@ -1,7 +1,7 @@
 export type Id = number;
 export type FlatNode = {t: 'Atom', s: string} | {t: 'Comp', s:string, kids: Id[]};
 export type FlatTree = {root: Id|undefined, nodes: FlatNode[]};
-import {TNode} from './Node';
+import {TNode} from './OldTree';
 
 export let empty: FlatTree = {root:undefined, nodes:[]};
 

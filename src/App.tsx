@@ -2,39 +2,42 @@ import type { Component } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext6.png'
-import { Node, comp, atom} from './Node';
-import { FlatTree } from './FlatTree';
+import {Exp, comp, atom, depth} from './Tree';
+//import { FlatTree } from './FlatTree';
+//let guy: FlatTree = {root:0, nodes:[]};
 
-let guy: FlatTree = {root:0, nodes:[]};
+let tree:Exp = comp([
+  atom('➕'),
+  atom('🌕'),
+  comp([
+    atom('➕'),
+    comp([
+      atom('✖️'),
+      atom('🌘'),
+      atom('🌕')]),
+    atom('🌘')])]);
 
-let tree:Node = comp('➕', [atom('🌕'), comp('➕', [comp('✖️', [atom('🌘'), atom('🌕')]), atom('🌘')])]);
 
-let depth = (node: Node):number  => {switch(node.t){
-  case 'Atom': return 0;
-  case 'Comp': return 1 + Math.max(...node.kids.map(depth));
-}};
-
-
-const NodeC: Component<{node: Node, parity: boolean}> = (props) => {
+const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
       return (
-        <div class='node atom'>{props.node.s}</div>
+        <div class={`${props.parity?'':'node atom'}`}>{props.node.sym}</div>
       );
     case 'Comp':
       return (
         <div class={`node comp`}>
-          {props.node.s}
+           <NodeC node={props.node.kids[0]} parity={true}/>
+          {/*(props.node.kids[0]).sym*/}
           <div style={`display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
-          <For each={props.node.kids}>
-            {kid => <NodeC node={kid} parity={(depth(kid)<2)?!props.parity:props.parity}/>}
+          <For each={props.node.kids.slice(1)}>
+            {kid => <NodeC node={kid} parity={false}/>}
           </For>
           </div>
           
         </div>
       );
   }
-  
 };
 
 const App: Component = () => {
@@ -78,7 +81,7 @@ const App: Component = () => {
       <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
 
       <div class='node-container'>
-        {NodeC({node: node(), parity: true})}
+        {NodeC({node: node(), parity: false})}
       </div>
       
 
