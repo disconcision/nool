@@ -5,7 +5,7 @@ import logo from './assets/nooltext6.png'
 import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
-let exp:Exp = comp([
+let exp1:Exp = comp([
   atom('➕'),
   atom('🌕'),
   comp([
@@ -15,6 +15,14 @@ let exp:Exp = comp([
       atom('🌘'),
       atom('🌕')]),
     atom('🌘')])]);
+
+let exp:Exp = comp([
+      atom('➕'),
+      atom('👾'),
+      comp([
+        atom('➕'),
+        atom('🦷'),
+        atom('🍄')])]);
 
 
 const NodeC: Component<{node: Exp, is_head: boolean}> = (props) => {
@@ -84,6 +92,8 @@ const App: Component = () => {
   
   const flipping = new Flipping({
     duration: 250,
+    //stagger: 10,
+    //selector:  (_el:Element) => {return [_el]},
     //parent: this,
     //attribute: 'data-flip-key',
     //activeSelector: (_el:any) => {return (true)},
@@ -93,25 +103,25 @@ const App: Component = () => {
     //e.preventDefault()
     let result = assoc_root(node());
     if (result=='NoMatch') result = assoc_root_rev(node());
-    flipping.read();
+    //flipping.read();
     if (result!='NoMatch') setNode(result);
   };
 
   const commNode = (e: Event) => {
     let result = commute_root(node());
-    flipping.read();
+    //flipping.read();
     if (result!='NoMatch') setNode(result);
   };
-
+  
   const transformNode = (f:(_:Exp)=>TransformResult) =>(e: Event) => {
     let result = f(node());
     flipping.read();
-    if (result!='NoMatch') setNode(result);
+    if (result!='NoMatch') {setNode(result); flipping.flip();}
   };
 
   createEffect(() => {
     console.log('call effect;flipping.flip %s',node());
-    flipping.flip();
+    //flipping.flip();
   });
 
   return (

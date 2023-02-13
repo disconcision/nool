@@ -68,7 +68,8 @@ code {
   background-clip: text;
 }
 
-.tbuts{
+.tbuts {
+  position: relative;
   user-select: none;
   cursor: pointer;
   display: flex;
@@ -79,8 +80,11 @@ code {
   border-top: 0.5px solid #cdcdcd;
 }
 .tbut {
+  padding: 7px;
   border-top: 0.4px solid #c6c6c6;
   border-bottom: 1.1px solid #f0f0f1;
+  transition: all 0.05s;
+  z-index: 10;
   font-variant: diagonal-fractions;
   text-shadow: 0 0.6px 0 #7d7d7d;
   text-transform: uppercase;
@@ -90,10 +94,11 @@ code {
   cursor: pointer;
   display: flex;
   color: #cfcfcf;
-  padding: 0.9em;
+  
   background-color: #f0f0f0;
   border-radius: 2em;
   margin: 0.25em;
+  position: relative;
 }
 /*.tbut:hover {
   filter: drop-shadow(0px 4px 6px #38fbf5);
@@ -104,11 +109,31 @@ code {
   color: #b8fffe;
 }*/
 .tbut:hover {
-  filter: drop-shadow(0px 2px 4px #a8f);
+  /*filter: drop-shadow(0px 2px 4px #a8f);*/
   border-top: 1px solid #a147c3;
   border-bottom: 0.5px solid white;
   text-shadow: 0 0.6px 0 #ff00ff;
   background-color: #38fbf5;
   box-shadow: inset 0px -10px 10px #ad91ff;
-  color: #e9ffff;
+  color: white;
+}
+.tbut:hover::before {
+  /*z-index: -1;*/
+  box-shadow: 0pt 5pt 8pt 0 #0fd8, 0 0.5px 2px 0 #6f00ff;
+  border-radius: 2em;
+  mix-blend-mode: hard-light;
+  content: "";
+  position: absolute;
+  width: 100%;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+.tbut:active {
+  padding-bottom: 6px;
+  border-top: 2.5px solid #c97cdc;
+  border-bottom: 0px solid white;
+  color: black;
+  filter: brightness(1.3) contrast(1.6) drop-shadow(0px 5px 10px cyan);
 }
