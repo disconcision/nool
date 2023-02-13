@@ -51,7 +51,11 @@ export const matches = (pat: Pat, exp: Exp): MatchResult => {
     case 'Comp': {
       switch(exp.t) {
         case 'Atom': return 'NoMatch';
-        case 'Comp': return kidsmatch(pat.kids, exp.kids);
+        case 'Comp':
+          let r= kidsmatch(pat.kids, exp.kids);
+          if (r == 'NoMatch') return 'NoMatch';
+          else return r;
+        return r
 }}}};
 
 const var_hydrate = (bindings: Binding[],pat_name:string) =>{

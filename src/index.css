@@ -20,6 +20,8 @@ code {
 
 .node-container {
   width: fit-content;
+  user-select: none;
+  cursor: pointer;
 }
 
 .node.atom {
@@ -36,7 +38,6 @@ code {
   padding: 0.2em;
   margin: 0.2em;
   align-items: center;
-  cursor: pointer;
   box-shadow: 4px 4px 8px #773fcc40;
   border-bottom: 0.3px solid rgba(13, 0, 95, 22);
   border-top: 0.3px solid rgba(255, 255, 255, 66);

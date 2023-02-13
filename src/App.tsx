@@ -3,9 +3,7 @@ import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext6.png'
 import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp} from './Tree';
-import Flipping from 'flipping';
-//import { FlatTree } from './FlatTree';
-//let guy: FlatTree = {root:0, nodes:[]};
+import Flipping from 'flipping/src/adapters/web';
 
 let exp:Exp = comp([
   atom('➕'),
@@ -35,11 +33,34 @@ const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
             {kid => <NodeC node={kid} parity={false}/>}
           </For>
           </div>
-          
         </div>
       );
   }
 };
+
+const commute_root = (exp:Exp):TransformResult =>
+transform(
+  exp,
+  p_comp([p_const('➕'), p_var('a'), p_var('b')]),
+  p_comp([p_const('➕'), p_var('b'), p_var('a')]));
+
+const assoc_root = (exp:Exp):TransformResult =>
+  transform(
+    exp,
+    p_comp([p_const('➕'), p_var('a'), p_comp([p_const('➕'), p_var('b'), p_var('c')])]),
+    p_comp([p_const('➕'), p_comp([p_const('➕'), p_var('a'), p_var('b')]), p_var('c')]));
+
+const assoc_root_rev = (exp:Exp):TransformResult =>
+  transform(
+    exp,
+    p_comp([p_const('➕'), p_comp([p_const('➕'), p_var('a'), p_var('b')]), p_var('c')]),
+    p_comp([p_const('➕'), p_var('a'), p_comp([p_const('➕'), p_var('b'), p_var('c')])]));
+      
+const identity_add = (exp:Exp):TransformResult =>
+  transform(
+    exp,
+    p_comp([p_const('➕'), p_var('🌕'), p_var("a")]),
+    p_comp([p_const('➕'), p_var('a')]));
 
 const App: Component = () => {
   type Task = {
@@ -48,9 +69,45 @@ const App: Component = () => {
     completed: boolean
   }
 
-
-
   const [node, setNode] = createSignal(exp);
+  
+  const flipping = new Flipping({
+    duration: 250,
+    //parent: this,
+    //attribute: 'data-flip-key',
+    //activeSelector: (_el:any) => {return (true)},
+  });
+
+  const assocNode = (e: Event) => {
+    //e.preventDefault()
+    let result = assoc_root(node());
+    if (result=='NoMatch') result = assoc_root_rev(node());
+    flipping.read();
+    if (result!='NoMatch') setNode(result);
+  };
+
+  const commNode = (e: Event) => {
+    let result = commute_root(node());
+    flipping.read();
+    if (result!='NoMatch') setNode(result);
+  };
+
+  createEffect(() => {
+    console.log('call effect;flipping.flip %s',node());
+    flipping.flip();
+  });
+
+  return (
+    <div id='main'>
+      <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
+      <div class='node-container' onclick = {commNode}>
+        {NodeC({node: node(), parity: false})}
+      </div>
+    </div>
+  )
+}
+
+export default App
 
   /*const [taskList, setTaskList] = createStore([] as Task[])
 
@@ -76,74 +133,3 @@ const App: Component = () => {
       'completed',
       completed => !completed)
   }*/
-
-  const commute_root = (exp:Exp):TransformResult =>
-  transform(
-    exp,
-    p_comp([p_const('➕'), p_var('a'), p_var('b')]),
-    p_comp([p_const('➕'), p_var('b'), p_var('a')]));
-  
-  const flipping = new Flipping({
-    //parent: this,
-    /*duration: 3000,
-    attribute: 'data-flip-key',
-    activeSelector: (_el:any) => {return (true)},*/
-  });
-  
-  console.log('mountNode; new flipping, initial flipping.read');
-  flipping.read();
-
-  const updateNode = (_:string) => {
-    console.log('updateNode called; flipping.read');
-    flipping.read();
-    let result = commute_root(node());
-    if (result!='NoMatch') setNode(result);
-  };
-
-  createEffect(() => {
-    console.log('call effect;flipping.flip %s',node());
-    flipping.flip();
-  });
-
-  return (
-    <div id='main'>
-      {/*<h1 class="mb-4">nool</h1>*/}
-      <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
-
-      <div class='node-container' onclick = {_ => updateNode("")}>
-        {NodeC({node: node(), parity: false})}
-      </div>
-      
-
-      {/*
-      <form class="mb-5 row row-cols-2 justify-content-center" onSubmit={addTask}>
-        <input type="text" class="input-group-text p-1 w-25" placeholder="wat do.." id="taskInput" required />
-
-        <button class="btn btn-primary ms-3 w-auto" type="submit">
-          taskify
-        </button>
-      </form>
-
-      
-
-      <div>
-        <h4 class="text-muted mb-4">tasks</h4>
-        <For each={taskList}>
-          {(task:Task) => (
-            <div class="row row-cols-3 mb-3 justify-content-center">
-              <button class="btn btn-danger w-auto" onclick={_ =>deleteTask(task.id)}>X</button>
-              <div class={`bg-light p-2 mx-2 ${task.completed && 'text-decoration-line-through text-success'}`}>
-                {task.text}
-              </div>
-            <input type="checkbox" checked={task.completed} role="button" class="form-check-input h-auto px-3"
-                   onClick={_ => toggleStatus(task.id)}/>
-        </div>
-        )}
-        </For>
-      </div> 
-      */}
-    </div>
-  )
-}
-
-export default App
