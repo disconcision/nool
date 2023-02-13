@@ -39,7 +39,7 @@ const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number}> = (prop
       );
     case 'Comp':
       return ( //data-flip-key={`flip-${props.node.id}`} 
-        <div class={`node comp`}>
+        <div data-flip-key2={`flip-${props.node.id}`} class={`node comp`}>
            <NodeC node={props.node.kids[0]} is_head={true} parent_id={props.node.id}/>
           <div style={`position: relative; display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
           <For each={props.node.kids.slice(1)}>
@@ -98,11 +98,21 @@ const App: Component = () => {
   const [node, setNode] = createSignal(exp);
   
   const flipping = new Flipping({
+    duration: 175,
+    //stagger: 1,
+    //selector:  (_el:Element) => {return [_el]},
+    //parent: this,
+    attribute: 'data-flip-key',
+    //activeSelector: (_el:any) => {return (true)},
+  });
+
+  const flipping2 = new Flipping({
     duration: 250,
+    easing:'cubic-bezier(0.68, -0.6, 0.32, 1.6)',
     //stagger: 10,
     //selector:  (_el:Element) => {return [_el]},
     //parent: this,
-    //attribute: 'data-flip-key',
+    attribute: 'data-flip-key2',
     //activeSelector: (_el:any) => {return (true)},
   });
 
@@ -122,8 +132,8 @@ const App: Component = () => {
   
   const transformNode = (f:(_:Exp)=>TransformResult) =>(e: Event) => {
     let result = f(node());
-    flipping.read();
-    if (result!='NoMatch') {setNode(result); flipping.flip();}
+    flipping.read();flipping2.read();
+    if (result!='NoMatch') {setNode(result); flipping2.flip();flipping.flip(); }
   };
 
   createEffect(() => {
