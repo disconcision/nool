@@ -31,7 +31,7 @@ const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number}> = (prop
       return ( //TODO: random hack below 
       //data-flip-parent={`flip-${props.node.id}`} 
         <Show when={props.is_head} 
-        fallback={<div data-flip-key={`flip-${props.node.id}`} class='node atom'>{props.node.sym}</div>}
+        fallback={<div data-flip-parent={`flip-${props.node.id}`} data-flip-key={`flip-${props.node.id}`} class='node atom'>{props.node.sym}</div>}
         >
           <div class='head'>{props.node.sym}</div>
         </Show>
@@ -39,7 +39,7 @@ const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number}> = (prop
       );
     case 'Comp':
       return ( //data-flip-key={`flip-${props.node.id}`} 
-        <div data-flip-key2={`flip-${props.node.id}`} class={`node comp`}>
+        <div data-flip-parent={`flip-${props.node.id}`} data-flip-key2={`flip-${props.node.id}`} class={`node comp`}>
            <NodeC node={props.node.kids[0]} is_head={true} parent_id={props.node.id}/>
           <div style={`position: relative; display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
           <For each={props.node.kids.slice(1)}>
@@ -132,8 +132,13 @@ const App: Component = () => {
   
   const transformNode = (f:(_:Exp)=>TransformResult) =>(e: Event) => {
     let result = f(node());
-    flipping.read();flipping2.read();
-    if (result!='NoMatch') {setNode(result); flipping2.flip();flipping.flip(); }
+    flipping.read();
+    flipping2.read();
+    if (result!='NoMatch') {
+      setNode(result);
+      flipping2.flip();
+      flipping.flip();
+    }
   };
 
   createEffect(() => {
