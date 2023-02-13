@@ -12,8 +12,10 @@ var id_gen = 0;
 const new_id = () => id_gen++;
   
 export type Exp = Node<string>;
-export const atom = (sym: string): Exp => ({t: 'Atom', id:new_id(), sym});
-export const comp = (kids: Exp[]): Exp => ({t: 'Comp', id:new_id(), kids});
+const atom_id = (sym: string, id:number): Exp => ({t: 'Atom', id, sym});
+export const atom = (sym: string): Exp => atom_id(sym, new_id());
+const comp_id  = (kids: Exp[], id:number): Exp => ({t: 'Comp', id, kids});
+export const comp = (kids: Exp[]): Exp => comp_id(kids, new_id());
 
 export const erase = (e: Exp): Exp => {
   switch(e.t) {
@@ -49,7 +51,11 @@ export const matches = (pat: Pat, exp: Exp): MatchResult => {
     case 'Comp': {
       switch(exp.t) {
         case 'Atom': return 'NoMatch';
-        case 'Comp': return kidsmatch(pat.kids, exp.kids);
+        case 'Comp':
+          let r= kidsmatch(pat.kids, exp.kids);
+          if (r == 'NoMatch') return 'NoMatch';
+          else return r;
+        return r
 }}}};
 
 const var_hydrate = (bindings: Binding[],pat_name:string) =>{
