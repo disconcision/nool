@@ -60,7 +60,13 @@ const identity_add = (exp:Exp):TransformResult =>
   transform(
     exp,
     p_comp([p_const('➕'), p_var('🌕'), p_var("a")]),
-    p_comp([p_const('➕'), p_var('a')]));
+    p_var('a'));
+
+const identity_add_rev = (exp:Exp):TransformResult =>
+    transform(
+      exp,
+      p_var('a'),
+      p_comp([p_const('➕'), p_var('🌕'), p_var("a")]));
 
 const App: Component = () => {
   type Task = {
@@ -92,6 +98,12 @@ const App: Component = () => {
     if (result!='NoMatch') setNode(result);
   };
 
+  const transformNode = (f:(_:Exp)=>TransformResult) =>(e: Event) => {
+    let result = f(node());
+    flipping.read();
+    if (result!='NoMatch') setNode(result);
+  };
+
   createEffect(() => {
     console.log('call effect;flipping.flip %s',node());
     flipping.flip();
@@ -99,10 +111,17 @@ const App: Component = () => {
 
   return (
     <div id='main'>
-      <img src={logo} alt='nool text' style='width: 8em; margin: 3em' />
+      <img src={logo} class='logo' />
+      <div class='tbuts'>
+        <div class='tbut' onclick = {transformNode(commute_root)}>comm</div>
+        <div class='tbut' onclick = {transformNode(assoc_root)}>ass1</div>
+        <div class='tbut' onclick = {transformNode(assoc_root_rev)}>ass2</div>
+        <div class='tbut' onclick = {transformNode(identity_add)}>id1</div>
+        <div class='tbut' onclick = {transformNode(identity_add_rev)}>id2</div>
+      </div>
       <div class='node-container' onclick = {commNode}>
         {NodeC({node: node(), parity: false})}
-      </div>
+      </div> 
     </div>
   )
 }

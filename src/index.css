@@ -18,6 +18,11 @@ code {
   align-items: center;
 }
 
+.logo {
+  width: 8em;
+  margin: 3em 0 1em 0;
+}
+
 .node-container {
   width: fit-content;
   user-select: none;
@@ -61,4 +66,27 @@ code {
   -webkit-background-clip: text;
   -moz-background-clip: text;
   background-clip: text;
+}
+
+.tbuts{
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  padding-top: 1em;
+  padding-bottom: 2em;
+}
+.tbut {
+  font-size: 0.75em;
+  margin: 0.2em;
+  padding: 0.2em;
+  border-radius: 0.2em;
+  border-bottom: 0.2px solid #321c64;
+  background-color: #c1d2ff;
+  color: white;
+  cursor: pointer;
+}
+.tbut:hover {
+  border-top: 0.3px solid #022d36;
+  background-color: #c5f1ff;
+  border-bottom: none;
 }
