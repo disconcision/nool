@@ -2,7 +2,7 @@ import { Component, createEffect,createRenderEffect  } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext6.png'
-import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp} from './Tree';
+import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
 let exp:Exp = comp([
@@ -17,20 +17,24 @@ let exp:Exp = comp([
     atom('🌘')])]);
 
 
-const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
+const NodeC: Component<{node: Exp, is_head: boolean}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
-      return (
-        <div data-flip-key={`flip-${props.node.id}`} class={`${props.parity?'head':'node atom'}`}>{props.node.sym}</div>
+      return ( //TODO: random hack below
+        <Show when={props.is_head}
+        fallback={<div data-flip-key={`flip-${props.node.id}`} class='node atom'>{props.node.sym}</div>}
+        >
+          <div class='head'>{props.node.sym}</div>
+        </Show>
+        
       );
     case 'Comp':
       return (
         <div data-flip-key={`flip-${props.node.id}`} class={`node comp`}>
-           <NodeC node={props.node.kids[0]} parity={true}/>
-          {/*(props.node.kids[0]).sym*/}
+           <NodeC node={props.node.kids[0]} is_head={true}/>
           <div style={`display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
           <For each={props.node.kids.slice(1)}>
-            {kid => <NodeC node={kid} parity={false}/>}
+            {kid => <NodeC node={kid} is_head={false}/>}
           </For>
           </div>
         </div>
@@ -38,35 +42,36 @@ const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
   }
 };
 
-const commute_root = (exp:Exp):TransformResult =>
-transform(
+const commute_root = (exp:Exp):TransformResult => transform(
   exp,
-  p_comp([p_const('➕'), p_var('a'), p_var('b')]),
-  p_comp([p_const('➕'), p_var('b'), p_var('a')]));
+  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('a'), p_var('b')]),
+  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('b'), p_var('a')]));
 
 const assoc_root = (exp:Exp):TransformResult =>
   transform(
     exp,
-    p_comp([p_const('➕'), p_var('a'), p_comp([p_const('➕'), p_var('b'), p_var('c')])]),
-    p_comp([p_const('➕'), p_comp([p_const('➕'), p_var('a'), p_var('b')]), p_var('c')]));
+    p_comp_id(-2,[p_const_id(-3, '➕'), p_var('a'), p_comp_id(-4,[p_const_id(-5,'➕'), p_var('b'), p_var('c')])]),
+    p_comp_id(-2, [p_const_id(-3, '➕'), p_comp_id(-4,[p_const_id(-5,'➕'), p_var('a'), p_var('b')]), p_var('c')]));
 
 const assoc_root_rev = (exp:Exp):TransformResult =>
   transform(
     exp,
-    p_comp([p_const('➕'), p_comp([p_const('➕'), p_var('a'), p_var('b')]), p_var('c')]),
-    p_comp([p_const('➕'), p_var('a'), p_comp([p_const('➕'), p_var('b'), p_var('c')])]));
+    p_comp_id(-2,[p_const_id(-3,'➕'), p_comp_id(-4,[p_const_id(-5,'➕'), p_var('a'), p_var('b')]), p_var('c')]),
+    p_comp_id(-2,[p_const_id(-3,'➕'), p_var('a'), p_comp_id(-4,[p_const_id(-5,'➕'), p_var('b'), p_var('c')])]));
       
-const identity_add = (exp:Exp):TransformResult =>
-  transform(
+const identity_add = (exp:Exp):TransformResult => {
+  let a = p_var('a');
+  return transform(
     exp,
-    p_comp([p_const('➕'), p_var('🌕'), p_var("a")]),
-    p_var('a'));
+    p_comp([p_const('➕'), p_const('🌕'), p_var('a')]),
+    p_var('a'))};
 
-const identity_add_rev = (exp:Exp):TransformResult =>
-    transform(
+const identity_add_rev = (exp:Exp):TransformResult =>{
+  let a = p_var('a');
+  return transform(
       exp,
       p_var('a'),
-      p_comp([p_const('➕'), p_var('🌕'), p_var("a")]));
+      p_comp([p_const('➕'), p_const('🌕'), p_var('a')]))};
 
 const App: Component = () => {
   type Task = {
@@ -113,14 +118,14 @@ const App: Component = () => {
     <div id='main'>
       <img src={logo} class='logo' />
       <div class='tbuts'>
-        <div class='tbut' onclick = {transformNode(commute_root)}>comm</div>
-        <div class='tbut' onclick = {transformNode(assoc_root)}>ass1</div>
-        <div class='tbut' onclick = {transformNode(assoc_root_rev)}>ass2</div>
-        <div class='tbut' onclick = {transformNode(identity_add)}>id1</div>
-        <div class='tbut' onclick = {transformNode(identity_add_rev)}>id2</div>
+        <div class='tbut' onclick= {transformNode(commute_root)}>comm</div>
+        <div class='tbut' onclick= {transformNode(assoc_root)}>ass1</div>
+        <div class='tbut' onclick= {transformNode(assoc_root_rev)}>ass2</div>
+        <div class='tbut' onclick= {transformNode(identity_add)}>id1</div>
+        <div class='tbut' onclick= {transformNode(identity_add_rev)}>id2</div>
       </div>
       <div class='node-container' onclick = {commNode}>
-        {NodeC({node: node(), parity: false})}
+        {NodeC({node: node(), is_head: false})}
       </div> 
     </div>
   )

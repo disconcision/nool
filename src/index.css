@@ -72,21 +72,31 @@ code {
   user-select: none;
   cursor: pointer;
   display: flex;
-  padding-top: 1em;
-  padding-bottom: 2em;
+  margin-top: 1em;
+  margin-bottom: 2em;
+  background-color: #e2faff;
+  border-radius: 2em;
+  border-top: 0.5px solid #b6c2ff;
 }
 .tbut {
-  font-size: 0.75em;
-  margin: 0.2em;
-  padding: 0.2em;
-  border-radius: 0.2em;
-  border-bottom: 0.2px solid #321c64;
-  background-color: #c1d2ff;
-  color: white;
+  font-variant: diagonal-fractions;
+  text-shadow: 0 0.5px 0 #799fd0;
+  text-transform: uppercase;
+  font-weight: 900;
+  font-size: 0.5em;
+  user-select: none;
   cursor: pointer;
+  display: flex;
+  color: white;
+  padding: 0.9em;
+  background-color: #c1d2ff;
+  border-radius: 2em;
+  margin: 0.25em;
+  border-top: 0.5px solid #b6c2ff;
 }
 .tbut:hover {
   border-top: 0.3px solid #022d36;
+  text-shadow: 0 -0.5px 0 #799fd0;
   background-color: #c5f1ff;
   border-bottom: none;
 }
