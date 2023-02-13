@@ -12,8 +12,10 @@ var id_gen = 0;
 const new_id = () => id_gen++;
   
 export type Exp = Node<string>;
-export const atom = (sym: string): Exp => ({t: 'Atom', id:new_id(), sym});
-export const comp = (kids: Exp[]): Exp => ({t: 'Comp', id:new_id(), kids});
+const atom_id = (sym: string, id:number): Exp => ({t: 'Atom', id, sym});
+export const atom = (sym: string): Exp => atom_id(sym, new_id());
+const comp_id  = (kids: Exp[], id:number): Exp => ({t: 'Comp', id, kids});
+export const comp = (kids: Exp[]): Exp => comp_id(kids, new_id());
 
 export const erase = (e: Exp): Exp => {
   switch(e.t) {

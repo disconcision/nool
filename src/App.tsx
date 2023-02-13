@@ -1,8 +1,9 @@
-import type { Component } from 'solid-js';
+import { Component, createEffect,createRenderEffect  } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext6.png'
 import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp} from './Tree';
+import Flipping from 'flipping';
 //import { FlatTree } from './FlatTree';
 //let guy: FlatTree = {root:0, nodes:[]};
 
@@ -22,11 +23,11 @@ const NodeC: Component<{node: Exp, parity: boolean}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
       return (
-        <div class={`${props.parity?'head':'node atom'}`}>{props.node.sym}</div>
+        <div data-flip-key={`flip-${props.node.id}`} class={`${props.parity?'head':'node atom'}`}>{props.node.sym}</div>
       );
     case 'Comp':
       return (
-        <div class={`node comp`}>
+        <div data-flip-key={`flip-${props.node.id}`} class={`node comp`}>
            <NodeC node={props.node.kids[0]} parity={true}/>
           {/*(props.node.kids[0]).sym*/}
           <div style={`display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
@@ -46,6 +47,8 @@ const App: Component = () => {
     text: string
     completed: boolean
   }
+
+
 
   const [node, setNode] = createSignal(exp);
 
@@ -79,14 +82,28 @@ const App: Component = () => {
     exp,
     p_comp([p_const('➕'), p_var('a'), p_var('b')]),
     p_comp([p_const('➕'), p_var('b'), p_var('a')]));
+  
+  const flipping = new Flipping({
+    //parent: this,
+    /*duration: 3000,
+    attribute: 'data-flip-key',
+    activeSelector: (_el:any) => {return (true)},*/
+  });
+  
+  console.log('mountNode; new flipping, initial flipping.read');
+  flipping.read();
 
   const updateNode = (_:string) => {
-    console.log('updateNode');
+    console.log('updateNode called; flipping.read');
+    flipping.read();
     let result = commute_root(node());
     if (result!='NoMatch') setNode(result);
   };
 
-
+  createEffect(() => {
+    console.log('call effect;flipping.flip %s',node());
+    flipping.flip();
+  });
 
   return (
     <div id='main'>
