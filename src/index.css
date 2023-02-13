@@ -74,29 +74,41 @@ code {
   display: flex;
   margin-top: 1em;
   margin-bottom: 2em;
-  background-color: #e2faff;
+  background-color: #e5e5e5;
   border-radius: 2em;
-  border-top: 0.5px solid #b6c2ff;
+  border-top: 0.5px solid #cdcdcd;
 }
 .tbut {
+  border-top: 0.4px solid #c6c6c6;
+  border-bottom: 1.1px solid #f0f0f1;
   font-variant: diagonal-fractions;
-  text-shadow: 0 0.5px 0 #799fd0;
+  text-shadow: 0 0.6px 0 #7d7d7d;
   text-transform: uppercase;
   font-weight: 900;
   font-size: 0.5em;
   user-select: none;
   cursor: pointer;
   display: flex;
-  color: white;
+  color: #cfcfcf;
   padding: 0.9em;
-  background-color: #c1d2ff;
+  background-color: #f0f0f0;
   border-radius: 2em;
   margin: 0.25em;
-  border-top: 0.5px solid #b6c2ff;
 }
-.tbut:hover {
-  border-top: 0.3px solid #022d36;
-  text-shadow: 0 -0.5px 0 #799fd0;
-  background-color: #c5f1ff;
+/*.tbut:hover {
+  filter: drop-shadow(0px 4px 6px #38fbf5);
+  border-top: 1px solid #37a19c;
+  background-color: #38fbf5;
   border-bottom: none;
+  box-shadow: inset 0px -10px 10px #46c2e9;
+  color: #b8fffe;
+}*/
+.tbut:hover {
+  filter: drop-shadow(0px 2px 4px #a8f);
+  border-top: 1px solid #a147c3;
+  border-bottom: 0.5px solid white;
+  text-shadow: 0 0.6px 0 #ff00ff;
+  background-color: #38fbf5;
+  box-shadow: inset 0px -10px 10px #ad91ff;
+  color: #e9ffff;
 }
