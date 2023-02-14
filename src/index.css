@@ -1,3 +1,59 @@
+@keyframes jello {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+
+  30% {
+    transform: scale3d(1.25, 0.75, 1);
+  }
+
+  40% {
+    transform: scale3d(0.75, 1.25, 1);
+  }
+
+  50% {
+    transform: scale3d(1.15, 0.85, 1);
+  }
+
+  65% {
+    transform: scale3d(0.95, 1.05, 1);
+  }
+
+  75% {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes wobble {
+  0%,
+  100% { transform: translateX(0%); transform-origin: 50% 50%;}
+  15% { transform: translateX(0.5%) rotate(-3deg); }
+  30% { transform: translateX(1.5%) rotate(3deg); }
+  45% { transform: translateX(1.5%) rotate(-1.3deg); }
+  60% { transform: translateX(0.5%) rotate(1.2deg); }
+  75% { transform: translateX(0%) rotate(-0.6deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% {
+    transform: scale(1.06);
+    filter: brightness(1.2) drop-shadow(0px 0px 20px #f3b9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes flare {
+  0% { filter: drop-shadow(0px 0px 2px magenta); }
+  20% {
+    filter: drop-shadow(0px 0px 20px magenta); }
+  100% { filter: drop-shadow(0px 0px 100px magenta); }
+}
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -13,14 +69,29 @@ code {
 }
 
 #main {
+  height: 100vw;
+  background-image: linear-gradient(180deg, #e5c1f9, 10%, #a6e0ff, 30%, #e8ffd7, 80%, #9cffcc);
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .logo {
+  background-image: url("/src/assets/nooltext7.png");
+  background-size: contain;
+  background-repeat: no-repeat;
   width: 8em;
+  padding-top: 2em;
   margin: 3em 0 1em 0;
+}
+.logo:hover {
+  mix-blend-mode: plus-lighter;
+  transition: all;
+  transition-duration: 2s;
+  /*filter: drop-shadow(0px 0px 10px magenta); */
+  animation: flare;
+  animation-duration: 2s;
+  animation-timing-function: linear;
 }
 
 .node-container {
@@ -37,7 +108,16 @@ code {
   padding: 0 0.25em;
   justify-content: center;
 }
+.node.atom:hover {
+  animation-name: pulse;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
+  /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
+}
+
 .node {
+  width: fit-content;
   display: flex;
   border-radius: 2em;
   padding: 0.2em;
@@ -52,6 +132,11 @@ code {
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
   /*background-color: #af90f5;*/
+}
+.node.comp:active {
+  animation-name: wobble;
+  animation-duration: 0.5s;
+  animation-iteration-count: infinite;
 }
 .node.comp {
   /* display: flex; */
@@ -75,13 +160,13 @@ code {
   display: flex;
   margin-top: 1em;
   margin-bottom: 2em;
-  background-color: #e5e5e5;
+  background-color: #aee7e866;
   border-radius: 2em;
-  border-top: 0.5px solid #cdcdcd;
+  border-top: 0.5px solid #a5cff7;
 }
 .tbut {
   padding: 7px;
-  border-top: 0.4px solid #c6c6c6;
+  border-top: 0.4px solid #b0b0b099;
   border-bottom: 1.1px solid #f0f0f1;
   transition: all 0.05s;
   z-index: 10;
@@ -93,9 +178,8 @@ code {
   user-select: none;
   cursor: pointer;
   display: flex;
-  color: #cfcfcf;
-  
-  background-color: #f0f0f0;
+  color: #95dde0;
+  background-color: #f0f0f077;
   border-radius: 2em;
   margin: 0.25em;
   position: relative;
@@ -110,16 +194,18 @@ code {
 }*/
 .tbut:hover {
   /*filter: drop-shadow(0px 2px 4px #a8f);*/
+  padding-bottom: 6px;
   border-top: 1px solid #a147c3;
   border-bottom: 0.5px solid white;
   text-shadow: 0 0.6px 0 #ff00ff;
   background-color: #38fbf5;
   box-shadow: inset 0px -10px 10px #ad91ff;
   color: white;
+  animation-name: wobble;
+  animation-duration: 0.3s;
 }
 .tbut:hover::before {
-  /*z-index: -1;*/
-  box-shadow: 0pt 5pt 8pt 0 #0fd8, 0 0.5px 2px 0 #6f00ff;
+  box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
   border-radius: 2em;
   mix-blend-mode: hard-light;
   content: "";
@@ -132,8 +218,12 @@ code {
 }
 .tbut:active {
   padding-bottom: 6px;
-  border-top: 2.5px solid #c97cdc;
+  border-top: 2.5px solid #000000;
   border-bottom: 0px solid white;
   color: black;
-  filter: brightness(1.3) contrast(1.6) drop-shadow(0px 5px 10px cyan);
+  filter: brightness(1.0) contrast(1.0) drop-shadow(0px 5px 10px #f0f9);
+  mix-blend-mode: plus-lighter;
+}
+.tbut:active::before {
+  box-shadow: none;
 }

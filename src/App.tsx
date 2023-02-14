@@ -1,7 +1,7 @@
 import { Component, createEffect,createRenderEffect  } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import logo from './assets/nooltext6.png'
+import logo from './assets/nooltext7.png'
 import {Exp, comp, atom, depth, transform, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
@@ -18,32 +18,36 @@ let exp1:Exp = comp([
 
 let exp:Exp = comp([
       atom('➕'),
-      atom('👾'),
+      atom('🎲'),
       comp([
         atom('➕'),
         atom('🦷'),
         atom('🍄')])]);
 
 
-const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number}> = (props) => {
+const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number, depth: number}> = (props) => {
   switch(props.node.t) {
     case 'Atom':
+      var opts:any = {};
+      opts[`data-flip-key-${props.depth}`] =`flip-${props.node.id}`;
       return ( //TODO: random hack below 
       //data-flip-parent={`flip-${props.node.id}`} 
         <Show when={props.is_head} 
-        fallback={<div data-flip-parent={`flip-${props.node.id}`} data-flip-key={`flip-${props.node.id}`} class='node atom'>{props.node.sym}</div>}
+        fallback={<div data-flip-key={`flip-${props.node.id}`} /*{...opts}*/ class='node atom'>{props.node.sym}</div>}
         >
           <div class='head'>{props.node.sym}</div>
         </Show>
         
       );
     case 'Comp':
+      var opts:any = {};
+      opts[`data-flip-key-${props.depth}`] =`flip-${props.node.id}`;
       return ( //data-flip-key={`flip-${props.node.id}`} 
-        <div data-flip-parent={`flip-${props.node.id}`} data-flip-key2={`flip-${props.node.id}`} class={`node comp`}>
-           <NodeC node={props.node.kids[0]} is_head={true} parent_id={props.node.id}/>
+        <div data-flip-parent={`flip-${props.node.id}`} data-flip-key-comp={`flip-${props.node.id}`} /*{...opts}*/ class={`node comp`}>
+           <NodeC node={props.node.kids[0]} is_head={true} parent_id={props.node.id} depth={props.depth+1} />
           <div style={`position: relative; display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
           <For each={props.node.kids.slice(1)}>
-            {kid => <NodeC node={kid} is_head={false} parent_id={props.node.id}/>}
+            {kid => <NodeC node={kid} is_head={false} parent_id={props.node.id} depth={props.depth+1}/>}
           </For>
           </div>
         </div>
@@ -74,29 +78,45 @@ const assoc_root_rev = (exp:Exp):TransformResult => {
     p_comp_id(-2,[p_const_id(-3,'➕'), p_comp_id(-4,[p_const_id(-5,'➕'), a, b]), c]),
     p_comp_id(-2,[p_const_id(-3,'➕'), a, p_comp_id(-4,[p_const_id(-5,'➕'), b, c])]))};
       
-const identity_add = (exp:Exp):TransformResult => {
-  let a = p_var('a');
-  return transform(
+const identity_add = (exp:Exp):TransformResult =>
+  transform(
     exp,
     p_comp([p_const('➕'), p_const('🌕'), p_var('a')]),
-    p_var('a'))};
+    p_var('a'));
 
-const identity_add_rev = (exp:Exp):TransformResult =>{
-  let a = p_var('a');
-  return transform(
+const identity_add_rev = (exp:Exp):TransformResult =>
+  transform(
       exp,
       p_var('a'),
-      p_comp([p_const('➕'), p_const('🌕'), p_var('a')]))};
+      p_comp([p_const('➕'), p_const('🌕'), p_var('a')]));
 
-const App: Component = () => {
-  type Task = {
-    id: string
-    text: string
-    completed: boolean
+
+// generate a list of n flippings, with attributes 'data-flip-key-n'
+let make_flippings = (n: number): Flipping[] => {
+  let result: Flipping[] = [];
+  for (let i = 0; i < n; i++) {
+    result.push(new Flipping({
+      duration: 175,
+      attribute: `data-flip-key-${i}`,
+    }));
   }
+  return result;
+};
 
-  const [node, setNode] = createSignal(exp);
-  
+// call flipping.read on a list of flippings
+let read_flippings = (flippings: Flipping[]) => {
+  for (let i = 0; i < flippings.length; i++) {
+    flippings[i].read();
+  }
+};
+
+// call flipping.flip on a list of flippings
+let flip_flippings = (flippings: Flipping[]) => {
+  for (let i = 0; i < flippings.length; i++) {
+    flippings[i].flip();
+  }
+};
+
   const flipping = new Flipping({
     duration: 175,
     //stagger: 1,
@@ -112,9 +132,20 @@ const App: Component = () => {
     //stagger: 10,
     //selector:  (_el:Element) => {return [_el]},
     //parent: this,
-    attribute: 'data-flip-key2',
+    attribute: 'data-flip-key-comp',
     //activeSelector: (_el:any) => {return (true)},
   });
+
+      
+const App: Component = () => {
+  type Task = {
+    id: string
+    text: string
+    completed: boolean
+  }
+
+  const [node, setNode] = createSignal(exp);
+  
 
   const assocNode = (e: Event) => {
     //e.preventDefault()
@@ -129,13 +160,23 @@ const App: Component = () => {
     //flipping.read();
     if (result!='NoMatch') setNode(result);
   };
+
+  const trans_or = (f:(_:Exp)=>TransformResult,g:(_:Exp)=>TransformResult) => (e: Exp) =>
+   {
+    let result = f(e);
+    if (result=='NoMatch') return g(e);
+    return result;
+  }
   
   const transformNode = (f:(_:Exp)=>TransformResult) =>(e: Event) => {
+    //let flippings = make_flippings(depth(node()));
     let result = f(node());
+    //read_flippings(flippings);
     flipping.read();
     flipping2.read();
     if (result!='NoMatch') {
       setNode(result);
+      //flip_flippings(flippings.reverse());
       flipping2.flip();
       flipping.flip();
     }
@@ -148,16 +189,16 @@ const App: Component = () => {
 
   return (
     <div id='main'>
-      <img src={logo} class='logo' />
+      <div class='logo' />
       <div class='tbuts'>
         <div class='tbut' onclick= {transformNode(commute_root)}>comm</div>
-        <div class='tbut' onclick= {transformNode(assoc_root)}>ass1</div>
-        <div class='tbut' onclick= {transformNode(assoc_root_rev)}>ass2</div>
-        <div class='tbut' onclick= {transformNode(identity_add)}>id1</div>
-        <div class='tbut' onclick= {transformNode(identity_add_rev)}>id2</div>
+        <div class='tbut' onclick= {transformNode(trans_or(assoc_root,assoc_root_rev))}>ass⁺</div>
+        <div class='tbut' onclick= {transformNode(trans_or(assoc_root_rev, assoc_root))}>ass⁻</div>
+        <div class='tbut' onclick= {transformNode(identity_add)}>id⁻</div>
+        <div class='tbut' onclick= {transformNode(identity_add_rev)}>id⁺</div>
       </div>
-      <div class='node-container' onclick = {commNode}>
-        {NodeC({node: node(), is_head: false, parent_id:-1})}
+      <div class='node-container'>
+        {NodeC({node: node(), is_head: false, parent_id:-1, depth:0})}
       </div> 
     </div>
   )
