@@ -24,6 +24,13 @@ let exp:Exp = comp([
         atom('🦷'),
         atom('🍄')])]);
 
+let exp2:Exp = comp([
+          atom('➕'),
+          atom('🐝'),
+          comp([
+            atom('➕'),
+            atom('🌸'),
+            atom('🍄')])]);        
 
 const NodeC: Component<{node: Exp, is_head: boolean, parent_id: number, depth: number}> = (props) => {
   switch(props.node.t) {
