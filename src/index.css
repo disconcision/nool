@@ -115,6 +115,10 @@ code {
   animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
+.node.selected,
+.node.selected:hover  {
+  filter: invert(1) !important;
+}
 
 .node {
   width: fit-content;

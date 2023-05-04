@@ -101,3 +101,20 @@ let kidsmatch = (pats: Pat[], exps: Exp[]): MatchResult => {
     .map(([p, t]) => matches(p, t))
     .reduce(concat_bindings, [])
 };
+
+/* descend into tree to find exp node of certain id, and then try to do the transform */
+export const transform_at_id = (exp: Exp, pat: Pat, template: Pat, id: number): TransformResult => {
+  console.log('transform_at_id', id);
+  switch(exp.t) {
+    case 'Atom': return exp.id == id ? transform(exp, pat, template) : exp;
+    case 'Comp': if (exp.id == id) {
+      return transform(exp, pat, template)
+    }
+    else {
+      let kids = exp.kids.map(kid => {
+        let res = transform_at_id(kid, pat, template, id);
+        switch(res) {
+          case 'NoMatch': return kid;
+          default: return res;
+          }});
+      return {...exp, kids};}}};
