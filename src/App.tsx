@@ -13,13 +13,14 @@ type Model =
 };
 
 type Transform  = [Pat, Pat];
+type Inject = (_: Action) => void;
 
 type Action =
 | {t: 'transformNode', f:(_:Exp)=>TransformResult}
 | {t: 'setSelect', id:number};
 
 const flipping = new Flipping({
-  duration: 175,
+  duration: 175, //175,
   //stagger: 1,
   //selector:  (_el:Element) => {return [_el]},
   //parent: this,
@@ -28,8 +29,8 @@ const flipping = new Flipping({
 });
 
 const flipping2 = new Flipping({
-  duration: 250,
-  easing:'cubic-bezier(0.68, -0.6, 0.32, 1.6)',
+  duration: 250, //250,
+  easing: 'cubic-bezier(0.68, -0.6, 0.32, 1.6)',
   //stagger: 10,
   //selector:  (_el:Element) => {return [_el]},
   //parent: this,
@@ -51,6 +52,7 @@ const update = (model: Model, setModel: any, action: Action): Model => {
         flipping.flip();
         return m;
       } else {
+        setModel(model);
         return model;
       }
     case 'setSelect':
@@ -90,42 +92,58 @@ let exp2:Exp = comp([
 let init_model = {
   stage: exp,
   selectPath: [],
-  selectId: 0,
+  selectId: -1,
 };
 
-const NodeC: Component<{node: Exp, model:Model, is_head: boolean, parent_id: number, depth: number, inject: (_:Action)=>void}> = (props) => {
+const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boolean, parent_id: number, depth: number, inject: Inject}> = (props) => {
   const setSelect = (id:number) =>
     (e:Event) => {e.preventDefault();
       e.stopPropagation();
       props.inject({t: 'setSelect', id})};
-  const is_selected = props.node.id ==props.model.selectId;
+  const is_selected = props.node.id == props.model.selectId;
   switch(props.node.t) {
     case 'Atom':
       var opts:any = {};
-      opts[`data-flip-key-${props.depth}`] =`flip-${props.node.id}`;
+      if(props.animate) { opts[`data-flip-key`] =`flip-${props.node.id}` };
       return ( //TODO: random hack below 
       //data-flip-parent={`flip-${node.id}`} 
         <Show when={props.is_head} 
-        fallback={<div data-flip-key={`flip-${props.node.id}`} /*{...opts}*/ class={`node atom ${is_selected?'selected':''}`} onclick={setSelect(props.node.id)}>{props.node.sym}</div>}
+        fallback={<div /*data-flip-key={`flip-${props.node.id}`}*/ {...opts} class={`node atom ${is_selected?'selected':''}`} onclick={setSelect(props.node.id)}>{props.node.sym}</div>}
         >
-          <div class='head'>{props.node.sym}</div>
+          <div class='head' {...opts}>{props.node.sym}</div>
         </Show>
         
       );
     case 'Comp':
       var opts:any = {};
-      opts[`data-flip-key-${props.depth}`] =`flip-${props.node.id}`;
+      if(props.animate) { opts[`data-flip-key-comp`] =`flip-${props.node.id}` };
       return ( //data-flip-key={`flip-${node.id}`} 
+      // flex-direction:${depth(props.node)<2?'row':'column'};
         <div
           data-flip-parent={`flip-${props.node.id}`}
-          data-flip-key-comp={`flip-${props.node.id}`}
+          {...opts}
           class={`node comp ${is_selected?'selected':''}`}
           onclick={setSelect(props.node.id)}
           >
-           <NodeC model={props.model} node={props.node.kids[0]} is_head={true} parent_id={props.node.id} depth={props.depth+1} inject={props.inject} />
-          <div style={`position: relative; display:flex; flex-direction:${depth(props.node)<2?'row':'column'};`}>
+           <NodeC
+            model={props.model}
+            node={props.node.kids[0]}
+            animate={props.animate}
+            is_head={true}
+            parent_id={props.node.id}
+            depth={props.depth+1}
+            inject={props.inject} />
+          <div style={`position: relative; display:flex; flex-direction: column;`}>
           <For each={props.node.kids.slice(1)}>
-            {kid => <NodeC model={props.model} node={kid} is_head={false} parent_id={props.node.id} depth={props.depth+1} inject={props.inject} />}
+            {kid =>
+              <NodeC
+                model={props.model}
+                node={kid}
+                animate={props.animate}
+                is_head={false}
+                parent_id={props.node.id}
+                depth={props.depth+1}
+                inject={props.inject} />}
           </For>
           </div>
         </div>
@@ -135,15 +153,13 @@ const NodeC: Component<{node: Exp, model:Model, is_head: boolean, parent_id: num
 
 const commute_root: Transform = [
   p_comp_id(-2,[p_const_id(-3,'➕'), p_var('a'), p_var('b')]),
-  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('b'), p_var('a')])];
+  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('b'), p_var('a')])
+];
 
 const do_at = ([pat, template]: Transform, id:number) => (exp:Exp):TransformResult =>
   transform_at_id(exp, pat, template, id);
 
-const commute_root_at = (id:number)=>(exp:Exp):TransformResult => 
-  do_at(commute_root, id)(exp);
-
-const assoc_root: ()=>Transform = () =>{
+const assoc_root: () => Transform = () =>{
   let a = p_var('a');
   let b = p_var('b');
   let c = p_var('c');
@@ -153,7 +169,7 @@ const assoc_root: ()=>Transform = () =>{
   ]
   };
 
-const assoc_root_rev: ()=>Transform = () =>{
+const assoc_root_rev: () => Transform = () =>{
   let a = p_var('a');
   let b = p_var('b');
   let c = p_var('c');
@@ -162,14 +178,14 @@ const assoc_root_rev: ()=>Transform = () =>{
     p_comp_id(-2,[p_const_id(-3,'➕'), a, p_comp_id(-4,[p_const_id(-5,'➕'), b, c])])]};
       
 const identity_add: Transform = [
-    p_comp([p_const('➕'), p_const('🌕'), p_var('a')]),
-    p_var('a')
-  ];
+  p_comp([p_const('➕'), p_const('0️⃣'), p_var('a')]),
+  p_var('a')
+];
 
 const identity_add_rev: Transform = [
-      p_var('a'),
-      p_comp([p_const('➕'), p_const('🌕'), p_var('a')])
-    ];
+  p_var('a'),
+  p_comp([p_const('➕'), p_const('0️⃣'), p_var('a')])
+];
 
 
 // generate a list of n flippings, with attributes 'data-flip-key-n'
@@ -198,7 +214,31 @@ let flip_flippings = (flippings: Flipping[]) => {
   }
 };
 
+const Preview: Component<{node: Exp, f: Transform, indicated: number, inject: Inject}> = (props) => {
+  const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
+  let node = do_at(props.f, props.indicated)(props.node);
+  //HACK: init_model
+  return(
+  <div
+    class='node-container'
+    style={(node == 'NoMatch')?'display: none':''}
+    onclick={evt => {console.log('yo'); transform(do_at(props.f, props.indicated))(evt)}}
+    >
+    {(node == 'NoMatch')? <div></div> : NodeC({model:init_model, node, animate:false, is_head: false, parent_id:-1, depth:0, inject:_=>{}})}
+  </div>)
+};
 
+const Previews: Component<{model: Model, inject: Inject}> = (props) => {
+  let transforms = [commute_root, assoc_root(), assoc_root_rev(), identity_add, identity_add_rev];
+  //TODO: BUG: instead of -1, check if selection is actually in tree
+  return(
+    <div class='previews'
+    style={props.model.selectId == -1 ? 'display:none':'display: flex; flex-direction: column; gap: 2em; font-size: 0.5em; padding: 2.3em;'}>
+      <For each={transforms}>{transform =>
+        Preview({node:props.model.stage, f:transform, indicated:props.model.selectId, inject:_=>{}})
+      }</For>
+    </div>)
+};
 
 const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
   console.log('rendering stage. selectId is', props.model.selectId);
@@ -208,7 +248,8 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
         <div>selectId: {props.model.selectId}</div>
       </div>
       <div class='node-container'>
-        {NodeC({model:props.model, node: props.model.stage, is_head: false, parent_id:-1, depth:0, inject:props.inject})}
+        {NodeC({model:props.model, node: props.model.stage, animate: true,is_head: false, parent_id:-1, depth:0, inject:props.inject})}
+        {Previews({model: props.model, inject:props.inject})}
       </div> 
     </div>
   )
@@ -216,12 +257,12 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
 
 const Buttons: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
   const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
-  const trans_or = (f:(_:Exp)=>TransformResult,g:(_:Exp)=>TransformResult) => (e: Exp) =>
+  /*const trans_or = (f:(_:Exp)=>TransformResult,g:(_:Exp)=>TransformResult) => (e: Exp) =>
    {
     let result = f(e);
     if (result=='NoMatch') return g(e);
     return result;
-  }
+  };*/
   return (<div class='tbuts'>
         <div class='tbut' onclick= {transform(do_at(commute_root, props.model.selectId))}>comm</div>
         <div class='tbut' onclick= {transform(do_at(assoc_root(), props.model.selectId))}>ass⁺</div>
@@ -244,28 +285,3 @@ const App: Component = () => {
 }
 
 export default App
-
-  /*const [taskList, setTaskList] = createStore([] as Task[])
-
-  /*const addTask= (e: Event) => {
-    e.preventDefault()
-    const taskInput= document.querySelector('#taskInput') as HTMLInputElement
-    const newTask: Task = {
-      id: Math.random().toString(36).substring(2),
-      text: taskInput.value,
-      completed: false
-    }
-    setTaskList([newTask, ...taskList])
-    taskInput.value = ''
-  }
-
-  const deleteTask = (taskId:string) => {
-    setTaskList(taskList.filter(task => task.id != taskId))
-  }
-
-  const toggleStatus = (taskId: string) => {
-    setTaskList(
-      task => task.id ===taskId,
-      'completed',
-      completed => !completed)
-  }*/

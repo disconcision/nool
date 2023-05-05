@@ -108,7 +108,8 @@ code {
   padding: 0 0.25em;
   justify-content: center;
 }
-.node.atom:hover {
+.node.atom:hover/*,
+.node.selected*/ {
   animation-name: pulse;
   animation-duration: 1s;
   animation-iteration-count: infinite;
@@ -117,7 +118,10 @@ code {
 }
 .node.selected,
 .node.selected:hover  {
-  filter: invert(1) !important;
+  outline: 1px solid #a043b8;
+  background-color: #c264d366 !important;
+  /* filter: hue-rotate(45deg);
+  /*filter: invert(1) !important;*/
 }
 
 .node {
@@ -230,4 +234,10 @@ code {
 }
 .tbut:active::before {
   box-shadow: none;
+}
+
+.previews {
+  position: absolute;
+  left: 0;
+  top: 0;
 }

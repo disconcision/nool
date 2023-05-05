@@ -102,6 +102,11 @@ let kidsmatch = (pats: Pat[], exps: Exp[]): MatchResult => {
     .reduce(concat_bindings, [])
 };
 
+let map_or = (acc: Exp[]|'NoMatch', b: TransformResult): Exp[]|'NoMatch' => {
+  if (acc === 'NoMatch' || b === 'NoMatch') return 'NoMatch';
+  return acc.concat([b])
+};
+
 /* descend into tree to find exp node of certain id, and then try to do the transform */
 export const transform_at_id = (exp: Exp, pat: Pat, template: Pat, id: number): TransformResult => {
   console.log('transform_at_id', id);
@@ -111,10 +116,15 @@ export const transform_at_id = (exp: Exp, pat: Pat, template: Pat, id: number): 
       return transform(exp, pat, template)
     }
     else {
-      let kids = exp.kids.map(kid => {
+      let kids_ = exp.kids.map(kid => {
+        //TODO: return NoMatch if any of the kids return NoMatch
         let res = transform_at_id(kid, pat, template, id);
         switch(res) {
           case 'NoMatch': return kid;
           default: return res;
           }});
-      return {...exp, kids};}}};
+      let kids = exp.kids
+      .map(kid => transform_at_id(kid, pat, template, id))
+      .reduce(map_or, [])
+      return kids==='NoMatch'?'NoMatch':{...exp, kids};}
+    }};
