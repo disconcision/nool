@@ -127,7 +127,7 @@ code {
 .node {
   width: fit-content;
   display: flex;
-  border-radius: 2em;
+  border-radius: 2em 0.5em 0.5em 2em;
   padding: 0.2em;
   margin: 0.2em;
   align-items: center;
@@ -169,17 +169,18 @@ code {
   margin-top: 1em;
   margin-bottom: 2em;
   background-color: #aee7e866;
-  border-radius: 2em;
+  border-radius: 1.1em;
   border-top: 0.5px solid #a5cff7;
 }
 .tbut {
+  height:fit-content;
   padding: 7px;
   border-top: 0.4px solid #b0b0b099;
   border-bottom: 1.1px solid #f0f0f1;
   transition: all 0.05s;
   z-index: 10;
   font-variant: diagonal-fractions;
-  text-shadow: 0 0.6px 0 #7d7d7d;
+  text-shadow: 0 -0.5px 0 #469aa5;
   text-transform: uppercase;
   font-weight: 900;
   font-size: 0.5em;
@@ -191,6 +192,9 @@ code {
   border-radius: 2em;
   margin: 0.25em;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 /*.tbut:hover {
   filter: drop-shadow(0px 4px 6px #38fbf5);
@@ -205,7 +209,7 @@ code {
   padding-bottom: 6px;
   border-top: 1px solid #a147c3;
   border-bottom: 0.5px solid white;
-  text-shadow: 0 0.6px 0 #ff00ff;
+  text-shadow: 0 -0.5px 0 #ff00ff;
   background-color: #38fbf5;
   box-shadow: inset 0px -10px 10px #ad91ff;
   color: white;
@@ -240,4 +244,42 @@ code {
   position: absolute;
   left: 0;
   top: 0;
+}
+
+#toolbar {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  height: 144px;
+  width: 1.63em;
+  background-size: 1.63em;
+  background-repeat: no-repeat;
+  box-shadow: 4px 4px 10px #0663;
+}
+
+.transform {
+  display: flex;
+  align-items: center;
+  font-size: 0.6em;
+}
+
+.pat.node.atom {
+  width: 1.5em;
+  font-family: "Segoe UI Emoji";
+}
+.pat.node.atom.♫ {
+  background-color: cyan;
+  color: rgb(29, 182, 182);
+}
+.pat.node.atom.♥ {
+  background-color: #f772f7;
+  color: rgb(189 49 255);
+}
+.pat.node.atom.✿ {
+  background-color: yellow;
+  color: rgb(198, 155, 39);
+}
+
+.tbut:active, .pat {
+  color: black !important;
 }

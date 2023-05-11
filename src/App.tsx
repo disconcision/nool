@@ -2,6 +2,7 @@ import { Component, createEffect,createRenderEffect  } from 'solid-js';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext7.png'
+import toolbarbkg from './assets/ps-toolbar.png'
 import {Exp, Pat, comp, atom, depth, transform, transform_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
@@ -12,7 +13,12 @@ type Model =
   selectId: number,
 };
 
-type Transform  = [Pat, Pat];
+type Transform  = {
+  name: string,
+  source: Pat,
+  result: Pat,
+};
+
 type Inject = (_: Action) => void;
 
 type Action =
@@ -97,9 +103,11 @@ let init_model = {
 
 const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boolean, parent_id: number, depth: number, inject: Inject}> = (props) => {
   const setSelect = (id:number) =>
-    (e:Event) => {e.preventDefault();
+    (e:Event) => {
+      e.preventDefault();
       e.stopPropagation();
-      props.inject({t: 'setSelect', id})};
+      props.inject({t: 'setSelect', id})
+    };
   const is_selected = props.node.id == props.model.selectId;
   switch(props.node.t) {
     case 'Atom':
@@ -108,7 +116,15 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
       return ( //TODO: random hack below 
       //data-flip-parent={`flip-${node.id}`} 
         <Show when={props.is_head} 
-        fallback={<div /*data-flip-key={`flip-${props.node.id}`}*/ {...opts} class={`node atom ${is_selected?'selected':''}`} onclick={setSelect(props.node.id)}>{props.node.sym}</div>}
+        fallback={
+          <div
+            /*data-flip-key={`flip-${props.node.id}`}*/
+            {...opts}
+            class={`node atom ${is_selected?'selected':''}`}
+            onclick={setSelect(props.node.id)}
+            >
+            {props.node.sym}
+          </div>}
         >
           <div class='head' {...opts}>{props.node.sym}</div>
         </Show>
@@ -131,7 +147,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
             animate={props.animate}
             is_head={true}
             parent_id={props.node.id}
-            depth={props.depth+1}
+            depth={props.depth + 1}
             inject={props.inject} />
           <div style={`position: relative; display:flex; flex-direction: column;`}>
           <For each={props.node.kids.slice(1)}>
@@ -142,7 +158,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
                 animate={props.animate}
                 is_head={false}
                 parent_id={props.node.id}
-                depth={props.depth+1}
+                depth={props.depth + 1}
                 inject={props.inject} />}
           </For>
           </div>
@@ -151,42 +167,59 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
   }
 };
 
-const commute_root: Transform = [
-  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('a'), p_var('b')]),
-  p_comp_id(-2,[p_const_id(-3,'➕'), p_var('b'), p_var('a')])
-];
+const PatView: Component<{p: Pat, is_head: boolean}> = (props) => {
+  switch(props.p.t) {
+    case 'Atom': {
+      const sym = props.p.sym.name;
+      switch(props.p.sym.t) {
+        case 'Var': return <div class={(sym + ' ' + (props.is_head?'head pat':'node atom pat'))}>{sym}</div>;
+        case 'Const': return <div class={(sym + ' ' + (props.is_head?'head pat':'node atom pat'))}>{sym}</div>;}}
+    case 'Comp': return (
+    <div class='node comp pat' style={`position: relative; display:flex; flex-direction: column;`}>
+      {PatView({p:props.p.kids[0], is_head:true})}
+      <For each={props.p.kids.slice(1)}>
+        {kid => PatView({p:kid, is_head:false})}
+      </For>
+    </div>);
+  }
+};
 
-const do_at = ([pat, template]: Transform, id:number) => (exp:Exp):TransformResult =>
-  transform_at_id(exp, pat, template, id);
+const var_a = p_var('✿');
+const var_b = p_var('♫');
+const var_c = p_var('♥');
+const plus_1 = p_const_id(-3, '➕');
+const plus_x = (a: Pat,b: Pat) => p_comp_id(-4, [p_const_id(-5, '➕'), a, b])
+const plus_y = (a: Pat,b: Pat) => p_comp_id(-2, [p_const_id(-3, '➕'), a, b])
 
-const assoc_root: () => Transform = () =>{
-  let a = p_var('a');
-  let b = p_var('b');
-  let c = p_var('c');
-  return [
-    p_comp_id(-2,[p_const_id(-3, '➕'), a, p_comp_id(-4,[p_const_id(-5,'➕'), b, c])]),
-    p_comp_id(-2, [p_const_id(-3, '➕'), p_comp_id(-4,[p_const_id(-5,'➕'), a, b]), c])
-  ]
-  };
+const commute_root: Transform = {
+  name: 'comm',
+  source: p_comp_id(-2,[plus_1, var_a, var_b]),
+  result:p_comp_id(-2,[plus_1, var_b, var_a])
+};
 
-const assoc_root_rev: () => Transform = () =>{
-  let a = p_var('a');
-  let b = p_var('b');
-  let c = p_var('c');
-  return [
-    p_comp_id(-2,[p_const_id(-3,'➕'), p_comp_id(-4,[p_const_id(-5,'➕'), a, b]), c]),
-    p_comp_id(-2,[p_const_id(-3,'➕'), a, p_comp_id(-4,[p_const_id(-5,'➕'), b, c])])]};
+const assoc_root: Transform = {
+  name: 'ass',
+  source: plus_y(var_a, plus_x(var_b, var_c)),
+  result: plus_y(plus_x(var_a, var_b), var_c)
+};
+
+const assoc_root_rev: Transform = {
+  name: 'ass⇦',
+  source: plus_y(plus_x(var_a, var_b), var_c),
+  result: plus_y(var_a, plus_x(var_b, var_c))
+};
       
-const identity_add: Transform = [
-  p_comp([p_const('➕'), p_const('0️⃣'), p_var('a')]),
-  p_var('a')
-];
+const identity_add: Transform = {
+  name: 'id',
+  source: var_a,
+  result: p_comp([p_const('➕'), p_const('0️⃣'), var_a])
+};
 
-const identity_add_rev: Transform = [
-  p_var('a'),
-  p_comp([p_const('➕'), p_const('0️⃣'), p_var('a')])
-];
-
+const identity_add_rev: Transform = {
+  name: 'id⇦',
+  source: p_comp([p_const('➕'), p_const('0️⃣'), var_a]),
+  result: var_a
+};
 
 // generate a list of n flippings, with attributes 'data-flip-key-n'
 let make_flippings = (n: number): Flipping[] => {
@@ -214,6 +247,12 @@ let flip_flippings = (flippings: Flipping[]) => {
   }
 };
 
+const do_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult =>
+  transform_at_id(exp, source, result, id);
+
+const do_reverse_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult =>
+  transform_at_id(exp, result, source, id);
+
 const Preview: Component<{node: Exp, f: Transform, indicated: number, inject: Inject}> = (props) => {
   const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
   let node = do_at(props.f, props.indicated)(props.node);
@@ -228,8 +267,8 @@ const Preview: Component<{node: Exp, f: Transform, indicated: number, inject: In
   </div>)
 };
 
-const Previews: Component<{model: Model, inject: Inject}> = (props) => {
-  let transforms = [commute_root, assoc_root(), assoc_root_rev(), identity_add, identity_add_rev];
+const AdjacentPossible: Component<{model: Model, inject: Inject}> = (props) => {
+  let transforms = [commute_root, assoc_root, assoc_root_rev, identity_add, identity_add_rev];
   //TODO: BUG: instead of -1, check if selection is actually in tree
   return(
     <div class='previews'
@@ -249,10 +288,35 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
       </div>
       <div class='node-container'>
         {NodeC({model:props.model, node: props.model.stage, animate: true,is_head: false, parent_id:-1, depth:0, inject:props.inject})}
-        {Previews({model: props.model, inject:props.inject})}
+        {AdjacentPossible({model: props.model, inject:props.inject})}
       </div> 
     </div>
   )
+};
+
+// arrows: → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄ ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄ ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦ ⇨ ➥ ➫ ➬
+const Button: Component<{t: Transform, id: number, inject:(_: Action) => void}> = (props) => {
+  //const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
+  return(<div class='tbut' onclick={(e:Event) => 
+    {e.preventDefault();
+    e.stopPropagation();
+    props.inject({t: 'transformNode', f:(do_at(props.t, props.id))})}
+    }>
+    <div>{props.t.name}</div>
+    <div class='transform'>
+      <div>
+        <PatView p={props.t.source} is_head={false} />
+      </div>
+      <div class='transform-arrow'>⇋</div> 
+      <div onclick={(e:Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        props.inject({t: 'transformNode', f:(do_reverse_at(props.t, props.id))})}
+    }>
+        <PatView p={props.t.result} is_head={false} />
+      </div>
+    </div>
+  </div>)
 };
 
 const Buttons: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
@@ -263,21 +327,30 @@ const Buttons: Component<{model: Model, inject:(_: Action) => void}> = (props) =
     if (result=='NoMatch') return g(e);
     return result;
   };*/
-  return (<div class='tbuts'>
-        <div class='tbut' onclick= {transform(do_at(commute_root, props.model.selectId))}>comm</div>
-        <div class='tbut' onclick= {transform(do_at(assoc_root(), props.model.selectId))}>ass⁺</div>
-        <div class='tbut' onclick= {transform(do_at(assoc_root_rev(), props.model.selectId))}>ass⁻</div>
-        <div class='tbut' onclick= {transform(do_at(identity_add, props.model.selectId))}>id⁻</div>
-        <div class='tbut' onclick= {transform(do_at(identity_add_rev, props.model.selectId))}>id⁺</div>
-      </div>)
-      };
+  return(
+    <div class='tbuts'>
+      {Button({t: commute_root, id: props.model.selectId, inject:props.inject})}
+      {Button({t: assoc_root, id: props.model.selectId, inject:props.inject})}
+      {/*Button({t: assoc_root_rev, id: props.model.selectId, inject:props.inject})*/}
+      {Button({t: identity_add, id: props.model.selectId, inject:props.inject})}
+      {/*Button({t: identity_add_rev, id: props.model.selectId, inject:props.inject})*/}
+    </div>
+  )
+};
       
+const Toolbar: Component<{model: Model, inject:Inject}> = (props) => {
+return (
+  <div id='toolbar' style={`background-image: url(${toolbarbkg})`}>
+    .
+  </div>
+)};
 const App: Component = () => {
   const [model, setModel] = createSignal(init_model);
   let inject = (a:Action) => {update(model(), setModel, a);};
   return (
     <div id='main'>
       <div class='logo' />
+      {Toolbar({model: model(), inject})}
       {Buttons({model: model(), inject})}
       {Stage({model: model(),inject})}
     </div>
