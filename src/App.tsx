@@ -6,11 +6,20 @@ import toolbarbkg from './assets/ps-toolbar.png'
 import {Exp, Pat, comp, atom, depth, transform, transform_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
-type Model =
-{
-  stage: Exp,
-  selectPath: number[],
-  selectId: number,
+
+type Id = number;
+type SelectionMask = [number, string][];
+
+type HoverTarget =
+| {t: 'NoHover'}
+| {t: 'StageNode', id: Id}
+| {t: 'TransformSource', pat: Pat}
+| {t: 'TransformResult', pat: Pat};
+
+
+type Selection = {
+  id: Id,
+  //mask: SelectionMask,
 };
 
 type Transform  = {
@@ -22,8 +31,9 @@ type Transform  = {
 type Inject = (_: Action) => void;
 
 type Action =
-| {t: 'transformNode', f:(_:Exp)=>TransformResult}
-| {t: 'setSelect', id:number};
+| {t: 'transformNode', f: (_:Exp) => TransformResult}
+| {t: 'setSelect', id: Id}
+| {t: 'setHover', target: HoverTarget};
 
 const flipping = new Flipping({
   duration: 175, //175,
@@ -62,8 +72,13 @@ const update = (model: Model, setModel: any, action: Action): Model => {
         return model;
       }
     case 'setSelect':
-      const m = {...model, selectId:action.id};
+      const m = {...model, selection:{id:action.id/*,mask:[]*/}};
       setModel(m);
+      return model;
+    case 'setHover':
+      const m2 = {...model, hover:action.target};
+      setModel(m2);
+      console.log('model.hover is now:', action.target);
       return model;
   }
 };
@@ -79,7 +94,7 @@ let exp1:Exp = comp([
       atom('🌕')]),
     atom('🌘')])]);
 
-let exp:Exp = comp([
+let exp0:Exp = comp([
       atom('➕'),
       atom('🎲'),
       comp([
@@ -95,10 +110,16 @@ let exp2:Exp = comp([
             atom('🌸'),
             atom('🍄')])]);
 
-let init_model = {
-  stage: exp,
-  selectPath: [],
-  selectId: -1,
+type Model = {
+  stage: Exp,
+  selection: Selection /*| 'NoSelection'*/,
+  hover: HoverTarget,
+};
+
+let init_model: Model = {
+  stage: exp0,
+  selection: {id: -1/*, mask:[]*/},
+  hover: {t:'NoHover'},
 };
 
 const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boolean, parent_id: number, depth: number, inject: Inject}> = (props) => {
@@ -108,7 +129,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
       e.stopPropagation();
       props.inject({t: 'setSelect', id})
     };
-  const is_selected = props.node.id == props.model.selectId;
+  const is_selected = props.node.id == props.model.selection.id;
   switch(props.node.t) {
     case 'Atom':
       var opts:any = {};
@@ -175,11 +196,13 @@ const PatView: Component<{p: Pat, is_head: boolean}> = (props) => {
         case 'Var': return <div class={(sym + ' ' + (props.is_head?'head pat':'node atom pat'))}>{sym}</div>;
         case 'Const': return <div class={(sym + ' ' + (props.is_head?'head pat':'node atom pat'))}>{sym}</div>;}}
     case 'Comp': return (
-    <div class='node comp pat' style={`position: relative; display:flex; flex-direction: column;`}>
+    <div class='node comp pat'>
       {PatView({p:props.p.kids[0], is_head:true})}
-      <For each={props.p.kids.slice(1)}>
-        {kid => PatView({p:kid, is_head:false})}
-      </For>
+      <div style={`position: relative; display:flex; flex-direction: column;`}>
+        <For each={props.p.kids.slice(1)}>
+          {kid => PatView({p:kid, is_head:false})}
+        </For>
+      </div>
     </div>);
   }
 };
@@ -272,19 +295,19 @@ const AdjacentPossible: Component<{model: Model, inject: Inject}> = (props) => {
   //TODO: BUG: instead of -1, check if selection is actually in tree
   return(
     <div class='previews'
-    style={props.model.selectId == -1 ? 'display:none':'display: flex; flex-direction: column; gap: 2em; font-size: 0.5em; padding: 2.3em;'}>
+    style={props.model.selection.id == -1 ? 'display:none':'display: flex; flex-direction: column; gap: 2em; font-size: 0.4em; padding: 2.3em;'}>
       <For each={transforms}>{transform =>
-        Preview({node:props.model.stage, f:transform, indicated:props.model.selectId, inject:_=>{}})
+        Preview({node:props.model.stage, f:transform, indicated:props.model.selection.id, inject:_=>{}})
       }</For>
     </div>)
 };
 
 const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
-  console.log('rendering stage. selectId is', props.model.selectId);
+  console.log('rendering stage. selection.id is', props.model.selection.id);
   return(
     <div id='stage'>
       <div id='debug' style='display:none'>
-        <div>selectId: {props.model.selectId}</div>
+        <div>selecttion.id: {props.model.selection.id}</div>
       </div>
       <div class='node-container'>
         {NodeC({model:props.model, node: props.model.stage, animate: true,is_head: false, parent_id:-1, depth:0, inject:props.inject})}
@@ -295,23 +318,29 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
 };
 
 // arrows: → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄ ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄ ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦ ⇨ ➥ ➫ ➬
-const Button: Component<{t: Transform, id: number, inject:(_: Action) => void}> = (props) => {
+const ToolTransform: Component<{t: Transform, id: number, inject:(_: Action) => void}> = (props) => {
   //const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
   return(<div class='tbut' onclick={(e:Event) => 
     {e.preventDefault();
     e.stopPropagation();
     props.inject({t: 'transformNode', f:(do_at(props.t, props.id))})}
     }>
-    <div>{props.t.name}</div>
+    <div class='label'>{props.t.name}</div>
     <div class='transform'>
-      <div>
+      <div
+        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
+        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+        >
         <PatView p={props.t.source} is_head={false} />
       </div>
       <div class='transform-arrow'>⇋</div> 
-      <div onclick={(e:Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        props.inject({t: 'transformNode', f:(do_reverse_at(props.t, props.id))})}
+      <div
+        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
+        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+        onclick={(e:Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          props.inject({t: 'transformNode', f:(do_reverse_at(props.t, props.id))})}
     }>
         <PatView p={props.t.result} is_head={false} />
       </div>
@@ -329,11 +358,12 @@ const Buttons: Component<{model: Model, inject:(_: Action) => void}> = (props) =
   };*/
   return(
     <div class='tbuts'>
-      {Button({t: commute_root, id: props.model.selectId, inject:props.inject})}
-      {Button({t: assoc_root, id: props.model.selectId, inject:props.inject})}
-      {/*Button({t: assoc_root_rev, id: props.model.selectId, inject:props.inject})*/}
-      {Button({t: identity_add, id: props.model.selectId, inject:props.inject})}
-      {/*Button({t: identity_add_rev, id: props.model.selectId, inject:props.inject})*/}
+      {ToolTransform({t: identity_add, id: props.model.selection.id, inject:props.inject})}
+      {ToolTransform({t: commute_root, id: props.model.selection.id, inject:props.inject})}
+      {ToolTransform({t: assoc_root, id: props.model.selection.id, inject:props.inject})}
+      {/*Button({t: assoc_root_rev, id: props.model.selection.id, inject:props.inject})*/}
+      
+      {/*Button({t: identity_add_rev, id: props.model.selection.id, inject:props.inject})*/}
     </div>
   )
 };

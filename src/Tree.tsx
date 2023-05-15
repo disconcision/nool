@@ -36,9 +36,11 @@ export const p_const = (name: string): Pat => ({t: 'Atom', id:new_id(), sym:{t: 
 export const p_comp_id = (id: number,kids: Pat[]): Pat => ({t: 'Comp', id, kids});
 export const p_comp = (kids: Pat[]): Pat => ({t: 'Comp', id:new_id(), kids});
 
-type Binding = {t:'Val', b:[string, Exp]} | {t:'Ids', b:[number, number]}
-let val = (name: string, exp: Exp): Binding => ({t:'Val', b:[name, exp]});
-let ids = (id1: number, id2: number): Binding => ({t:'Ids', b:[id1, id2]});
+type NameBinding = [string, Exp];
+type IdBinding = [number, number];
+type Binding = {t:'Val', ids:IdBinding, val:NameBinding} | {t:'Ids', ids:IdBinding}
+let val = (id1: number, id2: number, name: string, exp: Exp): Binding => ({t:'Val', val:[name, exp], ids:[id1, id2]});
+let ids = (id1: number, id2: number): Binding => ({t:'Ids', ids:[id1, id2]});
 type MatchResult = Binding[] | 'NoMatch';
 export type TransformResult = Exp | 'NoMatch';
 
@@ -47,7 +49,7 @@ export const matches = (pat: Pat, exp: Exp): MatchResult => {
   switch(pat.t) {
     case 'Atom': {
       switch(pat.sym.t) {
-        case 'Var': return [val(pat.sym.name, exp)];
+        case 'Var': return [val(pat.id, exp.id, pat.sym.name, exp)];
         case 'Const': {
           switch(exp.t) {
             case 'Atom': return pat.sym.name == exp.sym ? [ids(pat.id, exp.id)] : 'NoMatch';
@@ -57,20 +59,20 @@ export const matches = (pat: Pat, exp: Exp): MatchResult => {
       switch(exp.t) {
         case 'Atom': return 'NoMatch';
         case 'Comp':
-          let r= kidsmatch(pat.kids, exp.kids);
+          let r = kidsmatch(pat.kids, exp.kids);
           if (r == 'NoMatch') return 'NoMatch';
           else return r.concat(ids(pat.id, exp.id));
 }}}};
 
 const var_hydrate = (bindings: Binding[],pat_name:string):Exp =>{
-  let binding = bindings.find(({b:[name, _], t}) => name == pat_name && t == 'Val');
-  if (binding && binding.t =='Val') return binding.b[1];
+  let binding = bindings.find((guy) =>  guy.t == 'Val' && guy.val[0] == pat_name );
+  if (binding && binding.t =='Val') return binding.val[1];
   else return atom(pat_name); //TODO: error instead?
 }
 
 const ids_hydrate = (bindings: Binding[],pat_id:number):number =>{
-  let binding = bindings.find(({b:[id, _], t}) => id == pat_id && t == 'Ids');
-  if (binding && binding.t =='Ids') return binding.b[1];
+  let binding = bindings.find(({ids:[id, _], t}) => id == pat_id && t == 'Ids');
+  if (binding && binding.t =='Ids') return binding.ids[1];
   else return new_id(); //TODO: error instead?
 }
 
@@ -116,15 +118,9 @@ export const transform_at_id = (exp: Exp, pat: Pat, template: Pat, id: number): 
       return transform(exp, pat, template)
     }
     else {
-      let kids_ = exp.kids.map(kid => {
-        //TODO: return NoMatch if any of the kids return NoMatch
-        let res = transform_at_id(kid, pat, template, id);
-        switch(res) {
-          case 'NoMatch': return kid;
-          default: return res;
-          }});
-      let kids = exp.kids
-      .map(kid => transform_at_id(kid, pat, template, id))
-      .reduce(map_or, [])
-      return kids==='NoMatch'?'NoMatch':{...exp, kids};}
+      let kids =
+        exp.kids
+        .map(kid => transform_at_id(kid, pat, template, id))
+        .reduce(map_or, [])
+      return kids === 'NoMatch' ? 'NoMatch' : {...exp, kids};}
     }};

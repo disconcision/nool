@@ -61,6 +61,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #9cffcc !important;
 }
 
 code {
@@ -69,11 +70,11 @@ code {
 }
 
 #main {
-  height: 100vw;
   background-image: linear-gradient(180deg, #e5c1f9, 10%, #a6e0ff, 30%, #e8ffd7, 80%, #9cffcc);
-  display: flex;
-  flex-direction: column;
+  display: grid;
   align-items: center;
+  grid-template-columns: 2.2em 8em 1fr;
+  grid-template-rows: 3em 1fr;
 }
 
 .logo {
@@ -81,8 +82,10 @@ code {
   background-size: contain;
   background-repeat: no-repeat;
   width: 8em;
-  padding-top: 2em;
-  margin: 3em 0 1em 0;
+  padding: 1em;
+  grid-column: 1 / span 3;
+  grid-row: 1;
+  margin: 2em 2em 0 1.5em;
 }
 .logo:hover {
   mix-blend-mode: plus-lighter;
@@ -166,15 +169,20 @@ code {
   user-select: none;
   cursor: pointer;
   display: flex;
-  margin-top: 1em;
-  margin-bottom: 2em;
+  flex-direction: column;
+  align-items: end;
   background-color: #aee7e866;
   border-radius: 1.1em;
   border-top: 0.5px solid #a5cff7;
+  grid-column: 2 / span 1;
+  width: fit-content;
+  margin: 1.5em;
 }
 .tbut {
-  height:fit-content;
+  height: fit-content;
+  width: fit-content;
   padding: 7px;
+  gap: 0.5em;
   border-top: 0.4px solid #b0b0b099;
   border-bottom: 1.1px solid #f0f0f1;
   transition: all 0.05s;
@@ -183,7 +191,7 @@ code {
   text-shadow: 0 -0.5px 0 #469aa5;
   text-transform: uppercase;
   font-weight: 900;
-  font-size: 0.5em;
+  font-size: 0.6em;
   user-select: none;
   cursor: pointer;
   display: flex;
@@ -193,8 +201,16 @@ code {
   margin: 0.25em;
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
+}
+.tbut .label {
+  position: absolute;
+  top: .5em;
+  font-size: 0.37em;
+  right: 3.7em;
+  color: #cae6e0;
 }
 /*.tbut:hover {
   filter: drop-shadow(0px 4px 6px #38fbf5);
@@ -206,7 +222,7 @@ code {
 }*/
 .tbut:hover {
   /*filter: drop-shadow(0px 2px 4px #a8f);*/
-  padding-bottom: 6px;
+  /*padding-bottom: 6px;*/
   border-top: 1px solid #a147c3;
   border-bottom: 0.5px solid white;
   text-shadow: 0 -0.5px 0 #ff00ff;
@@ -242,19 +258,24 @@ code {
 
 .previews {
   position: absolute;
-  left: 0;
+  right: 0;
   top: 0;
 }
 
 #toolbar {
-  position: absolute;
-  top: 1em;
-  right: 1em;
+  grid-row: 2 / span 1;
+  grid-column: 1 / span 1;
+  margin: 1em;
   height: 144px;
   width: 1.63em;
   background-size: 1.63em;
   background-repeat: no-repeat;
   box-shadow: 4px 4px 10px #0663;
+}
+
+#stage {
+  grid-row: 2 / span 1;
+  grid-column: 3 / span 1;
 }
 
 .transform {
@@ -277,9 +298,15 @@ code {
 }
 .pat.node.atom.✿ {
   background-color: yellow;
-  color: rgb(198, 155, 39);
+  color: rgb(213, 176, 91);
 }
 
-.tbut:active, .pat {
+.pat.node.comp {
+  position: relative;
+  display:flex;
+  flex-direction: row;
+}
+
+.tbut:active .pat {
   color: black !important;
 }
