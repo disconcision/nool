@@ -72,20 +72,20 @@ code {
 #main {
   background-image: linear-gradient(180deg, #e5c1f9, 10%, #a6e0ff, 30%, #e8ffd7, 80%, #9cffcc);
   display: grid;
-  align-items: center;
-  grid-template-columns: 2.2em 8em 1fr;
-  grid-template-rows: 3em 1fr;
+  align-items: start;
+  grid-template-columns: 2.6em 7.3em 1fr;
+  grid-template-rows: 5em 1fr;
 }
 
 .logo {
-  background-image: url("/src/assets/nooltext7.png");
+  background-image: url(/src/assets/nooltext7.png);
   background-size: contain;
   background-repeat: no-repeat;
   width: 8em;
-  padding: 1em;
   grid-column: 1 / span 3;
   grid-row: 1;
-  margin: 2em 2em 0 1.5em;
+  margin: 1.5em;
+  height: 2em;
 }
 .logo:hover {
   mix-blend-mode: plus-lighter;
@@ -176,8 +176,9 @@ code {
   border-top: 0.5px solid #a5cff7;
   grid-column: 2 / span 1;
   width: fit-content;
-  margin: 1.5em;
+  margin-left: 1em;
 }
+
 .tbut {
   height: fit-content;
   width: fit-content;
@@ -257,20 +258,30 @@ code {
 }
 
 .previews {
+  flex-direction: column;
+  gap: 2em;
+  font-size: 0.4em;
+  padding: 2.3em;
+  filter: saturate(1) opacity(1) hue-rotate(277deg) blur(1px);
   position: absolute;
   right: 0;
   top: 0;
+  mix-blend-mode: color-burn;
+}
+.previews:hover{
+  filter: hue-rotate(277deg) saturate(1.5);
+  mix-blend-mode: normal;
 }
 
 #toolbar {
   grid-row: 2 / span 1;
   grid-column: 1 / span 1;
-  margin: 1em;
   height: 144px;
   width: 1.63em;
   background-size: 1.63em;
   background-repeat: no-repeat;
   box-shadow: 4px 4px 10px #0663;
+  margin-left: 1em;
 }
 
 #stage {
@@ -282,6 +293,10 @@ code {
   display: flex;
   align-items: center;
   font-size: 0.6em;
+}
+.transform .source:hover,
+.transform .result:hover {
+  filter: brightness(1.5);
 }
 
 .pat.node.atom {

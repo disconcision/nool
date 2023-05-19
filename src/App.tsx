@@ -295,7 +295,7 @@ const AdjacentPossible: Component<{model: Model, inject: Inject}> = (props) => {
   //TODO: BUG: instead of -1, check if selection is actually in tree
   return(
     <div class='previews'
-    style={props.model.selection.id == -1 ? 'display:none':'display: flex; flex-direction: column; gap: 2em; font-size: 0.4em; padding: 2.3em;'}>
+    style={props.model.selection.id == -1 ? 'display:none;':'display: flex;'}>
       <For each={transforms}>{transform =>
         Preview({node:props.model.stage, f:transform, indicated:props.model.selection.id, inject:_=>{}})
       }</For>
@@ -327,16 +327,16 @@ const ToolTransform: Component<{t: Transform, id: number, inject:(_: Action) => 
     }>
     <div class='label'>{props.t.name}</div>
     <div class='transform'>
-      <div
-        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
-        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+      <div class='source'
+        //onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
+        //onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         >
         <PatView p={props.t.source} is_head={false} />
       </div>
       <div class='transform-arrow'>⇋</div> 
-      <div
-        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
-        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+      <div class='result'
+        //onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
+        //onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         onclick={(e:Event) => {
           e.preventDefault();
           e.stopPropagation();
