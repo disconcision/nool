@@ -1,5 +1,5 @@
 import { Component, createEffect,createRenderEffect  } from 'solid-js';
-import { createSignal, For, Show } from 'solid-js';
+import { createSignal, For, Show, Switch, Match } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext7.png'
 import toolbarbkg from './assets/ps-toolbar.png'
@@ -318,29 +318,33 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
 };
 
 // arrows: → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄ ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄ ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦ ⇨ ➥ ➫ ➬
-const ToolTransform: Component<{t: Transform, id: number, inject:(_: Action) => void}> = (props) => {
-  //const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
+const ToolTransform: Component<{t: Transform, model: Model, inject:(_: Action) => void}> = (props) => {
   return(<div class='tbut' onclick={(e:Event) => 
     {e.preventDefault();
     e.stopPropagation();
-    props.inject({t: 'transformNode', f:(do_at(props.t, props.id))})}
+    props.inject({t: 'transformNode', f:(do_at(props.t, props.model.selection.id))})}
     }>
     <div class='label'>{props.t.name}</div>
     <div class='transform'>
       <div class='source'
-        //onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
-        //onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
+        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         >
         <PatView p={props.t.source} is_head={false} />
       </div>
-      <div class='transform-arrow'>⇋</div> 
+      <div class='transform-arrow'>
+        <Switch fallback='⇋'>
+          <Match when={props.model.hover.t === "TransformSource"}>→</Match>
+          <Match when={props.model.hover.t === "TransformResult"}>←</Match>
+        </Switch>
+      </div> 
       <div class='result'
-        //onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
-        //onMouseOut={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
+        onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         onclick={(e:Event) => {
           e.preventDefault();
           e.stopPropagation();
-          props.inject({t: 'transformNode', f:(do_reverse_at(props.t, props.id))})}
+          props.inject({t: 'transformNode', f:(do_reverse_at(props.t, props.model.selection.id))})}
     }>
         <PatView p={props.t.result} is_head={false} />
       </div>
@@ -349,21 +353,11 @@ const ToolTransform: Component<{t: Transform, id: number, inject:(_: Action) => 
 };
 
 const Buttons: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
-  const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});
-  /*const trans_or = (f:(_:Exp)=>TransformResult,g:(_:Exp)=>TransformResult) => (e: Exp) =>
-   {
-    let result = f(e);
-    if (result=='NoMatch') return g(e);
-    return result;
-  };*/
   return(
     <div class='tbuts'>
-      {ToolTransform({t: identity_add, id: props.model.selection.id, inject:props.inject})}
-      {ToolTransform({t: commute_root, id: props.model.selection.id, inject:props.inject})}
-      {ToolTransform({t: assoc_root, id: props.model.selection.id, inject:props.inject})}
-      {/*Button({t: assoc_root_rev, id: props.model.selection.id, inject:props.inject})*/}
-      
-      {/*Button({t: identity_add_rev, id: props.model.selection.id, inject:props.inject})*/}
+      {ToolTransform({t: identity_add, model: props.model, inject:props.inject})}
+      {ToolTransform({t: commute_root, model: props.model, inject:props.inject})}
+      {ToolTransform({t: assoc_root, model: props.model, inject:props.inject})}
     </div>
   )
 };
@@ -375,14 +369,14 @@ return (
   </div>
 )};
 const App: Component = () => {
-  const [model, setModel] = createSignal(init_model);
-  let inject = (a:Action) => {console.log(a);update(model(), setModel, a);};
+  const [model, setModel] = createStore(init_model);
+  let inject = (a:Action) => {console.log(a);update(model, setModel, a);};
   return (
     <div id='main'>
       <div class='logo' />
-      {Toolbar({model: model(), inject})}
-      {Buttons({model: model(), inject})}
-      {Stage({model: model(),inject})}
+      {Toolbar({model: model, inject})}
+      {Buttons({model: model, inject})}
+      {Stage({model: model,inject})}
     </div>
   )
 }

@@ -301,7 +301,10 @@ code {
   font-size: 0.6em;
 }
 .transform-arrow {
+  display: flex;
+  justify-content: center;
   color: #b3d4cc;
+  width: 0.9em;
 }
 
 .pat.node.atom {
