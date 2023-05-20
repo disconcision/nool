@@ -3,7 +3,7 @@ import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext7.png'
 import toolbarbkg from './assets/ps-toolbar.png'
-import {Exp, Pat, comp, atom, depth, transform, transform_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
+import {Exp, Pat, comp, atom, depth, transform, transform_at_id, TransformResult, TransformResult2, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
 
@@ -270,11 +270,19 @@ let flip_flippings = (flippings: Flipping[]) => {
   }
 };
 
-const do_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult =>
-  transform_at_id(exp, source, result, id);
+const do_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult => {
+  switch(transform_at_id(exp, source, result, id)) {
+    case 'NoMatch': return 'NoMatch';
+    case {exp, id}: return exp;
+    default: return 'NoMatch'; //TODO: why is this needed?
+  }}
 
-const do_reverse_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult =>
-  transform_at_id(exp, result, source, id);
+const do_reverse_at = ({source, result}: Transform, id:number) => (exp:Exp):TransformResult => {
+  switch(transform_at_id(exp, result, source, id)) {
+    case 'NoMatch': return 'NoMatch';
+    case {exp, id}: return exp;
+    default: return 'NoMatch'; //TODO: why is this needed?
+  }}
 
 const Preview: Component<{node: Exp, f: Transform, indicated: number, inject: Inject}> = (props) => {
   const transform = (f:(_:Exp) => TransformResult) => (_:Event) => props.inject({t: 'transformNode', f});

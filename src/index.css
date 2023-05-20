@@ -112,7 +112,9 @@ code {
   justify-content: center;
 }
 .node.atom:hover/*,
-.node.selected*/ {
+.node.selected*/,
+.transform .result:hover,
+.transform .source:hover {
   animation-name: pulse;
   animation-duration: 1s;
   animation-iteration-count: infinite;
@@ -233,6 +235,7 @@ code {
   animation-name: wobble;
   animation-duration: 0.3s;
 }
+/*
 .tbut:hover::before {
   box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
   border-radius: 2em;
@@ -244,7 +247,7 @@ code {
   right: 0;
   left: 0;
   bottom: 0;
-}
+}*/
 .tbut:active {
   padding-bottom: 6px;
   border-top: 2.5px solid #000000;
@@ -294,9 +297,9 @@ code {
   align-items: center;
   font-size: 0.6em;
 }
-.transform .source:hover,
-.transform .result:hover {
-  filter: brightness(1.5);
+
+.transform-arrow {
+  color: #b3d4cc;
 }
 
 .pat.node.atom {
