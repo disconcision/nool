@@ -3,7 +3,7 @@ import { createSignal, For, Show, Switch, Match } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import logo from './assets/nooltext7.png'
 import toolbarbkg from './assets/ps-toolbar.png'
-import {Exp, Pat, comp, atom, depth, transform, transform_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
+import {Exp, Pat, Binding, comp, atom, depth, transform, transform_at_id, matches_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
 
 
@@ -122,7 +122,21 @@ let init_model: Model = {
   hover: {t:'NoHover'},
 };
 
-const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boolean, parent_id: number, depth: number, inject: Inject}> = (props) => {
+let get_node_mask = (id: number, mask: Binding[]):string => {
+  let binding = mask.find(({ids:[_, id_stage], t}) => id_stage == id && t == 'Val');
+  return (binding?.t == 'Val' ? 'mask-'+binding?.val[0] :  'mask-none');
+}
+
+const NodeC: Component<{
+  node: Exp,
+  model:Model,
+  animate: boolean,
+  is_head: boolean,
+  parent_id: number,
+  depth: number,
+  inject: Inject
+  mask: Binding[]
+}> = (props) => {
   const setSelect = (id:number) =>
     (e:Event) => {
       e.preventDefault();
@@ -130,6 +144,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
       props.inject({t: 'setSelect', id})
     };
   const is_selected = props.node.id == props.model.selection.id;
+  const node_mask = get_node_mask(props.node.id, props.mask);
   switch(props.node.t) {
     case 'Atom':
       var opts:any = {};
@@ -141,7 +156,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
           <div
             /*data-flip-key={`flip-${props.node.id}`}*/
             {...opts}
-            class={`node atom ${is_selected?'selected':''}`}
+            class={`node atom ${is_selected?'selected':''} ${node_mask}`}
             onclick={setSelect(props.node.id)}
             >
             {props.node.sym}
@@ -159,7 +174,7 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
         <div
           data-flip-parent={`flip-${props.node.id}`}
           {...opts}
-          class={`node comp ${is_selected?'selected':''}`}
+          class={`node comp ${is_selected?'selected':''} ${node_mask}`}
           onclick={setSelect(props.node.id)}
           >
            <NodeC
@@ -169,7 +184,8 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
             is_head={true}
             parent_id={props.node.id}
             depth={props.depth + 1}
-            inject={props.inject} />
+            inject={props.inject}
+            mask={props.mask} />
           <div style={`position: relative; display:flex; flex-direction: column;`}>
           <For each={props.node.kids.slice(1)}>
             {kid =>
@@ -180,7 +196,8 @@ const NodeC: Component<{node: Exp, model:Model, animate: boolean, is_head: boole
                 is_head={false}
                 parent_id={props.node.id}
                 depth={props.depth + 1}
-                inject={props.inject} />}
+                inject={props.inject}
+                mask={props.mask}  />}
           </For>
           </div>
         </div>
@@ -286,7 +303,7 @@ const Preview: Component<{node: Exp, f: Transform, indicated: number, inject: In
     style={(node == 'NoMatch')?'display: none':''}
     onclick={evt => {console.log('yo'); transform(do_at(props.f, props.indicated))(evt)}}
     >
-    {(node == 'NoMatch')? <div></div> : NodeC({model:init_model, node, animate:false, is_head: false, parent_id:-1, depth:0, inject:_=>{}})}
+    {(node == 'NoMatch')? <div></div> : NodeC({model:init_model, node, animate:false, is_head: false, parent_id:-1, depth:0, inject:_=>{}, mask:[]})}
   </div>)
 };
 
@@ -302,15 +319,37 @@ const AdjacentPossible: Component<{model: Model, inject: Inject}> = (props) => {
     </div>)
 };
 
+const get_mask = (model: Model): Binding[] => {
+switch(model.hover.t) {
+  case 'NoHover': return [];
+  case 'StageNode': return [];
+  case 'TransformSource': 
+    const res = matches_at_id(model.stage, model.hover.pat, model.selection.id);
+    return res == 'NoMatch' ? [] : res;
+  case 'TransformResult':
+    const res2 =  matches_at_id(model.stage, model.hover.pat, model.selection.id);
+    return res2 == 'NoMatch' ? [] : res2;
+}};
+
 const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => {
   console.log('rendering stage. selection.id is', props.model.selection.id);
+  switch(props.model.hover.t) {
+    case 'NoHover': break;
+    case 'StageNode': break;
+    case 'TransformSource': 
+      (matches_at_id(props.model.stage, props.model.hover.pat, props.model.selection.id));
+      break;
+    case 'TransformResult':
+      console.log(matches_at_id(props.model.stage, props.model.hover.pat, props.model.selection.id));
+      break;
+  };
   return(
     <div id='stage'>
       <div id='debug' style='display:none'>
-        <div>selecttion.id: {props.model.selection.id}</div>
+        <div>selection.id: {props.model.selection.id}</div>
       </div>
       <div class='node-container'>
-        {NodeC({model:props.model, node: props.model.stage, animate: true,is_head: false, parent_id:-1, depth:0, inject:props.inject})}
+        {NodeC({model:props.model, mask:get_mask(props.model), node: props.model.stage, animate: true,is_head: false, parent_id:-1, depth:0, inject:props.inject})}
         {AdjacentPossible({model: props.model, inject:props.inject})}
       </div> 
     </div>
@@ -319,6 +358,11 @@ const Stage: Component<{model: Model, inject:(_: Action) => void}> = (props) => 
 
 // arrows: → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄ ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄ ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦ ⇨ ➥ ➫ ➬
 const ToolTransform: Component<{t: Transform, model: Model, inject:(_: Action) => void}> = (props) => {
+  //uncommenting this seems to stop node movement animation for some reason??
+  /*const source_matches = matches_at_id(props.model.stage, props.t.source, props.model.selection.id);
+  const result_matches = matches_at_id(props.model.stage, props.t.result, props.model.selection.id);
+  const source_matches_cls = source_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';
+  const result_matches_cls = result_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';*/
   return(<div class='tbut' onclick={(e:Event) => 
     {e.preventDefault();
     e.stopPropagation();
@@ -326,7 +370,7 @@ const ToolTransform: Component<{t: Transform, model: Model, inject:(_: Action) =
     }>
     <div class='label'>{props.t.name}</div>
     <div class='transform'>
-      <div class='source'
+      <div class={`source`}
         onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformSource', pat:props.t.source}})}
         onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         >
@@ -338,8 +382,8 @@ const ToolTransform: Component<{t: Transform, model: Model, inject:(_: Action) =
           <Match when={props.model.hover.t === "TransformResult"}>←</Match>
         </Switch>
       </div> 
-      <div class='result'
-        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
+      <div class={`result`}
+        onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.result}})}
         onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         onclick={(e:Event) => {
           e.preventDefault();

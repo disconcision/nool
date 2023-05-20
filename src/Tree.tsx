@@ -38,7 +38,7 @@ export const p_comp = (kids: Pat[]): Pat => ({t: 'Comp', id:new_id(), kids});
 
 type NameBinding = [string, Exp];
 type IdBinding = [number, number];
-type Binding = {t:'Val', ids:IdBinding, val:NameBinding} | {t:'Ids', ids:IdBinding}
+export type Binding = {t:'Val', ids:IdBinding, val:NameBinding} | {t:'Ids', ids:IdBinding}
 let val = (id1: number, id2: number, name: string, exp: Exp): Binding => ({t:'Val', val:[name, exp], ids:[id1, id2]});
 let ids = (id1: number, id2: number): Binding => ({t:'Ids', ids:[id1, id2]});
 type MatchResult = Binding[] | 'NoMatch';
@@ -103,6 +103,25 @@ let kidsmatch = (pats: Pat[], exps: Exp[]): MatchResult => {
     .map(([p, t]) => matches(p, t))
     .reduce(concat_bindings, [])
 };
+
+let matchresult_map_or = (acc: MatchResult, b: MatchResult): MatchResult => {
+  if (b === 'NoMatch') return acc;
+  return b;
+};
+
+/* descend into tree to find exp node of certain id, and then try to match the pattern */
+export const matches_at_id = (exp: Exp, pat: Pat, id: number): MatchResult => {
+  //console.log('matches_at_id', id);
+  switch(exp.t) {
+    case 'Atom': return exp.id == id ? matches(pat, exp) : "NoMatch";
+    case 'Comp': if (exp.id == id) {
+      return matches(pat, exp)
+    }
+    else {
+        return( exp.kids
+        .map(kid => matches_at_id(kid, pat, id))
+        .reduce(matchresult_map_or, []))
+    }}};
 
 let map_or = (acc: Exp[]|'NoMatch', b: TransformResult): Exp[]|'NoMatch' => {
   if (acc === 'NoMatch' || b === 'NoMatch') return 'NoMatch';
