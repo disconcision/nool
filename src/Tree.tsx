@@ -111,7 +111,7 @@ let map_or = (acc: Exp[]|'NoMatch', b: TransformResult): Exp[]|'NoMatch' => {
 
 /* descend into tree to find exp node of certain id, and then try to do the transform */
 export const transform_at_id = (exp: Exp, pat: Pat, template: Pat, id: number): TransformResult => {
-  console.log('transform_at_id', id);
+  //console.log('transform_at_id', id);
   switch(exp.t) {
     case 'Atom': return exp.id == id ? transform(exp, pat, template) : exp;
     case 'Comp': if (exp.id == id) {

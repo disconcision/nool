@@ -286,6 +286,8 @@ code {
   background-repeat: no-repeat;
   box-shadow: 4px 4px 10px #0663;
   margin-left: 1em;
+  mix-blend-mode: overlay;
+  opacity: 0.8;
 }
 
 #stage {

@@ -336,7 +336,7 @@ const ToolTransform: Component<{t: Transform, id: number, inject:(_: Action) => 
       <div class='transform-arrow'>⇋</div> 
       <div class='result'
         //onMouseEnter={(_:Event) => props.inject({t: 'setHover', target:{t:'TransformResult', pat:props.t.source}})}
-        //onMouseLeave={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
+        //onMouseOut={(_:Event) => props.inject({t: 'setHover', target:{t:'NoHover'}})}
         onclick={(e:Event) => {
           e.preventDefault();
           e.stopPropagation();
@@ -376,7 +376,7 @@ return (
 )};
 const App: Component = () => {
   const [model, setModel] = createSignal(init_model);
-  let inject = (a:Action) => {update(model(), setModel, a);};
+  let inject = (a:Action) => {console.log(a);update(model(), setModel, a);};
   return (
     <div id='main'>
       <div class='logo' />
