@@ -173,11 +173,14 @@ code {
   flex-direction: column;
   align-items: end;
   background-color: #aee7e866;
-  border-radius: 1.1em;
+  border-radius: 0 1.2em 1.2em 1.2em;
   border-top: 0.5px solid #a5cff7;
+  border-bottom: 0.5px solid #caffc3;
   grid-column: 2 / span 1;
   width: fit-content;
-  margin-left: 1em;
+  /* margin-left: 1em; */
+  padding: 0.2em;
+  gap: 0.2em;
 }
 
 .tbut {
@@ -200,7 +203,7 @@ code {
   color: #95dde0;
   background-color: #f0f0f077;
   border-radius: 2em;
-  margin: 0.25em;
+  border-radius: 1.7em;
   position: relative;
   display: flex;
   flex-direction: row;
