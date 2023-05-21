@@ -325,18 +325,65 @@ code {
 }
 
 /* styles for mask */
-#stage .node.mask-✿ {
- background-color: yellow !important;
- filter: sepia(100%) saturate(400%) brightness(100%) hue-rotate(0deg);
+@keyframes mask-pulse-✿  {
+  0% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(0deg);
+   }
+  50% {
+    transform: scale(1.06);
+    filter: sepia(100%) saturate(400%) hue-rotate(0deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6)) ;
+  }
+  100% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(0deg);
+   }
 }
-#stage .node.mask-♫  {
+@keyframes mask-pulse-♫   {
+  0% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(160deg);
+   }
+  50% {
+    transform: scale(1.06);
+    filter: sepia(100%) saturate(400%) hue-rotate(160deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(0, 153, 255, 0.6))  ; }
+  100% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(160deg);
+   }
+}
+@keyframes mask-pulse-♥  {
+  0% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(210deg);
+   }
+  50% {
+    transform: scale(1.06);
+    filter: sepia(100%) saturate(400%) hue-rotate(210deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6)) ; }
+  100% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(210deg);
+   }
+}
+
+#stage .node.mask.✿ {
+  animation-name: mask-pulse-✿;
+ background-color: yellow !important;
+ /*filter: sepia(100%) saturate(400%) brightness(90%) hue-rotate(0deg);*/
+}
+#stage .node.mask.♫  {
+  animation-name: mask-pulse-♫;
   background-color: cyan !important;
-  filter: sepia(100%) saturate(400%) brightness(100%) hue-rotate(160deg);
+  /*filter: sepia(100%) saturate(400%) hue-rotate(160deg);*/
  }
- #stage .node.mask-♥  {
+ #stage .node.mask.♥  {
+  animation-name: mask-pulse-♥;
   background-color: #f772f7 !important;
-  filter: sepia(100%) saturate(400%) brightness(100%) hue-rotate(210deg);
+  /*filter: sepia(100%) saturate(400%) hue-rotate(210deg);*/
  }
+
+ #stage .node.mask
+ {
+  
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
+  /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
+}
 
 .pat.node.comp {
   position: relative;

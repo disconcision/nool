@@ -124,7 +124,7 @@ let init_model: Model = {
 
 let get_node_mask = (id: number, mask: Binding[]):string => {
   let binding = mask.find(({ids:[_, id_stage], t}) => id_stage == id && t == 'Val');
-  return (binding?.t == 'Val' ? 'mask-'+binding?.val[0] :  'mask-none');
+  return (binding?.t == 'Val' ? 'mask '+binding?.val[0] :  '');
 }
 
 const NodeC: Component<{
