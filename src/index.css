@@ -153,9 +153,13 @@ code {
 .node.comp {
   /* display: flex; */
   color: transparent;
-    text-shadow: 0 0 0 #50b0ff;
-  background-color: #005bff26;
+    text-shadow: 0 0 0 #50b0ff;   
 }
+#stage .node.comp{ 
+  background-color: #005bff26;
+  /*background-image: url(src/assets/marble.jpeg);*/
+  background-size: 10em;}
+
 .head {
   background-color: #273b82;
   color: transparent;

@@ -5,6 +5,7 @@ import logo from './assets/nooltext7.png'
 import toolbarbkg from './assets/ps-toolbar.png'
 import {Exp, Pat, Binding, comp, atom, depth, transform, transform_at_id, matches_at_id, TransformResult, p_var, p_const, p_comp, p_comp_id, p_const_id, p_var_id} from './Tree';
 import Flipping from 'flipping/src/adapters/web';
+import Rand, {PRNG} from 'rand-seed';
 
 
 type Id = number;
@@ -145,6 +146,7 @@ const NodeC: Component<{
     };
   const is_selected = props.node.id == props.model.selection.id;
   const node_mask = get_node_mask(props.node.id, props.mask);
+  const yolo = new Rand(`${props.node.id}`);
   switch(props.node.t) {
     case 'Atom':
       var opts:any = {};
@@ -175,6 +177,7 @@ const NodeC: Component<{
           data-flip-parent={`flip-${props.node.id}`}
           {...opts}
           class={`node comp ${is_selected?'selected':''} ${node_mask}`}
+          style={`background-position: ${Math.floor(yolo.next() * 10)}0% 77.8%;`}
           onclick={setSelect(props.node.id)}
           >
            <NodeC
