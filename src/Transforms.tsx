@@ -35,19 +35,19 @@ const plus_x = (a: Pat, b: Pat) => p_comp_id(-4, [p_const_id(-5, "➕"), a, b]);
 const plus_y = (a: Pat, b: Pat) => p_comp_id(-2, [p_const_id(-3, "➕"), a, b]);
 
 export const commute_plus: Transform = {
-  name: "comm",
+  name: "⇿",
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
   result: p_comp_id(-2, [plus_1, var_b, var_a]),
 };
 
 export const associate_plus: Transform = {
-  name: "ass",
+  name: "⥂",
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
 };
 
 export const identity_plus: Transform = {
-  name: "id",
+  name: "⟲",
   source: var_a,
   result: p_comp([p_const("➕"), p_const("0️⃣"), var_a]),
 };

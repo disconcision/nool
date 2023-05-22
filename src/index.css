@@ -134,7 +134,7 @@ code {
 }
 
 .node.atom {
-  background-color: #af90f5;
+  background-color: #ba65ff55;
   color: white;
   width: fit-content;
   border-radius: 2em;
@@ -229,7 +229,7 @@ code {
   transition: all 0.05s;
   z-index: 10;
   font-variant: diagonal-fractions;
-  text-shadow: 0 -0.5px 0 #469aa5;
+  text-shadow: 0 -0.3px 0 #469aa5;
   text-transform: uppercase;
   font-weight: 900;
   font-size: 0.6em;
@@ -248,9 +248,10 @@ code {
 }
 .transform-view .label {
   position: absolute;
-  top: 0.5em;
-  font-size: 0.37em;
-  right: 3.7em;
+  top:  -0.2em; /*0.5em;*/
+  /*font-size: 0.37em;*/
+  /*right: 3.7em;*/
+  left: 0.8em;
   color: #cae6e0;
 }
 .transform-view:hover {
