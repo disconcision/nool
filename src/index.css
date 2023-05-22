@@ -30,34 +30,56 @@
 
 @keyframes wobble {
   0%,
-  100% { transform: translateX(0%); transform-origin: 50% 50%;}
-  15% { transform: translateX(0.5%) rotate(-3deg); }
-  30% { transform: translateX(1.5%) rotate(3deg); }
-  45% { transform: translateX(1.5%) rotate(-1.3deg); }
-  60% { transform: translateX(0.5%) rotate(1.2deg); }
-  75% { transform: translateX(0%) rotate(-0.6deg); }
+  100% {
+    transform: translateX(0%);
+    transform-origin: 50% 50%;
+  }
+  15% {
+    transform: translateX(0.5%) rotate(-3deg);
+  }
+  30% {
+    transform: translateX(1.5%) rotate(3deg);
+  }
+  45% {
+    transform: translateX(1.5%) rotate(-1.3deg);
+  }
+  60% {
+    transform: translateX(0.5%) rotate(1.2deg);
+  }
+  75% {
+    transform: translateX(0%) rotate(-0.6deg);
+  }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
   50% {
     transform: scale(1.06);
-    filter: brightness(1.2) drop-shadow(0px 0px 20px #f3b9); }
-  100% { transform: scale(1); }
+    filter: brightness(1.2) drop-shadow(0px 0px 20px #f3b9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes flare {
-  0% { filter: drop-shadow(0px 0px 2px magenta); }
+  0% {
+    filter: drop-shadow(0px 0px 2px magenta);
+  }
   20% {
-    filter: drop-shadow(0px 0px 20px magenta); }
-  100% { filter: drop-shadow(0px 0px 100px magenta); }
+    filter: drop-shadow(0px 0px 20px magenta);
+  }
+  100% {
+    filter: drop-shadow(0px 0px 100px magenta);
+  }
 }
-
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -65,12 +87,21 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
 
 #main {
-  background-image: linear-gradient(180deg, #e5c1f9, 10%, #a6e0ff, 30%, #e8ffd7, 80%, #9cffcc);
+  background-image: linear-gradient(
+    180deg,
+    #e5c1f9,
+    10%,
+    #a6e0ff,
+    30%,
+    #e8ffd7,
+    80%,
+    #9cffcc
+  );
   display: grid;
   align-items: start;
   grid-template-columns: 2.6em 7.3em 1fr;
@@ -91,7 +122,6 @@ code {
   mix-blend-mode: plus-lighter;
   transition: all;
   transition-duration: 2s;
-  /*filter: drop-shadow(0px 0px 10px magenta); */
   animation: flare;
   animation-duration: 2s;
   animation-timing-function: linear;
@@ -120,13 +150,6 @@ code {
   animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
-.node.selected,
-.node.selected:hover  {
-  outline: 1px solid #a043b8;
-  background-color: #c264d366 !important;
-  /* filter: hue-rotate(45deg);
-  /*filter: invert(1) !important;*/
-}
 
 .node {
   width: fit-content;
@@ -143,24 +166,29 @@ code {
   filter: brightness(1.1);
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
-  /*background-color: #af90f5;*/
+}
+.node.selected,
+.node.selected:hover {
+  outline: 1px solid #a043b8;
+  background-color: #c264d366 !important;
+}
+
+.node.comp {
+  /* display: flex; */
+  color: transparent;
+  text-shadow: 0 0 0 #50b0ff;
 }
 .node.comp:active {
   animation-name: wobble;
   animation-duration: 0.5s;
   animation-iteration-count: infinite;
 }
-.node.comp {
-  /* display: flex; */
-  color: transparent;
-    text-shadow: 0 0 0 #50b0ff;   
-}
-#stage .node.comp{ 
+#stage .node.comp {
   background-color: #005bff26;
   /*background-image: url(src/assets/marble.jpeg);*/
-  background-size: 10em;}
-
-.head {
+  background-size: 10em;
+}
+.node.comp .head {
   background-color: #273b82;
   color: transparent;
   text-shadow: 0.2px 0.5px 0.5px rgb(147 173 244);
@@ -168,8 +196,12 @@ code {
   -moz-background-clip: text;
   background-clip: text;
 }
+.node.comp .tail {
+  display: flex;
+  flex-direction: column;
+}
 
-.tbuts {
+.transforms-box {
   position: relative;
   user-select: none;
   cursor: pointer;
@@ -187,7 +219,7 @@ code {
   gap: 0.2em;
 }
 
-.tbut {
+.transform-view {
   height: fit-content;
   width: fit-content;
   padding: 7px;
@@ -214,24 +246,14 @@ code {
   align-items: center;
   justify-content: space-between;
 }
-.tbut .label {
+.transform-view .label {
   position: absolute;
-  top: .5em;
+  top: 0.5em;
   font-size: 0.37em;
   right: 3.7em;
   color: #cae6e0;
 }
-/*.tbut:hover {
-  filter: drop-shadow(0px 4px 6px #38fbf5);
-  border-top: 1px solid #37a19c;
-  background-color: #38fbf5;
-  border-bottom: none;
-  box-shadow: inset 0px -10px 10px #46c2e9;
-  color: #b8fffe;
-}*/
-.tbut:hover {
-  /*filter: drop-shadow(0px 2px 4px #a8f);*/
-  /*padding-bottom: 6px;*/
+.transform-view:hover {
   border-top: 1px solid #a147c3;
   border-bottom: 0.5px solid white;
   text-shadow: 0 -0.5px 0 #ff00ff;
@@ -241,7 +263,7 @@ code {
   animation-name: wobble;
   animation-duration: 0.3s;
 }
-/*.tbut:hover::before {
+/*.transform-view:hover::before {
   box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
   border-radius: 2em;
   mix-blend-mode: hard-light;
@@ -253,15 +275,15 @@ code {
   left: 0;
   bottom: 0;
 }*/
-.tbut:active {
+.transform-view:active {
   padding-bottom: 6px;
   border-top: 2.5px solid #000000;
   border-bottom: 0px solid white;
   color: black;
-  filter: brightness(1.0) contrast(1.0) drop-shadow(0px 5px 10px #f0f9);
+  filter: brightness(1) contrast(1) drop-shadow(0px 5px 10px #f0f9);
   mix-blend-mode: plus-lighter;
 }
-.tbut:active::before {
+.transform-view:active::before {
   box-shadow: none;
 }
 
@@ -276,7 +298,7 @@ code {
   top: 0;
   mix-blend-mode: color-burn;
 }
-.previews:hover{
+.previews:hover {
   filter: hue-rotate(277deg) saturate(1.5);
   mix-blend-mode: normal;
 }
@@ -329,60 +351,69 @@ code {
 }
 
 /* styles for mask */
-@keyframes mask-pulse-✿  {
-  0% { transform: scale(1);
+@keyframes mask-pulse-✿ {
+  0% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(0deg);
-   }
-  50% {
-    transform: scale(1.06);
-    filter: sepia(100%) saturate(400%) hue-rotate(0deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6)) ;
   }
-  100% { transform: scale(1);
+  50% {
+    transform: scale(1.06);
+    filter: sepia(100%) saturate(400%) hue-rotate(0deg) brightness(1.2)
+      drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6));
+  }
+  100% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(0deg);
-   }
+  }
 }
-@keyframes mask-pulse-♫   {
-  0% { transform: scale(1);
+@keyframes mask-pulse-♫ {
+  0% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(160deg);
-   }
+  }
   50% {
     transform: scale(1.06);
-    filter: sepia(100%) saturate(400%) hue-rotate(160deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(0, 153, 255, 0.6))  ; }
-  100% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(160deg) brightness(1.2)
+      drop-shadow(0px 0px 20px rgba(0, 153, 255, 0.6));
+  }
+  100% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(160deg);
-   }
+  }
 }
-@keyframes mask-pulse-♥  {
-  0% { transform: scale(1);
+@keyframes mask-pulse-♥ {
+  0% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(210deg);
-   }
+  }
   50% {
     transform: scale(1.06);
-    filter: sepia(100%) saturate(400%) hue-rotate(210deg) brightness(1.2) drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6)) ; }
-  100% { transform: scale(1);
+    filter: sepia(100%) saturate(400%) hue-rotate(210deg) brightness(1.2)
+      drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6));
+  }
+  100% {
+    transform: scale(1);
     filter: sepia(100%) saturate(400%) hue-rotate(210deg);
-   }
+  }
 }
 
 #stage .node.mask.✿ {
   animation-name: mask-pulse-✿;
- background-color: yellow !important;
- /*filter: sepia(100%) saturate(400%) brightness(90%) hue-rotate(0deg);*/
+  background-color: yellow !important;
+  /*filter: sepia(100%) saturate(400%) brightness(90%) hue-rotate(0deg);*/
 }
-#stage .node.mask.♫  {
+#stage .node.mask.♫ {
   animation-name: mask-pulse-♫;
   background-color: cyan !important;
   /*filter: sepia(100%) saturate(400%) hue-rotate(160deg);*/
- }
- #stage .node.mask.♥  {
+}
+#stage .node.mask.♥ {
   animation-name: mask-pulse-♥;
   background-color: #f772f7 !important;
   /*filter: sepia(100%) saturate(400%) hue-rotate(210deg);*/
- }
+}
 
- #stage .node.mask
- {
-  
+#stage .node.mask {
   animation-duration: 1s;
   animation-iteration-count: infinite;
   animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
@@ -391,11 +422,11 @@ code {
 
 .pat.node.comp {
   position: relative;
-  display:flex;
+  display: flex;
   flex-direction: row;
 }
 
-.tbut:active .pat {
+.transform-view:active .pat {
   color: black !important;
 }
 

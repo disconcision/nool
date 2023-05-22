@@ -2,27 +2,16 @@ import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import Rand from "rand-seed";
 import toolbarbkg from "./assets/ps-toolbar.png";
+import { Exp, Pat, Binding, matches_at_id, TransformResult } from "./Tree";
+import { HoverTarget, Model, init_model } from "./Model";
+import { Action, Inject } from "./Update";
 import {
   Transform,
   rev,
   do_at,
-  commute_plus,
-  associate_plus,
-  identity_plus,
+  transforms,
+  transforms_directed,
 } from "./Transforms";
-import { Exp, Pat, Binding, matches_at_id, TransformResult } from "./Tree";
-import { Model, init_model } from "./Model";
-import { Action, Inject } from "./Update";
-
-const transforms = [identity_plus, commute_plus, associate_plus];
-
-const transforms_directed = [
-  commute_plus,
-  associate_plus,
-  rev(associate_plus),
-  identity_plus,
-  rev(identity_plus),
-];
 
 const get_hover_binding = (model: Model): Binding[] => {
   switch (model.hover.t) {
@@ -106,14 +95,14 @@ const NodeExp: Component<{
       }
       return (
         //data-flip-key={`flip-${node.id}`}
-        // flex-direction:${depth(props.node)<2?'row':'column'};
         <div
           data-flip-parent={`flip-${props.node.id}`}
           {...opts}
           class={`node comp ${is_selected ? "selected" : ""} ${node_mask}`}
-          style={`background-position: ${Math.floor(
+          // for granite style:
+          /*style={`background-position: ${Math.floor(
             yolo.next() * 10
-          )}0% 77.8%;`}
+          )}0% 77.8%;`}*/
           onclick={setSelect(props.node.id)}
         >
           <NodeExp
@@ -127,7 +116,8 @@ const NodeExp: Component<{
             mask={props.mask}
           />
           <div
-            style={`position: relative; display:flex; flex-direction: column;`}
+          class="tail"
+            style={``}
           >
             <For each={props.node.kids.slice(1)}>
               {(kid) => (
@@ -155,30 +145,18 @@ const PatView: Component<{ p: Pat; is_head: boolean }> = (props) => {
       const sym = props.p.sym.name;
       switch (props.p.sym.t) {
         case "Var":
-          return (
-            <div
-              class={sym + " " + (props.is_head ? "head pat" : "node atom pat")}
-            >
-              {sym}
-            </div>
-          );
         case "Const":
-          return (
-            <div
-              class={sym + " " + (props.is_head ? "head pat" : "node atom pat")}
-            >
-              {sym}
-            </div>
-          );
+          const cls = `pat ${sym} ${
+            props.is_head ? "head pat" : "node atom pat"
+          }`;
+          return <div class={cls}>{sym}</div>;
       }
     }
     case "Comp":
       return (
         <div class="node comp pat">
           {PatView({ p: props.p.kids[0], is_head: true })}
-          <div
-            style={`position: relative; display:flex; flex-direction: column;`}
-          >
+          <div>
             <For each={props.p.kids.slice(1)}>
               {(kid) => PatView({ p: kid, is_head: false })}
             </For>
@@ -233,7 +211,7 @@ const AdjacentPossible: Component<{ model: Model; inject: Inject }> = (
     <div
       class="previews"
       style={
-        props.model.selection.id == -1 ? "display:none;" : "display: flex;"
+        props.model.selection.id == -1 ? "display: none;" : "display: flex;"
       }
     >
       <For each={transforms_directed}>
@@ -254,28 +232,6 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
   props
 ) => {
   console.log("rendering stage. selection.id is", props.model.selection.id);
-  switch (props.model.hover.t) {
-    case "NoHover":
-      break;
-    case "StageNode":
-      break;
-    case "TransformSource":
-      matches_at_id(
-        props.model.stage,
-        props.model.hover.pat,
-        props.model.selection.id
-      );
-      break;
-    case "TransformResult":
-      console.log(
-        matches_at_id(
-          props.model.stage,
-          props.model.hover.pat,
-          props.model.selection.id
-        )
-      );
-      break;
-  }
   return (
     <div id="stage">
       <div id="debug" style="display:none">
@@ -309,31 +265,35 @@ const TransformView: Component<{
   const result_matches = matches_at_id(props.model.stage, props.t.result, props.model.selection.id);
   const source_matches_cls = source_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';
   const result_matches_cls = result_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';*/
+  const transformNode = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.inject({
+      t: "transformNode",
+      f: do_at(props.t, props.model.selection.id),
+    });
+  };
+  const transformNodeReverse = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.inject({
+      t: "transformNode",
+      f: do_at(rev(props.t), props.model.selection.id),
+    });
+  };
+  const setHover = (target: HoverTarget) => (_: Event) =>
+    props.inject({
+      t: "setHover",
+      target,
+    });
   return (
-    <div
-      class="tbut"
-      onclick={(e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        props.inject({
-          t: "transformNode",
-          f: do_at(props.t, props.model.selection.id),
-        });
-      }}
-    >
+    <div class="transform-view" onclick={transformNode}>
       <div class="label">{props.t.name}</div>
       <div class="transform">
         <div
-          class={`source`}
-          onMouseEnter={(_: Event) =>
-            props.inject({
-              t: "setHover",
-              target: { t: "TransformSource", pat: props.t.source },
-            })
-          }
-          onMouseLeave={(_: Event) =>
-            props.inject({ t: "setHover", target: { t: "NoHover" } })
-          }
+          class="source"
+          onMouseEnter={setHover({ t: "TransformSource", pat: props.t.source })}
+          onMouseLeave={setHover({ t: "NoHover" })}
         >
           <PatView p={props.t.source} is_head={false} />
         </div>
@@ -344,24 +304,10 @@ const TransformView: Component<{
           </Switch>
         </div>
         <div
-          class={`result`}
-          onMouseEnter={(_: Event) =>
-            props.inject({
-              t: "setHover",
-              target: { t: "TransformResult", pat: props.t.result },
-            })
-          }
-          onMouseLeave={(_: Event) =>
-            props.inject({ t: "setHover", target: { t: "NoHover" } })
-          }
-          onclick={(e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            props.inject({
-              t: "transformNode",
-              f: do_at(rev(props.t), props.model.selection.id),
-            });
-          }}
+          class="result"
+          onMouseEnter={setHover({ t: "TransformResult", pat: props.t.result })}
+          onMouseLeave={setHover({ t: "NoHover" })}
+          onclick={transformNodeReverse}
         >
           <PatView p={props.t.result} is_head={false} />
         </div>
@@ -374,15 +320,17 @@ export const TransformsBox: Component<{
   model: Model;
   inject: (_: Action) => void;
 }> = (props) => {
-  const view = (t: Transform) =>
-    TransformView({
-      t,
-      model: props.model,
-      inject: props.inject,
-    });
   return (
-    <div class="tbuts">
-      <For each={transforms}>{view}</For>
+    <div class="transforms-box">
+      <For each={transforms}>
+        {(t: Transform) =>
+          TransformView({
+            t,
+            model: props.model,
+            inject: props.inject,
+          })
+        }
+      </For>
     </div>
   );
 };

@@ -1,4 +1,14 @@
-import { Pat, Exp, TransformResult, transform_at_id, p_var, p_const, p_comp, p_comp_id, p_const_id } from "./Tree";
+import {
+  Pat,
+  Exp,
+  TransformResult,
+  transform_at_id,
+  p_var,
+  p_const,
+  p_comp,
+  p_comp_id,
+  p_const_id,
+} from "./Tree";
 
 export type Transform = {
   name: string;
@@ -41,3 +51,13 @@ export const identity_plus: Transform = {
   source: var_a,
   result: p_comp([p_const("➕"), p_const("0️⃣"), var_a]),
 };
+
+export const transforms = [identity_plus, commute_plus, associate_plus];
+
+export const transforms_directed = [
+  commute_plus,
+  associate_plus,
+  rev(associate_plus),
+  identity_plus,
+  rev(identity_plus),
+];

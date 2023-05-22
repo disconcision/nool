@@ -1,4 +1,4 @@
-import { Component, createEffect, createRenderEffect } from "solid-js";
+import { Component } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Action, update } from "./Update";
 import { init_model } from "./Model";
@@ -13,8 +13,8 @@ const App: Component = () => {
   return (
     <div id="main">
       <div class="logo" />
-      {Toolbar({ model: model, inject })}
-      {TransformsBox({ model: model, inject })}
+      {Toolbar({ model, inject })}
+      {TransformsBox({ model, inject })}
       {Stage({ model: model, inject })}
     </div>
   );
