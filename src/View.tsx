@@ -74,6 +74,7 @@ const NodeExp: Component<{
           when={props.is_head}
           fallback={
             <div
+            id={`node-${props.node.id}`}
               /*data-flip-key={`flip-${props.node.id}`}*/
               {...opts}
               class={`node atom ${is_selected ? "selected" : ""} ${node_mask}`}
@@ -96,6 +97,7 @@ const NodeExp: Component<{
       return (
         //data-flip-key={`flip-${node.id}`}
         <div
+        id={`node-${props.node.id}`}
           data-flip-parent={`flip-${props.node.id}`}
           {...opts}
           class={`node comp ${is_selected ? "selected" : ""} ${node_mask}`}

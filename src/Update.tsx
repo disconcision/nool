@@ -55,19 +55,38 @@ let flip_flippings = (flippings: Flipping[]) => {
     flippings[i].flip();
   }
 };
+interface ExDocument extends Document {
+  startViewTransition?: any;
+}
+const doc: ExDocument = document;
+
+interface ExCSSStyleDeclaration extends CSSStyleDeclaration {
+  viewTransitionName?: any;
+}
 
 //TODO: separate effects from functional update somehow
 export const update = (model: Model, setModel: any, action: Action): Model => {
   switch (action.t) {
     case "transformNode":
       let result = action.f(model.stage);
-      flipping.read();
-      flipping2.read();
+      //flipping.read();
+      //flipping2.read();
       if (result != "NoMatch") {
+        /*const guy = document.getElementById("3") as HTMLElement;
+        if (guy?.style) {
+          let style = guy.style as ExCSSStyleDeclaration;
+          style.viewTransitionName = "modal"};*/
         const m = { ...model, stage: result };
-        setModel(m);
-        flipping2.flip();
-        flipping.flip();
+        doc.startViewTransition((_:any) => {
+          /*if (guy?.style) {
+            let style = guy.style as ExCSSStyleDeclaration;
+            style.viewTransitionName = "";
+          };*/
+          setModel(m);
+          });
+        //setModel(m);
+        //flipping2.flip();
+        //flipping.flip();
         return m;
       } else {
         setModel(model);

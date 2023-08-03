@@ -151,7 +151,12 @@ code {
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
 
+/*#node-3.node {
+  view-transition-name: modal;
+}*/
+
 .node {
+  transition: all 1s;
   width: fit-content;
   display: flex;
   border-radius: 2em 0.5em 0.5em 2em;
@@ -433,4 +438,26 @@ code {
 
 .result.no-match {
   filter: opacity(0.7) sepia(1) saturate(0);
+}
+
+@keyframes myship{
+  from {transform: translateX(30px);} 
+  to{transform: translateX(-30px);} 
+}
+/*.node-container::view-transition {
+  position: fixed;
+  inset: 0;
+}*/
+
+::view-transition-new(root),
+::view-transition-old(root) {
+  animation-duration: 2s;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
+}
+
+::view-transition-old(modal),
+::view-transition-new(modal)  {
+  animation-duration: 1s;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
+  animation: myship;
 }
