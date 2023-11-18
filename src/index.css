@@ -51,6 +51,29 @@
   }
 }
 
+@keyframes wobble2 {
+  0%,
+  100% {
+    transform: translateX(0%);
+    transform-origin: 50% 50%;
+  }
+  15% {
+    transform: translateX(0.2%) rotate(-1deg);
+  }
+  30% {
+    transform: translateX(-0.2%) rotate(-1deg);
+  }
+  45% {
+    transform: translateX(0.2%) rotate(0deg);
+  }
+  60% {
+    transform: translateX(-0.2%) rotate(1deg);
+  }
+  75% {
+    transform: translateX(0%) rotate(1deg);
+  }
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -137,7 +160,7 @@ code {
   background-color: #ba65ff55;
   color: white;
   width: fit-content;
-  border-radius: 2em;
+  border-radius: 0.5em 1.3em 0.9em 0.9em;
   padding: 0 0.25em;
   justify-content: center;
 }
@@ -154,7 +177,7 @@ code {
 .node {
   width: fit-content;
   display: flex;
-  border-radius: 2em 0.5em 0.5em 2em;
+  border-radius: 2.3em 1.2em 0.6em 1.5em;
   padding: 0.2em;
   margin: 0.2em;
   align-items: center;
@@ -163,14 +186,26 @@ code {
   border-top: 0.3px solid rgba(255, 255, 255, 66);
 }
 .node:hover {
+  /*mix-blend-mode: color-dodge;*/
   filter: brightness(1.1);
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
 }
 .node.selected,
 .node.selected:hover {
-  outline: 1px solid #a043b8;
-  background-color: #c264d366 !important;
+  border: 0;
+  outline: 0.6px solid #ffffff;
+    box-shadow: 0px 0px 9px #ffffff;
+    /* mix-blend-mode: color-dodge;*/
+  /*outline: 1px solid #258b86;*/
+  /*outline: 1px solid #a043b8;
+  background-color: #c264d366 !important;*/
+}
+
+.node.selected > .head,
+.node.selected:hover > .head {
+  filter: brightness(10);
+  /*mix-blend-mode: color-dodge;*/
 }
 
 .node.comp {
@@ -179,8 +214,8 @@ code {
   text-shadow: 0 0 0 #50b0ff;
 }
 .node.comp:active {
-  animation-name: wobble;
-  animation-duration: 0.5s;
+  animation-name: wobble2;
+  animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
 #stage .node.comp {
@@ -264,6 +299,11 @@ code {
   animation-name: wobble;
   animation-duration: 0.3s;
 }
+
+.transform-view .source:hover > .node > .head,
+.transform-view .result:hover > .node > .head {
+  filter: brightness(10);
+}
 /*.transform-view:hover::before {
   box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
   border-radius: 2em;
@@ -335,8 +375,9 @@ code {
 }
 
 .pat.node.atom {
-  width: 1.5em;
-  font-family: "Segoe UI Emoji";
+  width: 1em;
+  padding: 0 0.8em;
+  /*font-family: "Segoe UI Emoji";*/
 }
 .pat.node.atom.♫ {
   background-color: cyan;
@@ -433,4 +474,13 @@ code {
 
 .result.no-match {
   filter: opacity(0.7) sepia(1) saturate(0);
+}
+
+.id-view {
+  display: contents;
+  position: absolute;
+  /* left: 1em; */
+  font-size: 3pt;
+  color: #c8cfff;
+  text-shadow: 0.3px 0.2px 0.5px #7856ba;
 }

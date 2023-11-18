@@ -27,9 +27,9 @@ export const do_at =
   (exp: Exp): TransformResult =>
     transform_at_id(exp, source, result, id);
 
-const var_a = p_var("✿");
-const var_b = p_var("♫");
-const var_c = p_var("♥");
+const var_a = p_var("♫");
+const var_b = p_var("♥");
+const var_c = p_var("✿");
 const plus_1 = p_const_id(-3, "➕");
 const plus_x = (a: Pat, b: Pat) => p_comp_id(-4, [p_const_id(-5, "➕"), a, b]);
 const plus_y = (a: Pat, b: Pat) => p_comp_id(-2, [p_const_id(-3, "➕"), a, b]);

@@ -60,7 +60,7 @@ const NodeExp: Component<{
   };
   const is_selected = props.node.id == props.model.selection.id;
   const node_mask = node_mask_cls(props.node.id, props.mask);
-  const yolo = new Rand(`${props.node.id}`);
+  //const yolo = new Rand(`${props.node.id}`);
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
@@ -68,23 +68,22 @@ const NodeExp: Component<{
         opts[`data-flip-key`] = `flip-${props.node.id}`;
       }
       return (
-        //TODO: random hack below
-        //data-flip-parent={`flip-${node.id}`}
         <Show
           when={props.is_head}
           fallback={
             <div
-              /*data-flip-key={`flip-${props.node.id}`}*/
               {...opts}
               class={`node atom ${is_selected ? "selected" : ""} ${node_mask}`}
               onclick={setSelect(props.node.id)}
             >
               {props.node.sym}
+              <div class="id-view">{props.node.id}</div>
             </div>
           }
         >
           <div class="head" {...opts}>
             {props.node.sym}
+            <div class="id-view">{props.node.id}</div>
           </div>
         </Show>
       );
