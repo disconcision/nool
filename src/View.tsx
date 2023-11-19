@@ -74,7 +74,7 @@ const NodeExp: Component<{
             <div
               {...opts}
               class={`node atom ${is_selected ? "selected" : ""} ${node_mask}`}
-              onclick={setSelect(props.node.id)}
+              onmousedown={setSelect(props.node.id)}
             >
               {props.node.sym}
               <div class="id-view">{props.node.id}</div>
@@ -102,7 +102,7 @@ const NodeExp: Component<{
           /*style={`background-position: ${Math.floor(
             yolo.next() * 10
           )}0% 77.8%;`}*/
-          onclick={setSelect(props.node.id)}
+          onmousedown={setSelect(props.node.id)}
         >
           <NodeExp
             model={props.model}
@@ -181,6 +181,7 @@ const Preview: Component<{
       style={node == "NoMatch" ? "display: none" : ""}
       onclick={(evt) => {
         console.log("yo");
+        evt.stopPropagation();
         transform(do_at(props.f, props.indicated))(evt);
       }}
     >

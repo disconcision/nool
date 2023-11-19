@@ -213,7 +213,7 @@ code {
   color: transparent;
   text-shadow: 0 0 0 #50b0ff;
 }
-.node.comp:active {
+.node:active {
   animation-name: wobble2;
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
