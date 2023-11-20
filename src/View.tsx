@@ -89,7 +89,9 @@ const NodeExp: Component<{
       );
     case "Comp":
       var opts: any = {};
-      if (props.animate) {
+      console.log("this props.mask:" + props.mask.map((x) => x.ids[1]));
+      console.log("this props.node.id:" + props.node.id);
+      if (props.animate && props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id) /*(props.node.id == 4 || props.node.id == 14)*/) {
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
@@ -104,6 +106,7 @@ const NodeExp: Component<{
           )}0% 77.8%;`}*/
           onmousedown={setSelect(props.node.id)}
         >
+          <div class="id-view">{props.node.id}</div>
           <NodeExp
             model={props.model}
             node={props.node.kids[0]}

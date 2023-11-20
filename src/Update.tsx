@@ -70,7 +70,7 @@ export const update = (model: Model, setModel: any, action: Action): Model => {
         flipping.flip();
         return m;
       } else {
-        setModel(model);
+       //setModel(model);
         return model;
       }
     case "setSelect":
