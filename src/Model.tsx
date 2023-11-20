@@ -24,8 +24,11 @@ export type Model = {
 
 const exp0: Exp = comp([
   atom("➕"),
-  atom("🎲"),
   comp([atom("➕"), atom("☁️"), atom("🍄")]),
+  comp([atom("➕"),
+    comp([atom("➕"), atom("🎲"), atom("🦠"),]), 
+    comp([atom("➕"), atom("🧩"), atom("🐝")]),
+    ]),
 ]);
 
 const exp1: Exp = comp([

@@ -181,7 +181,6 @@ const Preview: Component<{
       style={node == "NoMatch" ? "display: none" : ""}
       onclick={(evt) => {
         console.log("yo");
-        evt.stopPropagation();
         transform(do_at(props.f, props.indicated))(evt);
       }}
     >

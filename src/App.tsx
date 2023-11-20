@@ -15,7 +15,7 @@ const App: Component = () => {
       <div class="logo" />
       {Toolbar({ model, inject })}
       {TransformsBox({ model, inject })}
-      {Stage({ model: model, inject })}
+      {Stage({ model, inject })}
     </div>
   );
 };
