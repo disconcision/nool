@@ -5,42 +5,28 @@ import toolbarbkg from "./assets/ps-toolbar.png";
 import { Exp, Pat, Binding, matches_at_id, TransformResult } from "./Tree";
 import { HoverTarget, Model, init_model } from "./Model";
 import { Action, Inject } from "./Update";
-import {
-  Transform,
-  rev,
-  do_at,
-  transforms,
-  transforms_directed,
-} from "./Transforms";
+import { Transform, rev, do_at } from "./Transforms";
 
 const get_hover_binding = (model: Model): Binding[] => {
   switch (model.hover.t) {
     case "NoHover":
-      console.log("1. NoHover")
       return [];
     case "StageNode":
-      console.log("2. StageNode")
       return [];
     case "TransformSource":
-      console.log("3. TransformSource")
-      const res = matches_at_id(
+      const rs = matches_at_id(
         model.stage,
         model.hover.pat,
         model.selection.id
       );
-      return res == "NoMatch" ? [] : res;
+      return rs == "NoMatch" ? [] : rs;
     case "TransformResult":
-      console.log("4. TransformResult")
-      console.log("model.stage: " + JSON.stringify(model.stage));
-      console.log("model.hover.pat: " + JSON.stringify(model.hover.pat));
-      console.log("model.selection.id: " + model.selection.id);
-      const res2 = matches_at_id(
+      const rr = matches_at_id(
         model.stage,
         model.hover.pat,
         model.selection.id
       );
-      console.log("matches_at_id: " + JSON.stringify(res2));
-      return res2 == "NoMatch" ? [] : res2;
+      return rr == "NoMatch" ? [] : rr;
   }
 };
 
@@ -81,7 +67,9 @@ const NodeExp: Component<{
           fallback={
             <div
               {...opts}
-              class={`node atom ${props.node.sym} ${is_selected ? "selected" : ""} ${node_mask}`}
+              class={`node atom ${props.node.sym} ${
+                is_selected ? "selected" : ""
+              } ${node_mask}`}
               onmousedown={setSelect(props.node.id)}
             >
               {props.node.sym}
@@ -97,9 +85,16 @@ const NodeExp: Component<{
       );
     case "Comp":
       var opts: any = {};
-      console.log("this props.mask:" + props.mask.map((x) => x.ids[1]));
-      console.log("this props.node.id:" + props.node.id);
-      if (props.animate && props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id) /*(props.node.id == 4 || props.node.id == 14)*/) {
+      //console.log("this props.mask:" + props.mask.map((x) => x.ids[1]));
+      //console.log("this props.node.id:" + props.node.id);
+      if (
+        props.animate &&
+        props.mask
+          .map((x) => x.ids[1])
+          .find(
+            (id) => id == props.node.id
+          ) /*(props.node.id == 4 || props.node.id == 14)*/
+      ) {
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
@@ -125,10 +120,7 @@ const NodeExp: Component<{
             inject={props.inject}
             mask={props.mask}
           />
-          <div
-          class="tail"
-            style={``}
-          >
+          <div class="tail" style={``}>
             <For each={props.node.kids.slice(1)}>
               {(kid) => (
                 <NodeExp
@@ -183,7 +175,7 @@ const Preview: Component<{
   inject: Inject;
 }> = (props) => {
   const transform = (f: (_: Exp) => TransformResult) => (_: Event) =>
-    props.inject({ t: "transformNode", f });
+    props.inject({ t: "transformNode", idx: 0, /* TODO hack idx */ f });
   const node = do_at(props.f, props.indicated)(props.node);
   //HACK: init_model
   return (
@@ -224,7 +216,7 @@ const AdjacentPossible: Component<{ model: Model; inject: Inject }> = (
         props.model.selection.id == -1 ? "display: none;" : "display: flex;"
       }
     >
-      <For each={transforms_directed}>
+      <For each={props.model.transforms_directed}>
         {(transform) =>
           Preview({
             node: props.model.stage,
@@ -266,6 +258,7 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
 
 // arrows: → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄ ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄ ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦ ⇨ ➥ ➫ ➬
 const TransformView: Component<{
+  idx: any;
   t: Transform;
   model: Model;
   inject: (_: Action) => void;
@@ -278,8 +271,13 @@ const TransformView: Component<{
   const transformNode = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
+    /*props.inject({
+      t: "flipTransform",
+      idx: props.idx,
+    });*/
     props.inject({
       t: "transformNode",
+      idx: props.idx,
       f: do_at(props.t, props.model.selection.id),
     });
   };
@@ -288,6 +286,7 @@ const TransformView: Component<{
     e.stopPropagation();
     props.inject({
       t: "transformNode",
+      idx: props.idx,
       f: do_at(rev(props.t), props.model.selection.id),
     });
   };
@@ -296,14 +295,23 @@ const TransformView: Component<{
       t: "setHover",
       target,
     });
+  const flipTransform = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.inject({
+      t: "flipTransform",
+      idx: props.idx,
+    });
+  };
   return (
-    <div class="transform-view" onclick={transformNode}>
+    <div class="transform-view" onclick={flipTransform}>
       <div class="label">{props.t.name}</div>
       <div class="transform">
         <div
           class="source"
           onMouseEnter={setHover({ t: "TransformSource", pat: props.t.source })}
           onMouseLeave={setHover({ t: "NoHover" })}
+          onclick={transformNode}
         >
           <PatView p={props.t.source} is_head={false} />
         </div>
@@ -332,9 +340,10 @@ export const TransformsBox: Component<{
 }> = (props) => {
   return (
     <div class="transforms-box">
-      <For each={transforms}>
-        {(t: Transform) =>
+      <For each={props.model.transforms}>
+        {(t: Transform, idx) =>
           TransformView({
+            idx: idx(),
             t,
             model: props.model,
             inject: props.inject,

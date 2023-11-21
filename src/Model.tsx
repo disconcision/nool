@@ -1,7 +1,6 @@
 import { Exp, Pat, comp, atom } from "./Tree";
-
+import { Transform, transforms, transforms_directed} from "./Transforms";
 export type Id = number;
-//type SelectionMask = [number, string][];
 
 export type HoverTarget =
   | { t: "NoHover" }
@@ -11,18 +10,19 @@ export type HoverTarget =
 
 type Selection = {
   id: Id;
-  //mask: SelectionMask,
 };
 
 export type Model = {
   stage: Exp;
-  selection: Selection /*| 'NoSelection'*/;
+  selection: Selection;
   hover: HoverTarget;
+  transforms: Transform[];
+  transforms_directed: Transform[];
 };
 
-// 🦷 🦠 🧩
+// 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕
 
-const exp0: Exp = comp([
+const stage: Exp = comp([
   atom("➕"),
   comp([atom("➕"), atom("☁️"), atom("🍄")]),
   comp([atom("➕"),
@@ -31,20 +31,22 @@ const exp0: Exp = comp([
     ]),
 ]);
 
-const exp1: Exp = comp([
+const _stage1: Exp = comp([
   atom("➕"),
   atom("🌕"),
   comp([atom("➕"), comp([atom("✖️"), atom("🌘"), atom("🌕")]), atom("🌘")]),
 ]);
 
-const exp2: Exp = comp([
+const _stage2: Exp = comp([
   atom("➕"),
   atom("🐝"),
   comp([atom("➕"), atom("🌸"), atom("🍄")]),
 ]);
 
 export const init_model: Model = {
-  stage: exp0,
-  selection: { id: -1 /*, mask:[]*/ },
+  stage: stage,
+  selection: { id: -1 },
   hover: { t: "NoHover" },
+  transforms: transforms,
+  transforms_directed: transforms_directed,
 };

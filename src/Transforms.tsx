@@ -17,7 +17,7 @@ export type Transform = {
 };
 
 export const rev = (t: Transform): Transform => ({
-  name: t.name + "⇦",
+  name: t.name,
   source: t.result,
   result: t.source,
 });
@@ -52,12 +52,20 @@ export const identity_plus: Transform = {
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
 };
 
-export const transforms = [identity_plus, commute_plus, associate_plus];
+export const transforms: Transform[] =
+  [identity_plus, commute_plus, associate_plus];
 
-export const transforms_directed = [
+export const transforms_directed: Transform[] = [
   commute_plus,
   associate_plus,
   rev(associate_plus),
   identity_plus,
   rev(identity_plus),
 ];
+
+export const flip_at_index = (transforms: Transform[], index: number) => {
+  console.log("flip_at_index", index);
+  let td = transforms.map((t, i) => (i === index ? rev(t) : t));
+  console.log(JSON.stringify(transforms, null, 2));
+  console.log(JSON.stringify(td, null, 2));
+  return transforms.map((t, i) => (i === index ? rev(t) : t));}

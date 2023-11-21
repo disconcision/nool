@@ -74,6 +74,32 @@
   }
 }
 
+@keyframes wobble3 {
+  0%,
+  100% {
+    transform: translateX(0%);
+    transform-origin: 50% 50%;
+  }
+  15% {transform: translateX(0.2%) rotate(-3deg);}
+  30% {transform: translateX(-0.2%) rotate(-1deg);}
+  45% {transform: translateX(0.2%) rotate(0deg);}
+  60% {transform: translateX(-0.2%) rotate(1deg);}
+  75% {transform: translateX(0%) rotate(3deg);}
+}
+
+@keyframes wobbleH {
+  0%,
+  100% {
+    transform: translateX(0%);
+    transform-origin: 50% 50%;
+  }
+  15% {transform: translateX(0.8%) rotate(-3deg);}
+  30% {transform: translateX(-4.8%);}
+  45% {transform: translateX(0.8%);}
+  60% {transform: translateX(-0.8%);}
+  75% {transform: translateX(0%);}
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -214,7 +240,7 @@ code {
   text-shadow: 0 0 0 #50b0ff;
 }
 .node:active {
-  animation-name: wobble2;
+  animation-name: wobble2 !important;
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
@@ -249,30 +275,29 @@ code {
   border-bottom: 0.5px solid #caffc3;
   grid-column: 2 / span 1;
   width: fit-content;
-  /* margin-left: 1em; */
-  padding: 0.2em;
-  gap: 0.2em;
+  padding: 0.3em;
+  gap: 0em;
 }
 
 .transform-view {
   height: fit-content;
   width: fit-content;
-  padding: 7px;
+  padding: 2px;
   gap: 0.5em;
+  /*background-color: #f0f0f077;
   border-top: 0.4px solid #b0b0b099;
-  border-bottom: 1.1px solid #f0f0f1;
+  border-bottom: 1.1px solid #f0f0f1;*/
   transition: all 0.05s;
   z-index: 10;
   font-variant: diagonal-fractions;
   text-shadow: 0 -0.3px 0 #469aa5;
   text-transform: uppercase;
   font-weight: 900;
-  font-size: 0.6em;
+  font-size: 0.7em;
   user-select: none;
   cursor: pointer;
   display: flex;
   color: #95dde0;
-  background-color: #f0f0f077;
   border-radius: 2em;
   border-radius: 1.7em;
   position: relative;
@@ -283,26 +308,43 @@ code {
 }
 .transform-view .label {
   position: absolute;
-  top:  -0.2em; /*0.5em;*/
-  /*font-size: 0.37em;*/
+  top:  -0.1em; /*0.5em;*/
+  font-size: 0.6em;
   /*right: 3.7em;*/
-  left: 0.8em;
+  left: 0em;
   color: #cae6e0;
 }
 .transform-view:hover {
-  border-top: 1px solid #a147c3;
+  /*border-top: 0.3px solid #a147c3;
   border-bottom: 0.5px solid white;
   text-shadow: 0 -0.5px 0 #ff00ff;
   background-color: #38fbf5;
   box-shadow: inset 0px -10px 10px #ad91ff;
-  color: white;
-  animation-name: wobble;
-  animation-duration: 0.3s;
+  color: white;*/
+  animation-name: wobble3;
+  animation-duration: 0.2s;
 }
 
 .transform-view .source:hover > .node > .head,
 .transform-view .result:hover > .node > .head {
   filter: brightness(10);
+}
+
+.transform-view .node.comp {
+  box-shadow: 1px 1px 4px #55ac8740;
+  border-bottom: 0.1px solid #8ee347;
+}
+.transform-view .node:hover {
+  border-top: 0.3px solid #a147c3 !important;
+  border-bottom: 0.5px solid white !important;
+  background-color: #7ce5bb;
+  box-shadow: inset 0px -10px 10px #ad91ff !important;
+  filter: brightness(1.1);
+
+}
+.transform-view  .node:hover + .node  {
+  animation-name: wobbleH;
+  animation-duration: 1.2s;
 }
 /*.transform-view:hover::before {
   box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
@@ -317,11 +359,14 @@ code {
   bottom: 0;
 }*/
 .transform-view:active {
+  text-shadow: 0 -0.5px 0 #ff00ff;
+  background-color: #38fbf5;
+  box-shadow: inset 0px -10px 10px #ad91ff;
   padding-bottom: 6px;
-  border-top: 2.5px solid #000000;
+  border-top: 0.6px solid #000000;
   border-bottom: 0px solid white;
   color: black;
-  filter: brightness(1) contrast(1) drop-shadow(0px 5px 10px #f0f9);
+  filter: brightness(1) contrast(1) drop-shadow(0px 5px 6px #f0f9);
   mix-blend-mode: plus-lighter;
 }
 .transform-view:active::before {
@@ -371,7 +416,7 @@ code {
   display: flex;
   justify-content: center;
   color: #b3d4cc;
-  width: 0.9em;
+  width: 2.2em;
 }
 
 .pat.node.atom {
