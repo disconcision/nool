@@ -16,10 +16,13 @@ import {
 const get_hover_binding = (model: Model): Binding[] => {
   switch (model.hover.t) {
     case "NoHover":
+      console.log("1. NoHover")
       return [];
     case "StageNode":
+      console.log("2. StageNode")
       return [];
     case "TransformSource":
+      console.log("3. TransformSource")
       const res = matches_at_id(
         model.stage,
         model.hover.pat,
@@ -27,11 +30,16 @@ const get_hover_binding = (model: Model): Binding[] => {
       );
       return res == "NoMatch" ? [] : res;
     case "TransformResult":
+      console.log("4. TransformResult")
+      console.log("model.stage: " + JSON.stringify(model.stage));
+      console.log("model.hover.pat: " + JSON.stringify(model.hover.pat));
+      console.log("model.selection.id: " + model.selection.id);
       const res2 = matches_at_id(
         model.stage,
         model.hover.pat,
         model.selection.id
       );
+      console.log("matches_at_id: " + JSON.stringify(res2));
       return res2 == "NoMatch" ? [] : res2;
   }
 };
@@ -73,7 +81,7 @@ const NodeExp: Component<{
           fallback={
             <div
               {...opts}
-              class={`node atom ${is_selected ? "selected" : ""} ${node_mask}`}
+              class={`node atom ${props.node.sym} ${is_selected ? "selected" : ""} ${node_mask}`}
               onmousedown={setSelect(props.node.id)}
             >
               {props.node.sym}
@@ -97,7 +105,7 @@ const NodeExp: Component<{
       return (
         //data-flip-key={`flip-${node.id}`}
         <div
-          data-flip-parent={`flip-${props.node.id}`}
+          //data-flip-parent={`flip-${props.node.id}`}
           {...opts}
           class={`node comp ${is_selected ? "selected" : ""} ${node_mask}`}
           // for granite style:

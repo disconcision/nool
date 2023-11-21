@@ -105,19 +105,26 @@ let kidsmatch = (pats: Pat[], exps: Exp[]): MatchResult => {
 };
 
 let matchresult_map_or = (acc: MatchResult, b: MatchResult): MatchResult => {
-  if (b === 'NoMatch') return acc;
-  return b;
+  if (acc === 'NoMatch' ||b === 'NoMatch') return acc;
+  return acc.concat(b);
 };
 
 /* descend into tree to find exp node of certain id, and then try to match the pattern */
 export const matches_at_id = (exp: Exp, pat: Pat, id: number): MatchResult => {
   //console.log('matches_at_id', id);
+  console.log('matches_at_id', id);
+  console.log('matches_at_id pat:',  JSON.stringify(pat));
+  console.log('matches_at_id exp:',  JSON.stringify(exp));
+  
   switch(exp.t) {
     case 'Atom': return exp.id == id ? matches(pat, exp) : "NoMatch";
     case 'Comp': if (exp.id == id) {
+      console.log("comp exp == id")
+      console.log('matches(pat, exp)',  matches(pat, exp));
       return matches(pat, exp)
     }
     else {
+      console.log("comp exp != id");
         return( exp.kids
         .map(kid => matches_at_id(kid, pat, id))
         .reduce(matchresult_map_or, []))

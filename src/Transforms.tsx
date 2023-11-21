@@ -49,7 +49,7 @@ export const associate_plus: Transform = {
 export const identity_plus: Transform = {
   name: "⟲",
   source: var_a,
-  result: p_comp([p_const("➕"), p_const("0️⃣"), var_a]),
+  result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
 };
 
 export const transforms = [identity_plus, commute_plus, associate_plus];

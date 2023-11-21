@@ -484,3 +484,7 @@ code {
   color: #c8cfff;
   text-shadow: 0.3px 0.2px 0.5px #7856ba;
 }
+
+.🌑 {
+  filter: brightness(1.4);
+}

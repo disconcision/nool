@@ -10,7 +10,8 @@ export type Action =
   | { t: "setHover"; target: HoverTarget };
 
 const flipping = new Flipping({
-  duration: 175, //175,
+  duration: 250, //175,
+  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
   //stagger: 1,
   //selector:  (_el:Element) => {return [_el]},
   //parent: this,
@@ -62,15 +63,15 @@ export const update = (model: Model, setModel: any, action: Action): Model => {
     case "transformNode":
       let result = action.f(model.stage);
       flipping.read();
-      flipping2.read();
+      //flipping2.read();
       if (result != "NoMatch") {
         const m = { ...model, stage: result };
         setModel(m);
-        flipping2.flip();
+        //flipping2.flip();
         flipping.flip();
         return m;
       } else {
-       //setModel(model);
+        setModel(model);
         return model;
       }
     case "setSelect":
