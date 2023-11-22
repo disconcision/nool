@@ -11,23 +11,7 @@ export type Action =
   | { t: "setHover"; target: HoverTarget }
   | { t: "flipTransform"; idx: number };
 
-const flipping = new Flipping({
-  duration: 250,
-  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
-  //stagger: 1,
-  //selector:  (_el:Element) => {return [_el]},
-  //parent: this,
-  attribute: "data-flip-key",
-  //activeSelector: (_el:any) => {return (true)},
-});
-
-const flipping2 = new Flipping({
-  duration: 250,
-  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
-  attribute: "data-flip-key-comp",
-});
-
-export const update_ = (model: Model, setModel: any, action: Action): Model => {
+export const update_ = (model: Model, action: Action): Model => {
   switch (action.t) {
     case "transformNode":
       let result = action.f(model.stage);
@@ -48,10 +32,26 @@ export const update_ = (model: Model, setModel: any, action: Action): Model => {
   }
 };
 
+const flipping = new Flipping({
+  attribute: "data-flip-key",
+  duration: 250,
+  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
+  //stagger: 1,
+  //selector:  (_el:Element) => {return [_el]},
+  //parent: this,
+  //activeSelector: (_el:any) => {return (true)},
+});
+
+const flipping_comp = new Flipping({
+  attribute: "data-flip-key-comp",
+  duration: 250,
+  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
+});
+
 export const update = (model: Model, setModel: any, action: Action): void => {
   flipping.read();
-  //flipping2.read();
-  setModel(update_(model, setModel, action));
-  //flipping2.flip();
+  //flipping_comp.read();
+  setModel(update_(model, action));
+  //flipping_comp.flip();
   flipping.flip();
 };

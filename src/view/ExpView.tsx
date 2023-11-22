@@ -23,11 +23,15 @@ export const NodeExp: Component<{
   mask: Binding[];
 }> = (props) => {
   const setSelect = (id: number) => (e: Event) => {
-    e.preventDefault();
+    //e.preventDefault();
+    //above modulates whether shake occurs for some reason
     e.stopPropagation();
     props.inject({ t: "setSelect", id });
   };
-  const is_selected = props.node.id == props.model.selection.id;
+  /* TODO: figure out why below has to be a function. if it's not,
+     then the stage doesn't get redrawn after selects other than
+     the first one. this only started occuring after the previous commits */
+  let is_selected = (props:any) => props.node.id == props.model.selection.id;
   const node_mask = node_mask_cls(props.node.id, props.mask);
   //const yolo = new Rand(`${props.node.id}`);
   switch (props.node.t) {
@@ -43,7 +47,7 @@ export const NodeExp: Component<{
             <div
               {...opts}
               class={`node atom ${props.node.sym} ${
-                is_selected ? "selected" : ""
+                is_selected(props) ? "selected" : ""
               } ${node_mask}`}
               onpointerdown={setSelect(props.node.id)}
             >
@@ -73,7 +77,7 @@ export const NodeExp: Component<{
         <div
           //data-flip-parent={`flip-${props.node.id}`}
           {...opts}
-          class={`node comp ${is_selected ? "selected" : ""} ${node_mask}`}
+          class={`node comp ${is_selected(props) ? "selected" : ""} ${node_mask}`}
           // for granite style:
           /*style={`background-position: ${Math.floor(yolo.next() * 10)}0% 77.8%;`}*/
           onpointerdown={setSelect(props.node.id)}

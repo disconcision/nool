@@ -100,7 +100,7 @@ const TransformView: Component<{
       <div class="transform">
         <div
           class="source"
-          onpointerenter={setHover({
+          onmouseenter={setHover({
             t: "TransformSource",
             pat: props.t.source,
           })}
@@ -117,7 +117,7 @@ const TransformView: Component<{
         </div>
         <div
           class="result"
-          onpointerenter={setHover({
+          onmouseenter={setHover({
             t: "TransformResult",
             pat: props.t.result,
           })}
