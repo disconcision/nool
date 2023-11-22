@@ -35,7 +35,8 @@ jobs:
           pwd
           ls
           node --version
-          npm i -g pnpm@7.26.3
+          yarn global add pnpm@7.26.3
+          npm install --global pnpm@7.26.3 && SHELL=bash pnpm setup
           source /home/runner/.bashrc
           pnpm install
           pnpm run build
