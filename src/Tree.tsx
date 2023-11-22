@@ -21,6 +21,17 @@ export const erase = (e: Exp): Exp => {
   switch(e.t) {
     case 'Atom': return {t: 'Atom', id:0, sym: e.sym};
     case 'Comp': return {t: 'Comp', id:0, kids: e.kids.map(erase)};}};
+
+const equal_modulo_ids = (a: Exp, b: Exp): boolean => {
+  switch(a.t) {
+    case 'Atom':
+      switch(b.t) {
+        case 'Atom': return a.sym == b.sym;
+        case 'Comp': return false;}
+    case 'Comp':
+      switch(b.t) {
+        case 'Atom': return false;
+        case 'Comp': return a.kids.length == b.kids.length && zip(a.kids, b.kids).every(([a, b]) => equal_modulo_ids(a, b));}}};
     
 
 export const depth = (node: Exp):number  => {switch(node.t){
@@ -92,9 +103,30 @@ export const transform = (exp: Exp, pat: Pat, template: Pat): TransformResult =>
   return hydrate(template, bindings);
 };
 
+
+let name_bindings = (bindings: Binding[]): NameBinding[] =>
+  bindings.map((bind) => {
+    switch(bind.t){
+      case 'Val': return [bind.val];
+      case 'Ids': return [];
+  }}).flat();
+
+
+/* Enforces linearity: Duplicate bindings must have the same value */
 let concat_bindings = (a: MatchResult, b: MatchResult): MatchResult => {
     if (a === 'NoMatch' || b === 'NoMatch') return 'NoMatch';
+    let a_names = name_bindings(a);
+    //filter out bindings from b (all bindings from b, not just name bindings )that have the same name as bindings in a
+    let b_contains_dupe_with_different_value = b.find((bind) =>
+      bind.t == 'Val' && a_names.find(([name, exp]) => name == bind.val[0] && !equal_modulo_ids(exp,bind.val[1])
+    ));
+    if (b_contains_dupe_with_different_value) return 'NoMatch';
+    // don't filter for now, otherwise highlighting doesn't work. may want to firm this up later
+    let _b_filtered = b.filter((bind) =>
+      bind.t == 'Ids' || !a_names.find(([name, _]) => name == bind.val[0]
+    ));
     return a.concat(b);
+
 };
 
 let kidsmatch = (pats: Pat[], exps: Exp[]): MatchResult => {

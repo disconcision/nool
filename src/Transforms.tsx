@@ -37,6 +37,10 @@ const plus_x = (a: Pat, b: Pat) =>
 const plus_y = (a: Pat, b: Pat) =>
   p_comp_id(-20, [p_const_id(-30, "➕"), a, b]);
 
+const neg_1 = p_const_id(-60, "➖");
+const neg_x = (a: Pat) =>
+  p_comp_id(-40, [neg_1, a]);
+
 export const commute_plus: Transform = {
   name: "⇿",
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
@@ -55,10 +59,17 @@ export const identity_plus: Transform = {
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
 };
 
+export const inverse_plus: Transform = {
+  name: "⇿",
+  source: plus_x(var_a, neg_x(var_a)),
+  result: p_const("🌑"),
+};
+
 export const transforms: Transform[] = [
   identity_plus,
   commute_plus,
   associate_plus,
+  inverse_plus,
 ];
 
 export const transforms_directed: Transform[] = [
@@ -67,6 +78,8 @@ export const transforms_directed: Transform[] = [
   rev(associate_plus),
   identity_plus,
   rev(identity_plus),
+  inverse_plus,
+  rev(inverse_plus),
 ];
 
 export const flip_at_index = (ts: Transform[], index: number): Transform[] =>

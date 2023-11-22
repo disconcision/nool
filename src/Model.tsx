@@ -25,7 +25,7 @@ export type Model = {
 
 const stage: Exp = comp([
   atom("➕"),
-  comp([atom("➕"), atom("☁️"), atom("🍄")]),
+  comp([atom("➕"), comp([atom("➕"), atom("☁️"), comp([atom("➖"), atom("🍄")]),]), atom("🍄")]),
   comp([
     atom("➕"),
     comp([atom("➕"), atom("🎲"), atom("🦠")]),
