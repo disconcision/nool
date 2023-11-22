@@ -35,8 +35,9 @@ jobs:
           pwd
           ls
           node --version
-          npm install --global pnpm@7.26.3 && SHELL=bash pnpm setup
+          npm install --global pnpm@7.26.3
           source /home/runner/.bashrc
+          pnpm install
           pnpm run build
         working-directory: ./source
       - name: Checkout website build artifacts repo # STEP 4
