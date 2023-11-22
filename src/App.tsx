@@ -2,7 +2,8 @@ import { Component } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Action, update } from "./Update";
 import { init_model } from "./Model";
-import { Toolbar, TransformsBox, Stage } from "./View";
+import { Stage } from "./view/StageView";
+import { Toolbar, TransformsBox } from "./view/ToolsView";
 
 const App: Component = () => {
   const [model, setModel] = createStore(init_model);

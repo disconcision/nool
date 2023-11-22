@@ -27,7 +27,6 @@ const flipping2 = new Flipping({
   attribute: "data-flip-key-comp",
 });
 
-//TODO: separate effects from functional update somehow
 export const update_ = (model: Model, setModel: any, action: Action): Model => {
   switch (action.t) {
     case "transformNode":
@@ -51,6 +50,8 @@ export const update_ = (model: Model, setModel: any, action: Action): Model => {
 
 export const update = (model: Model, setModel: any, action: Action): void => {
   flipping.read();
+  //flipping2.read();
   setModel(update_(model, setModel, action));
+  //flipping2.flip();
   flipping.flip();
 };

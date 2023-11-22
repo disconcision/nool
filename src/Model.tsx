@@ -1,5 +1,6 @@
 import { Exp, Pat, comp, atom } from "./Tree";
-import { Transform, transforms, transforms_directed} from "./Transforms";
+import { Transform, transforms, transforms_directed } from "./Transforms";
+
 export type Id = number;
 
 export type HoverTarget =
@@ -25,10 +26,11 @@ export type Model = {
 const stage: Exp = comp([
   atom("➕"),
   comp([atom("➕"), atom("☁️"), atom("🍄")]),
-  comp([atom("➕"),
-    comp([atom("➕"), atom("🎲"), atom("🦠"),]), 
+  comp([
+    atom("➕"),
+    comp([atom("➕"), atom("🎲"), atom("🦠")]),
     comp([atom("➕"), atom("🧩"), atom("🐝")]),
-    ]),
+  ]),
 ]);
 
 const _stage1: Exp = comp([

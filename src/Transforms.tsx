@@ -30,9 +30,12 @@ export const do_at =
 const var_a = p_var("♫");
 const var_b = p_var("♥");
 const var_c = p_var("✿");
-const plus_1 = p_const_id(-3, "➕");
-const plus_x = (a: Pat, b: Pat) => p_comp_id(-40, [p_const_id(-50, "➕"), a, b]);
-const plus_y = (a: Pat, b: Pat) => p_comp_id(-20, [p_const_id(-30, "➕"), a, b]);
+
+const plus_1 = p_const_id(-10, "➕");
+const plus_x = (a: Pat, b: Pat) =>
+  p_comp_id(-40, [p_const_id(-50, "➕"), a, b]);
+const plus_y = (a: Pat, b: Pat) =>
+  p_comp_id(-20, [p_const_id(-30, "➕"), a, b]);
 
 export const commute_plus: Transform = {
   name: "⇿",
@@ -52,8 +55,11 @@ export const identity_plus: Transform = {
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
 };
 
-export const transforms: Transform[] =
-  [identity_plus, commute_plus, associate_plus];
+export const transforms: Transform[] = [
+  identity_plus,
+  commute_plus,
+  associate_plus,
+];
 
 export const transforms_directed: Transform[] = [
   commute_plus,
@@ -63,9 +69,5 @@ export const transforms_directed: Transform[] = [
   rev(identity_plus),
 ];
 
-export const flip_at_index = (transforms: Transform[], index: number) => {
-  console.log("flip_at_index", index);
-  let td = transforms.map((t, i) => (i === index ? rev(t) : t));
-  console.log(JSON.stringify(transforms, null, 2));
-  console.log(JSON.stringify(td, null, 2));
-  return transforms.map((t, i) => (i === index ? rev(t) : t));}
+export const flip_at_index = (ts: Transform[], index: number): Transform[] =>
+  ts.map((t, i) => (i === index ? rev(t) : t));

@@ -200,10 +200,16 @@ code {
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
 
+/* balances out display of identity transform, mostly so
+   clicking the arrow to reverse the transform doesn't
+   end up moving the arrow */
+.source > .node.atom,
+.result > .node.atom { margin: 1.1em 0.5em 1.1em 1.8em; }
+
 .node {
   width: fit-content;
   display: flex;
-  border-radius: 2.3em 1.2em 0.6em 1.5em;
+  border-radius: 3em 1.2em 0.6em 32%;
   padding: 0.2em;
   margin: 0.2em;
   align-items: center;

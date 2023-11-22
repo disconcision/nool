@@ -26,6 +26,10 @@ jobs:
       #  uses: lhotari/action-upterm@v1
       #curl -fsSL https://get.pnpm.io/install.sh | sh - || true
       #sudo -s && source /root/.bashrc
+      - name: Use Node.js 20.3.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.3.0'
       - name: Install dependencies and build nool # STEP 3
         run: |
           pwd

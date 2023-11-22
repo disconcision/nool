@@ -111,9 +111,6 @@ let matchresult_map_or = (acc: MatchResult, b: MatchResult): MatchResult => {
 
 /* descend into tree to find exp node of certain id, and then try to match the pattern */
 export const matches_at_id = (exp: Exp, pat: Pat, id: number): MatchResult => {
-  /*console.log('matches_at_id', id);
-  console.log('matches_at_id pat:',  JSON.stringify(pat));
-  console.log('matches_at_id exp:',  JSON.stringify(exp));*/
   switch(exp.t) {
     case 'Atom': return exp.id == id ? matches(pat, exp) : "NoMatch";
     case 'Comp': if (exp.id == id) {
