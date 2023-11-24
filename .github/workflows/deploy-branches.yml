@@ -30,12 +30,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '21.2.0'
+      # yarn global add pnpm@8.10.5
       - name: Install dependencies and build nool # STEP 3
         run: |
           pwd
           ls
           node --version
-          yarn global add pnpm@8.10.5
           npm install --global pnpm@8.10.5 && SHELL=bash pnpm setup
           pnpm --version
           source /home/runner/.bashrc
