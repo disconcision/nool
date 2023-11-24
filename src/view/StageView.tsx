@@ -5,6 +5,7 @@ import { Model } from "../Model";
 import { Action } from "../Update";
 import { AdjacentPossible } from "./PreView";
 import { NodeExp } from "./ExpView";
+import { SettingsView } from "./SettingsView";
 
 const get_hover_binding = (model: Model): Binding[] => {
   switch (model.hover.t) {
@@ -29,12 +30,15 @@ const get_hover_binding = (model: Model): Binding[] => {
   }
 };
 
+
+
 export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
   props
 ) => {
   //console.log("rendering stage. selection.id is", props.model.selection.id);
   return (
     <div id="stage">
+      {SettingsView({ model: props.model, inject: props.inject })}
       <div id="debug" style="display:none">
         <div>selection.id: {props.model.selection.id}</div>
       </div>

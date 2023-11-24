@@ -1,6 +1,7 @@
 import { Pat } from "./syntax/Pat";
 import { Exp, atom, comp } from "./syntax/Exp";
 import { Transform, transforms, transforms_directed } from "./Transforms";
+import * as Settings from "./Settings";
 
 export type Id = number;
 
@@ -20,6 +21,7 @@ export type Model = {
   hover: HoverTarget;
   transforms: Transform[];
   transforms_directed: Transform[];
+  settings: Settings.t;
 };
 
 // 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕
@@ -56,4 +58,5 @@ export const init_model: Model = {
   hover: { t: "NoHover" },
   transforms: transforms,
   transforms_directed: transforms_directed,
+  settings: Settings.init,
 };

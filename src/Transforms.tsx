@@ -9,17 +9,20 @@ import {
   p_const_id,
 } from "./syntax/Pat";
 import { Exp } from "./syntax/Exp";
+import * as Sound from "./Sound";
 
 export type Transform = {
   name: string;
   source: Pat;
   result: Pat;
+  sound: () => void;
 };
 
 export const rev = (t: Transform): Transform => ({
   name: t.name,
   source: t.result,
   result: t.source,
+  sound: t.sound,
 });
 
 export const do_at =
@@ -44,24 +47,28 @@ export const commute_plus: Transform = {
   name: "⇿",
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
   result: p_comp_id(-2, [plus_1, var_b, var_a]),
+  sound: Sound.mk("F2", "8n"),
 };
 
 export const associate_plus: Transform = {
   name: "⥂",
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
+  sound: Sound.mk("D2", "8n"),
 };
 
 export const identity_plus: Transform = {
   name: "⟲",
   source: var_a,
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
+  sound: Sound.mk("A2", "8n"),
 };
 
 export const inverse_plus: Transform = {
   name: "⇿",
   source: plus_x(var_a, neg_x(var_a)),
   result: p_const("🌑"),
+  sound: Sound.mk("D2", "8n"),
 };
 
 export const transforms: Transform[] = [

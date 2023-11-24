@@ -66,6 +66,7 @@ const TransformView: Component<{
     props.inject({
       t: "transformNode",
       idx: props.idx,
+      transform: props.t,
       f: do_at(props.t, props.model.selection.id),
     });
   };
@@ -78,6 +79,7 @@ const TransformView: Component<{
     props.inject({
       t: "transformNode",
       idx: props.idx,
+      transform: props.t,
       f: do_at(rev(props.t), props.model.selection.id),
     });
   };

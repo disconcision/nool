@@ -9,13 +9,13 @@ import { Exp } from "../syntax/Exp";
 
 const Preview: Component<{
   node: Exp;
-  f: Transform;
+  t: Transform;
   indicated: number;
   inject: Inject;
 }> = (props) => {
   const transform = (f: (_: Exp) => TransformResult) => (_: Event) =>
-    props.inject({ t: "transformNode", idx: 0, /* TODO hack idx */ f });
-  const node = do_at(props.f, props.indicated)(props.node);
+    props.inject({ t: "transformNode", transform:props.t, idx: 0, /* TODO hack idx */ f });
+  const node = do_at(props.t, props.indicated)(props.node);
   //HACK: init_model
   return (
     <div
@@ -23,7 +23,7 @@ const Preview: Component<{
       style={node == "NoMatch" ? "display: none" : ""}
       onmousedown={(evt) => {
         console.log("yo");
-        transform(do_at(props.f, props.indicated))(evt);
+        transform(do_at(props.t, props.indicated))(evt);
       }}
     >
       {node == "NoMatch" ? (
@@ -56,10 +56,10 @@ export const AdjacentPossible: Component<{ model: Model; inject: Inject }> = (
       }
     >
       <For each={props.model.transforms_directed}>
-        {(transform) =>
+        {(t) =>
           Preview({
             node: props.model.stage,
-            f: transform,
+            t,
             indicated: props.model.selection.id,
             inject: (_) => {},
           })
