@@ -32,18 +32,29 @@ const motion_icon = (motion: Settings.motion): string => {
   }
 };
 
-let icon = (inject: Inject, img: string, action: Settings.Action) => (
-  <img class="icon" src={img} onmousedown={setSetting(inject, action)} />
+let action_icon = (action: Settings.Action, settings: Settings.t): string => {
+  switch (action) {
+    case "ToggleSound":
+      return sound_icon(settings.sound);
+    case "ToggleMotion":
+      return motion_icon(settings.motion);
+  }
+};
+
+let icon = (inject: Inject, settings: Settings.t, action: Settings.Action) => (
+  <img
+    class="icon"
+    src={action_icon(action, settings)}
+    onmousedown={setSetting(inject, action)}
+  />
 );
 
 export const SettingsView: Component<{
   model: Model;
   inject: (_: Action) => void;
-}> = (props) => {
-  return (
-    <div id="settings-panel">
-      {icon(props.inject, sound_icon(props.model.settings.sound), "ToggleSound")}
-      {icon(props.inject, motion_icon(props.model.settings.motion), "ToggleMotion")}
-    </div>
-  );
-};
+}> = (props) => (
+  <div id="settings-panel">
+    {icon(props.inject, props.model.settings, "ToggleSound")}
+    {icon(props.inject, props.model.settings, "ToggleMotion")}
+  </div>
+);
