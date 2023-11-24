@@ -26,17 +26,17 @@ jobs:
       #  uses: lhotari/action-upterm@v1
       #curl -fsSL https://get.pnpm.io/install.sh | sh - || true
       #sudo -s && source /root/.bashrc
-      - name: Use Node.js 18.17.0
+      - name: Use Node.js 21.2.0
         uses: actions/setup-node@v3
         with:
-          node-version: '18.17.0'
+          node-version: '21.2.0'
       - name: Install dependencies and build nool # STEP 3
         run: |
           pwd
           ls
           node --version
-          yarn global add pnpm@7.26.3
-          npm install --global pnpm@7.26.3 && SHELL=bash pnpm setup
+          yarn global add pnpm@8.10.5
+          npm install --global pnpm@8.10.5 && SHELL=bash pnpm setup
           pnpm --version
           source /home/runner/.bashrc
           pnpm install
