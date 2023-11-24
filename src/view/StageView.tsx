@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
-import { Binding, matches_at_id } from "../Tree";
+import { Binding, matches_at_id } from "../syntax/Pat";
 import { Model } from "../Model";
 import { Action } from "../Update";
 import { AdjacentPossible } from "./PreView";

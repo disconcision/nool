@@ -1,4 +1,5 @@
-import { Exp, TransformResult } from "./Tree";
+import { TransformResult } from "./syntax/Pat";
+import { Exp } from "./syntax/Exp";
 import { Model, Id, HoverTarget } from "./Model";
 import { flip_at_index } from "./Transforms";
 import Flipping from "flipping/src/adapters/web";

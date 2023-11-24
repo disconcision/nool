@@ -1,11 +1,11 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
-import { Pat } from "../Tree";
+import { Pat } from "../syntax/Pat";
 import { HoverTarget, Model } from "../Model";
 import { Action, Inject } from "../Update";
 import { Transform, rev, do_at } from "../Transforms";
-
+ 
 export const Toolbar: Component<{ model: Model; inject: Inject }> = (props) => {
   return (
     <div id="toolbar" style={`background-image: url(${toolbarbkg})`}>

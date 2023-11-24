@@ -1,6 +1,5 @@
 import {
   Pat,
-  Exp,
   TransformResult,
   transform_at_id,
   p_var,
@@ -8,7 +7,8 @@ import {
   p_comp,
   p_comp_id,
   p_const_id,
-} from "./Tree";
+} from "./syntax/Pat";
+import { Exp } from "./syntax/Exp";
 
 export type Transform = {
   name: string;
@@ -38,8 +38,7 @@ const plus_y = (a: Pat, b: Pat) =>
   p_comp_id(-20, [p_const_id(-30, "➕"), a, b]);
 
 const neg_1 = p_const_id(-60, "➖");
-const neg_x = (a: Pat) =>
-  p_comp_id(-40, [neg_1, a]);
+const neg_x = (a: Pat) => p_comp_id(-40, [neg_1, a]);
 
 export const commute_plus: Transform = {
   name: "⇿",

@@ -1,7 +1,8 @@
 import { Component } from "solid-js";
 import { For, Show } from "solid-js";
 //import Rand from "rand-seed";
-import { Exp, Binding } from "../Tree";
+import { Binding } from "../syntax/Pat";
+import { Exp } from "../syntax/Exp";
 import { Model } from "../Model";
 import { Inject } from "../Update";
 

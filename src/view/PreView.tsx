@@ -1,10 +1,11 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
-import { Exp, TransformResult } from "../Tree";
+import { TransformResult } from "../syntax/Pat";
 import { Model, init_model } from "../Model";
 import { Inject } from "../Update";
 import { Transform, do_at } from "../Transforms";
 import { NodeExp } from "./ExpView";
+import { Exp } from "../syntax/Exp";
 
 const Preview: Component<{
   node: Exp;

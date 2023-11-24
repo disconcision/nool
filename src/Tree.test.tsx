@@ -1,4 +1,6 @@
-import { Exp, TransformResult, erase, matches, hydrate, transform, atom, comp, p_var, p_const, p_comp } from './Tree';
+
+import { Exp, erase, atom, comp} from './syntax/Exp';
+import {  TransformResult,  matches, hydrate, transform,  p_var, p_const, p_comp } from './syntax/Pat';
 
 
 describe("test matches", () => {

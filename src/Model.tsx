@@ -1,4 +1,5 @@
-import { Exp, Pat, comp, atom } from "./Tree";
+import { Pat } from "./syntax/Pat";
+import { Exp, atom, comp } from "./syntax/Exp";
 import { Transform, transforms, transforms_directed } from "./Transforms";
 
 export type Id = number;
@@ -25,7 +26,11 @@ export type Model = {
 
 const stage: Exp = comp([
   atom("➕"),
-  comp([atom("➕"), comp([atom("➕"), atom("☁️"), comp([atom("➖"), atom("🍄")]),]), atom("🍄")]),
+  comp([
+    atom("➕"),
+    comp([atom("➕"), atom("☁️"), comp([atom("➖"), atom("🍄")])]),
+    atom("🍄"),
+  ]),
   comp([
     atom("➕"),
     comp([atom("➕"), atom("🎲"), atom("🦠")]),
