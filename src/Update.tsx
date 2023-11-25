@@ -1,5 +1,6 @@
 import { TransformResult } from "./syntax/Pat";
 import { Transform } from "./Transforms";
+import { Path } from "./syntax/Node";
 import { Exp } from "./syntax/Exp";
 import { Model, Id, HoverTarget } from "./Model";
 import { flip_at_index } from "./Transforms";
@@ -17,7 +18,7 @@ export type Action =
       transform: Transform;
       f: (_: Exp) => TransformResult;
     }
-  | { t: "setSelect"; id: Id }
+  | { t: "setSelect"; path: Path }
   | { t: "setHover"; target: HoverTarget }
   | { t: "flipTransform"; idx: number }
   | { t: "setSetting"; action: Settings.Action };
@@ -53,15 +54,7 @@ export const update = (model: Model, action: Action): Model => {
         return model;
       }
     case "setSelect":
-      console.log("id:", action.id);
-      const getted_path = (model.info.get(action.id))?.path;
-      if (getted_path == undefined) {
-        console.log("Error: Update: undefined path");
-        return model;
-      } else {
-        //console.log("getted_path:", getted_path);
-      //console.log("path:", getted_path);
-      return { ...model, selection: getted_path };}
+      return { ...model, selection: action.path };
     case "setHover":
       return { ...model, hover: action.target };
     case "flipTransform":

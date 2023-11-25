@@ -6,6 +6,7 @@ import { Exp } from "../syntax/Exp";
 import { Model } from "../Model";
 import { Inject } from "../Update";
 import { path_eq } from "../syntax/Node";
+import * as Statics from "../Statics";
 
 const node_mask_cls = (id: number, mask: Binding[]): string => {
   const binding = mask.find(
@@ -17,10 +18,7 @@ const node_mask_cls = (id: number, mask: Binding[]): string => {
 export const NodeExp: Component<{
   node: Exp;
   model: Model;
-  animate: boolean;
   is_head: boolean;
-  parent_id: number;
-  depth: number;
   inject: Inject;
   mask: Binding[];
 }> = (props) => {
@@ -28,40 +26,21 @@ export const NodeExp: Component<{
     //e.preventDefault();
     //above modulates whether shake occurs for some reason
     e.stopPropagation();
-    props.inject({ t: "setSelect", id });
+    props.inject({
+      t: "setSelect",
+      path: Statics.get(props.model.info, id).path,
+    });
   };
-  /* TODO: figure out why below has to be a function. if it's not,
-     then the stage doesn't get redrawn after selects other than
-     the first one. this only started occuring after the previous commits */
   const is_selected = (props: { node: Exp; model: Model }): boolean => {
-    let getted_path = props.model.info.get(props.node.id)?.path;
-    if (getted_path == undefined) {
-      console.log("Error: Update: undefined path");
-      return false;
-    } else {
-      console.log("props.node.id:", props.node.id);
-      console.log("is_selected: selection:", Array.from(props.model.selection));
-      console.log(
-        "is_selected: getted_path:",
-        Array.from(getted_path) 
-      );
-      console.log(
-        "is_selected: selection == path:",
-        Array.from(props.model.selection) == Array.from(getted_path) 
-      );
-      return path_eq(getted_path,props.model.selection);
-    }
+    let node_path = Statics.get(props.model.info, props.node.id).path;
+    return path_eq(node_path, props.model.selection);
   };
-
-  //props.node.id === props.model.selection.id;
   const node_mask = node_mask_cls(props.node.id, props.mask);
   //const yolo = new Rand(`${props.node.id}`);
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
-      if (props.animate) {
-        opts[`data-flip-key`] = `flip-${props.node.id}`;
-      }
+      opts[`data-flip-key`] = `flip-${props.node.id}`;
       return (
         <Show
           when={props.is_head}
@@ -86,12 +65,7 @@ export const NodeExp: Component<{
       );
     case "Comp":
       var opts: any = {};
-      //console.log("this props.mask:" + props.mask.map((x) => x.ids[1]));
-      //console.log("this props.node.id:" + props.node.id);
-      if (
-        props.animate &&
-        props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)
-      ) {
+      if (props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)) {
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
@@ -110,10 +84,7 @@ export const NodeExp: Component<{
           <NodeExp
             model={props.model}
             node={props.node.kids[0]}
-            animate={props.animate}
             is_head={true}
-            parent_id={props.node.id}
-            depth={props.depth + 1}
             inject={props.inject}
             mask={props.mask}
           />
@@ -123,10 +94,7 @@ export const NodeExp: Component<{
                 <NodeExp
                   model={props.model}
                   node={kid}
-                  animate={props.animate}
                   is_head={false}
-                  parent_id={props.node.id}
-                  depth={props.depth + 1}
                   inject={props.inject}
                   mask={props.mask}
                 />

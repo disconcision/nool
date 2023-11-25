@@ -28,3 +28,12 @@ export const mk = (exp: Exp.t): InfoMap => {
   visit(exp);
   return map;
 }
+
+export const get = (map: InfoMap, id: ID): Info => {
+  const info = map.get(id);
+  if (info == undefined) {
+    throw new Error(`InfoMap.get: id ${id} not found`);
+  } else {
+    return info;
+  }
+}

@@ -47,10 +47,7 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
           model: props.model,
           mask: get_hover_binding(props.model),
           node: props.model.stage,
-          animate: true,
           is_head: false,
-          parent_id: -1,
-          depth: 0,
           inject: props.inject,
         })}
         {AdjacentPossible({ model: props.model, inject: props.inject })}
