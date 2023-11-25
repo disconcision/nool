@@ -2,6 +2,7 @@ import { Pat } from "./syntax/Pat";
 import { Exp, atom, comp } from "./syntax/Exp";
 import { Transform, transforms, transforms_directed } from "./Transforms";
 import * as Settings from "./Settings";
+import * as Statics from "./Statics";
 
 export type Id = number;
 
@@ -17,6 +18,7 @@ type Selection = {
 
 export type Model = {
   stage: Exp;
+  info: Statics.InfoMap;
   selection: Selection;
   hover: HoverTarget;
   transforms: Transform[];
@@ -54,6 +56,7 @@ const _stage2: Exp = comp([
 
 export const init_model: Model = {
   stage: stage,
+  info: Statics.mk(stage),
   selection: { id: -1 },
   hover: { t: "NoHover" },
   transforms: transforms,

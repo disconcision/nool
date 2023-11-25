@@ -6,6 +6,7 @@ import { flip_at_index } from "./Transforms";
 import Flipping from "flipping/src/adapters/web";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
+import * as Statics from "./Statics";
 
 export type Inject = (_: Action) => void;
 
@@ -46,7 +47,9 @@ export const update = (model: Model, action: Action): Model => {
     case "transformNode":
       let result = action.f(model.stage);
       if (result != "NoMatch") {
-        return { ...model, stage: result };
+        //console.log("info:", Statics.mk(result));
+        return { ...model, info: Statics.mk(result),
+          stage: result };
       } else {
         return model;
       }
