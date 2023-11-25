@@ -34,7 +34,7 @@ export const sound = (model: Model, action: Action): void => {
       }
       break;
     case "setSelect":
-      Sound.select();
+      Sound.select(action.path.length);
       break;
     case "setHover":
     case "flipTransform":
@@ -48,7 +48,7 @@ export const update = (model: Model, action: Action): Model => {
     case "transformNode":
       let result = action.f(model.stage);
       if (result != "NoMatch") {
-        console.log("info:", Statics.mk(result));
+        //console.log("info:", Statics.mk(result));
         return { ...model, info: Statics.mk(result), stage: result };
       } else {
         return model;

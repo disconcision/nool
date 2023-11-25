@@ -3,13 +3,15 @@ export type motion = "On" | "Off" | "Half";
 export type t = {
   sound: boolean;
   motion: motion;
+  preview: boolean;
 };
 
-export type Action = "ToggleSound" | "ToggleMotion";
+export type Action = "ToggleSound" | "ToggleMotion" | "TogglePreview";
 
 export const init: t = {
   sound: true,
   motion: "Half",
+  preview: true,
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -25,5 +27,7 @@ export const update = (settings: t, action: Action): t => {
         case "Half":
           return { ...settings, motion: "On" };
       }
+    case "TogglePreview":
+      return { ...settings, preview: !settings.preview };
   }
 };

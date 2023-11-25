@@ -32,7 +32,9 @@ export const mk = (exp: Exp.t): InfoMap => {
 export const get = (map: InfoMap, id: ID): Info => {
   const info = map.get(id);
   if (info == undefined) {
-    throw new Error(`InfoMap.get: id ${id} not found`);
+    console.log(`InfoMap.get: id ${id} not found`);
+    //throw new Error(`InfoMap.get: id ${id} not found`);
+    return { path: [] };
   } else {
     return info;
   }

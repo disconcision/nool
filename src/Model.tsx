@@ -61,4 +61,4 @@ export const init_model: Model = {
   settings: Settings.init,
 };
 
-console.log("info: init:", Statics.mk(stage));
+//console.log("info: init:", Statics.mk(stage));

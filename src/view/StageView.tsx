@@ -14,23 +14,13 @@ const get_hover_binding = (model: Model): Binding[] => {
     case "StageNode":
       return [];
     case "TransformSource":
-      const rs = matches_at_path(
-        model.stage,
-        model.hover.pat,
-        model.selection
-      );
+      const rs = matches_at_path(model.stage, model.hover.pat, model.selection);
       return rs == "NoMatch" ? [] : rs;
     case "TransformResult":
-      const rr = matches_at_path(
-        model.stage,
-        model.hover.pat,
-        model.selection
-      );
+      const rr = matches_at_path(model.stage, model.hover.pat, model.selection);
       return rr == "NoMatch" ? [] : rr;
   }
 };
-
-
 
 export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
   props
@@ -49,8 +39,14 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
           node: props.model.stage,
           is_head: false,
           inject: props.inject,
+          animate: true,
         })}
-        {AdjacentPossible({ model: props.model, inject: props.inject })}
+        {props.model.settings.preview ? AdjacentPossible({
+          path: props.model.selection,
+          stage: props.model.stage,
+          model: props.model,
+          inject: props.inject,
+        }) : null}
       </div>
     </div>
   );

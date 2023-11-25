@@ -54,16 +54,16 @@ const TransformView: Component<{
 }> = (props) => {
 
   const source_matches_cls = (props: { model: Model; t: Transform }) => {
-    console.log('selection src:', props.model.selection);
+    //console.log('selection src:', props.model.selection);
     const res = matches_at_path(props.model.stage, props.t.source, props.model.selection);
-    console.log('res:', res);
+    //console.log('res:', res);
     return res == 'NoMatch' /*|| res.length == 0* || props.model.selection.length > 0 */? 'no-match' : 'match';
   };
 
   const result_matches_cls = (props: { model: Model; t: Transform })=> {
-    console.log('selection res:', props.model.selection);
+    //console.log('selection res:', props.model.selection);
     const res = matches_at_path(props.model.stage, props.t.result, props.model.selection);
-    console.log('res:', res);
+    //console.log('res:', res);
     return res == 'NoMatch' /*|| res.length == 0*|| props.model.selection.length > 0*/  ? 'no-match' : 'match';
   };
   

@@ -7,6 +7,8 @@ import sound_icon_off from "../assets/sound-off.svg";
 import motion_on from "../assets/motion-on.svg";
 import motion_off from "../assets/motion-off.svg";
 import motion_half from "../assets/motion-half.svg";
+import preview_on from "../assets/eye-open.svg";
+import preview_off from "../assets/eye-closed.svg";
 
 const setSetting = (inject: Inject, action: Settings.Action) => (e: Event) => {
   e.preventDefault();
@@ -17,9 +19,9 @@ const setSetting = (inject: Inject, action: Settings.Action) => (e: Event) => {
   });
 };
 
-const sound_icon = (sound: boolean): string => {
-  return sound ? sound_icon_on : sound_icon_off;
-};
+const sound_icon = (sound: boolean): string =>
+  sound ? sound_icon_on : sound_icon_off;
+
 
 const motion_icon = (motion: Settings.motion): string => {
   switch (motion) {
@@ -32,12 +34,17 @@ const motion_icon = (motion: Settings.motion): string => {
   }
 };
 
+const preview_icon = (preview: boolean): string => 
+  preview ? preview_on : preview_off;
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
       return sound_icon(settings.sound);
     case "ToggleMotion":
       return motion_icon(settings.motion);
+    case "TogglePreview":
+      return preview_icon(settings.preview);
   }
 };
 
@@ -56,5 +63,6 @@ export const SettingsView: Component<{
   <div id="settings-panel">
     {icon(props.inject, props.model.settings, "ToggleSound")}
     {icon(props.inject, props.model.settings, "ToggleMotion")}
+    {icon(props.inject, props.model.settings, "TogglePreview")}
   </div>
 );

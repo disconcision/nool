@@ -75,7 +75,7 @@ export const inverse_plus: Transform = {
   name: "⇿",
   source: plus_x(var_a, neg_x(var_a)),
   result: p_const("🌑"),
-  sound: Sound.mk("D2", "8n"),
+  sound: Sound.mk("C3", "8n"),
 };
 
 export const transforms: Transform[] = [

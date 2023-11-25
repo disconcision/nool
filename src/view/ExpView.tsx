@@ -18,6 +18,7 @@ const node_mask_cls = (id: number, mask: Binding[]): string => {
 export const NodeExp: Component<{
   node: Exp;
   model: Model;
+  animate: boolean;
   is_head: boolean;
   inject: Inject;
   mask: Binding[];
@@ -40,7 +41,9 @@ export const NodeExp: Component<{
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
-      opts[`data-flip-key`] = `flip-${props.node.id}`;
+      if (props.animate) {
+        opts[`data-flip-key`] = `flip-${props.node.id}`;
+      }
       return (
         <Show
           when={props.is_head}
@@ -65,7 +68,10 @@ export const NodeExp: Component<{
       );
     case "Comp":
       var opts: any = {};
-      if (props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)) {
+      if (
+        props.animate &&
+        props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)
+      ) {
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
@@ -84,6 +90,7 @@ export const NodeExp: Component<{
           <NodeExp
             model={props.model}
             node={props.node.kids[0]}
+            animate={props.animate}
             is_head={true}
             inject={props.inject}
             mask={props.mask}
@@ -94,6 +101,7 @@ export const NodeExp: Component<{
                 <NodeExp
                   model={props.model}
                   node={kid}
+                  animate={props.animate}
                   is_head={false}
                   inject={props.inject}
                   mask={props.mask}
