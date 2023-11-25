@@ -3,7 +3,7 @@ import { Transform } from "./Transforms";
 import { Path } from "./syntax/Node";
 import { Exp } from "./syntax/Exp";
 import { Model, Id, HoverTarget } from "./Model";
-import { flip_at_index } from "./Transforms";
+import { flip_at_index, do_at_path } from "./Transforms";
 import Flipping from "flipping/src/adapters/web";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
@@ -24,14 +24,17 @@ export type Action =
   | { t: "setSetting"; action: Settings.Action }
   | { t: "cycleSelectKids"; direction: "up" | "down" }
   | { t: "selectParent" }
-  | { t: "selectFirstChild" };
+  | { t: "selectFirstChild" }
+  | { t: "applyTransform"; idx: number };
 
 export const sound = (model: Model, action: Action): void => {
   switch (action.t) {
     case "transformNode":
       let result = action.f(model.stage);
       if (result != "NoMatch") {
-        return action.transform.sound();
+        return action.transform.reversed
+          ? action.transform.sound_rev()
+          : action.transform.sound();
       } else {
         Sound.noop();
       }
@@ -47,6 +50,7 @@ export const sound = (model: Model, action: Action): void => {
     case "setHover":
     case "flipTransform":
     case "setSetting":
+    case "applyTransform":
       undefined;
   }
 };
@@ -93,6 +97,19 @@ export const update = (model: Model, action: Action): Model => {
       const path2 = model.selection;
       const selection2 = path2.concat([1]);
       return { ...model, selection: selection2 };
+    case "applyTransform":
+      if (action.idx < 0 || action.idx >= model.transforms.length) return model;
+      let transform =  model.transforms[action.idx];
+      let result2 = do_at_path(
+       transform,
+        model.selection
+      )(model.stage);
+      if (result2 != "NoMatch") {
+        transform.sound();
+        return { ...model, info: Statics.mk(result2), stage: result2 };
+      } else {
+        return model;
+      }
   }
 };
 

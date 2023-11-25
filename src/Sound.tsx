@@ -6,24 +6,22 @@ import chchiu from "./assets/sfx/chchiu-out.wav";
 import shwoph from "./assets/sfx/shwo-ph-out.wav";
 import tiup from "./assets/sfx/tiup-comm-out.wav";
 
-type Sound = {
-  note: string;
-  duration: string;
-};
+let revsfx = new Tone.Reverb({ decay: 4, wet: 0.3 }).toDestination();
 
 type Sfxbank = "pew" | "pshew" | "klohk" | "chchiu" | "shwoph" | "tiup";
-const player_pew = new Tone.Player(pew).toDestination();
 
-const player_pshew = new Tone.Player(pshew).toDestination();
-const player_klohk = new Tone.Player(klohk).toDestination();
-const player_chchiu = new Tone.Player(chchiu).toDestination();
+const player_pew = new Tone.Player(pew).toDestination().connect(revsfx);
+const player_pshew = new Tone.Player(pshew).toDestination().connect(revsfx);
+const player_klohk = new Tone.Player(klohk).toDestination().connect(revsfx);
+const player_chchiu = new Tone.Player(chchiu).toDestination().connect(revsfx);
 //let ps = new Tone.PitchShift(-3).toDestination();
 //player_chchiu.connect(ps);
 player_chchiu.playbackRate = 1.6;
-
-const player_shwoph = new Tone.Player(shwoph).toDestination();
+const player_shwoph = new Tone.Player(shwoph).toDestination().connect(revsfx);
 player_shwoph.playbackRate = 1.4;
-const player_tiup = new Tone.Player(tiup).toDestination();
+const player_tiup = new Tone.Player(tiup).toDestination().connect(revsfx);
+player_tiup.volume.value = -12;
+
 const sfx_bank = (sfx: Sfxbank): Tone.Player =>
   ({
     pew: player_pew,
@@ -33,13 +31,18 @@ const sfx_bank = (sfx: Sfxbank): Tone.Player =>
     shwoph: player_shwoph,
     tiup: player_tiup,
   }[sfx]);
+
 export const sfx = (sfx: Sfxbank) => () => {
-  let p =sfx_bank(sfx);
-  //p.playbackRate = 1.4;
-  //p.reverse =true;
+  let p = sfx_bank(sfx);
+  p.reverse = false;
   p.start();
 };
 
+export const sfx_reverse = (sfx: Sfxbank) => () => {
+  let p = sfx_bank(sfx);
+  p.reverse = true;
+  p.start();
+};
 
 const player = new Tone.Player(pew).toDestination();
 let rev2 = new Tone.Reverb(2).toDestination();
@@ -66,14 +69,15 @@ export const mk = (note: string, duration: string) => () =>
   synth.triggerAttackRelease(note, duration);
 
 const number_to_letter = (n: number): string => {
-  const letters = "ACEGBDF";
+  const letters = "ACFGBDF";
   return letters[n % letters.length];
 };
 
 export const select = (depth: number) => {
-  
-  //sfx_load_play("pew");
-  //player.start();
+  //const chorus = new Tone.Chorus(4, 2.5, 0.5).toDestination().start();
+  //synth.connect(chorus);
+  //const cheby = new Tone.Chebyshev(2).toDestination();
+  //synth.connect(cheby);
   synth.triggerAttackRelease([number_to_letter(depth) + "1"], "32n");
 };
 

@@ -2,6 +2,7 @@ import { Inject } from "./Update";
 
 export const keydown = (inject: Inject) => (event: KeyboardEvent) => {
   const keyName = event.key;
+  
   //console.log("keydown:" + keyName);
   switch (keyName) {
     case "ArrowLeft":
@@ -15,6 +16,18 @@ export const keydown = (inject: Inject) => (event: KeyboardEvent) => {
       break;
     case "ArrowDown":
       inject({ t: "cycleSelectKids", direction: "down" });
+      break;
+    case "1":
+      inject({ t: "applyTransform", idx: 0 });
+      break;
+    case "2":
+      inject({ t: "applyTransform", idx: 1 });
+      break;
+    case "3":
+      inject({ t: "applyTransform", idx: 2 });
+      break;
+    case "4":
+      inject({ t: "applyTransform", idx: 3 });
       break;
   }
 };

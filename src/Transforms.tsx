@@ -18,6 +18,8 @@ export type Transform = {
   source: Pat;
   result: Pat;
   sound: () => void;
+  sound_rev: () => void;
+  reversed: boolean;
 };
 
 export const rev = (t: Transform): Transform => ({
@@ -25,6 +27,8 @@ export const rev = (t: Transform): Transform => ({
   source: t.result,
   result: t.source,
   sound: t.sound,
+  sound_rev: t.sound_rev,
+  reversed: !t.reversed,
 });
 
 export const do_at =
@@ -55,13 +59,17 @@ export const commute_plus: Transform = {
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
   result: p_comp_id(-2, [plus_1, var_b, var_a]),
   sound: Sound.sfx("tiup"), //Sound.mk("F2", "8n"),
+  sound_rev: Sound.sfx_reverse("tiup"),
+  reversed: false,
 };
 
 export const associate_plus: Transform = {
   name: "⥂",
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
-  sound: Sound.sfx("shwoph") //Sound.mk("D2", "8n"),
+  sound: Sound.sfx("shwoph"), //Sound.mk("D2", "8n"),
+  sound_rev: Sound.sfx_reverse("shwoph"),
+  reversed: false,
 };
 
 export const identity_plus: Transform = {
@@ -69,6 +77,8 @@ export const identity_plus: Transform = {
   source: var_a,
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
   sound: Sound.sfx("chchiu"), //Sound.mk("A2", "8n"),
+  sound_rev: Sound.sfx_reverse("chchiu"),
+  reversed: false,
 };
 
 export const inverse_plus: Transform = {
@@ -76,6 +86,8 @@ export const inverse_plus: Transform = {
   source: plus_x(var_a, neg_x(var_a)),
   result: p_const("🌑"),
   sound: Sound.sfx("klohk"), //Sound.mk("C3", "8n"),
+  sound_rev: Sound.sfx_reverse("klohk"),
+  reversed: false,
 };
 
 export const transforms: Transform[] = [
