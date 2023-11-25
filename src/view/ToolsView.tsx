@@ -5,7 +5,7 @@ import { Pat, matches_at_path } from "../syntax/Pat";
 import { HoverTarget, Model } from "../Model";
 import { Action, Inject } from "../Update";
 import { Transform, rev, do_at_path } from "../Transforms";
- 
+
 export const Toolbar: Component<{ model: Model; inject: Inject }> = (props) => {
   return (
     <div id="toolbar" style={`background-image: url(${toolbarbkg})`}>
@@ -52,21 +52,34 @@ const TransformView: Component<{
   model: Model;
   inject: (_: Action) => void;
 }> = (props) => {
-
   const source_matches_cls = (props: { model: Model; t: Transform }) => {
     //console.log('selection src:', props.model.selection);
-    const res = matches_at_path(props.model.stage, props.t.source, props.model.selection);
+    const res = matches_at_path(
+      props.model.stage,
+      props.t.source,
+      props.model.selection
+    );
     //console.log('res:', res);
-    return res == 'NoMatch' /*|| res.length == 0* || props.model.selection.length > 0 */? 'no-match' : 'match';
+    return res ==
+      "NoMatch" /*|| res.length == 0* || props.model.selection.length > 0 */
+      ? "no-match"
+      : "match";
   };
 
-  const result_matches_cls = (props: { model: Model; t: Transform })=> {
+  const result_matches_cls = (props: { model: Model; t: Transform }) => {
     //console.log('selection res:', props.model.selection);
-    const res = matches_at_path(props.model.stage, props.t.result, props.model.selection);
+    const res = matches_at_path(
+      props.model.stage,
+      props.t.result,
+      props.model.selection
+    );
     //console.log('res:', res);
-    return res == 'NoMatch' /*|| res.length == 0*|| props.model.selection.length > 0*/  ? 'no-match' : 'match';
+    return res ==
+      "NoMatch" /*|| res.length == 0*|| props.model.selection.length > 0*/
+      ? "no-match"
+      : "match";
   };
-  
+
   const transformNode = (e: Event) => {
     e.preventDefault();
     //e.stopPropagation();

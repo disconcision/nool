@@ -21,7 +21,10 @@ export type Action =
   | { t: "setSelect"; path: Path }
   | { t: "setHover"; target: HoverTarget }
   | { t: "flipTransform"; idx: number }
-  | { t: "setSetting"; action: Settings.Action };
+  | { t: "setSetting"; action: Settings.Action }
+  | { t: "cycleSelectKids"; direction: "up" | "down" }
+  | { t: "selectParent" }
+  | { t: "selectFirstChild" };
 
 export const sound = (model: Model, action: Action): void => {
   switch (action.t) {
@@ -67,6 +70,24 @@ export const update = (model: Model, action: Action): Model => {
         ...model,
         settings: Settings.update(model.settings, action.action),
       };
+    case "cycleSelectKids":
+      //TODO: robustify this
+      const old_path = [...model.selection].reverse();
+      if (old_path.length == 0) return model;
+      const [hd, ...tl] = old_path;
+      const new_hd = hd == 1 ? 2 : 2 ? 1 : hd;
+      const selection3 = [new_hd, ...tl].reverse();
+      return { ...model, selection: selection3 };
+    case "selectParent":
+      const path = model.selection;
+      const selection =
+        path.length == 0 ? path : path.slice(0, path.length - 1);
+      return { ...model, selection };
+    case "selectFirstChild":
+      //TODO: this goes too far. also not robust
+      const path2 = model.selection;
+      const selection2 = path2.concat([1]);
+      return { ...model, selection: selection2 };
   }
 };
 
@@ -74,6 +95,7 @@ const flipping = new Flipping({
   attribute: "data-flip-key",
   duration: 250,
   easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
+  //parent: document.getElementById("stage")!,
   //stagger: 1,
   //selector:  (_el:Element) => {return [_el]},
   //parent: this,
