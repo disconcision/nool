@@ -51,6 +51,41 @@ type MatchResult = Binding[] | "NoMatch";
 
 export type TransformResult = Exp.t | "NoMatch";
 
+let name_bindings = (bindings: Binding[]): NameBinding[] =>
+  bindings
+    .map((bind) => {
+      switch (bind.t) {
+        case "Val":
+          return [bind.val];
+        case "Ids":
+          return [];
+      }
+    })
+    .flat();
+
+/* Enforces linearity: Duplicate bindings must have the same value */
+let concat_bindings = (a: MatchResult, b: MatchResult): MatchResult => {
+  if (a === "NoMatch" || b === "NoMatch") return "NoMatch";
+  let a_names = name_bindings(a);
+  let b_contains_dupe_with_different_value = b.find(
+    (bind) =>
+      bind.t == "Val" &&
+      a_names.find(
+        ([name, exp]) => name == bind.val[0] && !Exp.equals(exp, bind.val[1])
+      )
+  );
+  if (b_contains_dupe_with_different_value) return "NoMatch";
+  // don't filter dupes, otherwise highlighting doesn't work. may want to firm this up later
+  return a.concat(b);
+};
+
+let kidsmatch = (pats: Pat[], exps: Exp.t[]): MatchResult => {
+  if (pats.length !== exps.length) return "NoMatch";
+  return zip(pats, exps)
+    .map(([p, t]) => matches(p, t))
+    .reduce(concat_bindings, []);
+};
+
 /* Try to match Exp with Pat at the root of Exp */
 export const matches = (pat: Pat, exp: Exp.t): MatchResult => {
   switch (pat.t) {
@@ -131,63 +166,29 @@ export const transform = (
   return result;
 };
 
-let name_bindings = (bindings: Binding[]): NameBinding[] =>
-  bindings
-    .map((bind) => {
-      switch (bind.t) {
-        case "Val":
-          return [bind.val];
-        case "Ids":
-          return [];
-      }
-    })
-    .flat();
-
-/* Enforces linearity: Duplicate bindings must have the same value */
-let concat_bindings = (a: MatchResult, b: MatchResult): MatchResult => {
-  if (a === "NoMatch" || b === "NoMatch") return "NoMatch";
-  let a_names = name_bindings(a);
-  let b_contains_dupe_with_different_value = b.find(
-    (bind) =>
-      bind.t == "Val" &&
-      a_names.find(
-        ([name, exp]) => name == bind.val[0] && !Exp.equals(exp, bind.val[1])
-      )
-  );
-  if (b_contains_dupe_with_different_value) return "NoMatch";
-  // don't filter dupes, otherwise highlighting doesn't work. may want to firm this up later
-  return a.concat(b);
-};
-
-let kidsmatch = (pats: Pat[], exps: Exp.t[]): MatchResult => {
-  if (pats.length !== exps.length) return "NoMatch";
-  return zip(pats, exps)
-    .map(([p, t]) => matches(p, t))
-    .reduce(concat_bindings, []);
-};
-
+/* Return first non-NoMatch result */
 let matchresult_map_or = (acc: MatchResult, b: MatchResult): MatchResult => {
-  if (acc === "NoMatch" || b === "NoMatch") return acc;
-  return acc.concat(b);
+  if (acc != "NoMatch") return acc;
+  else return b;
 };
 
-/* descend into tree to find exp node of certain id, and then try to match the pattern */
+/* Descend into tree to find exp node of id, and then try to match the pattern */
 export const matches_at_id = (
   exp: Exp.t,
   pat: Pat,
   id: number
 ): MatchResult => {
-  switch (exp.t) {
-    case "Atom":
-      return exp.id == id ? matches(pat, exp) : "NoMatch";
-    case "Comp":
-      if (exp.id == id) {
-        return matches(pat, exp);
-      } else {
+  if (exp.id == id) {
+    return matches(pat, exp);
+  } else {
+    switch (exp.t) {
+      case "Atom":
+        return "NoMatch";
+      case "Comp":
         return exp.kids
           .map((kid) => matches_at_id(kid, pat, id))
-          .reduce(matchresult_map_or, []);
-      }
+          .reduce(matchresult_map_or, "NoMatch");
+    }
   }
 };
 

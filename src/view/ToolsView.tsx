@@ -1,7 +1,7 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
-import { Pat } from "../syntax/Pat";
+import { Pat, matches_at_id } from "../syntax/Pat";
 import { HoverTarget, Model } from "../Model";
 import { Action, Inject } from "../Update";
 import { Transform, rev, do_at } from "../Transforms";
@@ -52,11 +52,21 @@ const TransformView: Component<{
   model: Model;
   inject: (_: Action) => void;
 }> = (props) => {
-  //uncommenting this seems to stop node movement animation for some reason??
-  /*const source_matches = matches_at_id(props.model.stage, props.t.source, props.model.selection.id);
-  const result_matches = matches_at_id(props.model.stage, props.t.result, props.model.selection.id);
-  const source_matches_cls = source_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';
-  const result_matches_cls = result_matches == 'NoMatch' || props.model.selection.id == -1 ? 'no-match' : 'match';*/
+
+  const source_matches_cls = (props:any) => {
+    console.log('selection id src:', props.model.selection.id);
+    const res = matches_at_id(props.model.stage, props.t.source, props.model.selection.id);
+    console.log('res:', res);
+    return res == 'NoMatch' /*|| res.length == 0*/ || props.model.selection.id < 0 ? 'no-match' : 'match';
+  };
+
+  const result_matches_cls = (props:any) => {
+    console.log('selection id res:', props.model.selection.id);
+    const res = matches_at_id(props.model.stage, props.t.result, props.model.selection.id);
+    console.log('res:', res);
+    return res == 'NoMatch' /*|| res.length == 0*/ || props.model.selection.id < 0 ? 'no-match' : 'match';
+  };
+  
   const transformNode = (e: Event) => {
     e.preventDefault();
     //e.stopPropagation();
@@ -101,7 +111,7 @@ const TransformView: Component<{
       <div class="label">{props.t.name}</div>
       <div class="transform">
         <div
-          class="source"
+          class={"source " + source_matches_cls(props)}
           onmouseenter={setHover({
             t: "TransformSource",
             pat: props.t.source,
@@ -118,7 +128,7 @@ const TransformView: Component<{
           </Switch>
         </div>
         <div
-          class="result"
+          class={"result " + result_matches_cls(props)}
           onmouseenter={setHover({
             t: "TransformResult",
             pat: props.t.result,

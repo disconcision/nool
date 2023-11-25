@@ -76,7 +76,7 @@ export const NodeExp: Component<{
       return (
         //data-flip-key={`flip-${node.id}`}
         <div
-          //data-flip-parent={`flip-${props.node.id}`}
+          data-flip-parent={`flip-${props.node.id}`}
           {...opts}
           class={`node comp ${is_selected(props) ? "selected" : ""} ${node_mask}`}
           // for granite style:

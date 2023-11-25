@@ -24,9 +24,16 @@ export type Action =
 export const sound = (model: Model, action: Action): void => {
   switch (action.t) {
     case "transformNode":
-      action.transform.sound();
+      let result = action.f(model.stage);
+      if (result != "NoMatch") {
+        return action.transform.sound();
+      } else {
+         Sound.noop();
+      }
+      break;
     case "setSelect":
       Sound.select();
+      break;
     case "setHover":
     case "flipTransform":
     case "setSetting":
