@@ -183,7 +183,8 @@ code {
 }
 
 .node.atom {
-  background-color: #ba65ff55;
+  /*background-color: #ba65ff55;*/
+  /*box-shadow: none*/
   color: white;
   width: fit-content;
   border-radius: 0.5em 1.3em 0.9em 0.9em;
@@ -200,13 +201,19 @@ code {
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
 
+.transform .source, .result {
+  transition: filter 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+
 /* balances out display of identity transform, mostly so
    clicking the arrow to reverse the transform doesn't
    end up moving the arrow */
-.source > .node.atom,
-.result > .node.atom { margin: 1.1em 0.5em 1.1em 1.8em; }
+.transform .source > .node.atom,
+.transform .result > .node.atom
+{ margin: 1.1em 0.5em 1.1em 1.8em; }
 
 .node {
+  transition: all 0.5s ease-in-out;
   width: fit-content;
   display: flex;
   border-radius: 3em 1.2em 0.6em 32%;
@@ -214,11 +221,14 @@ code {
   margin: 0.07em;
   align-items: center;
   box-shadow: 4px 4px 8px #773fcc40;
-  border-bottom: 0.3px solid rgba(13, 0, 95, 22);
-  border-top: 0.3px solid rgba(255, 255, 255, 66);
+  /*border-bottom: 0.3px solid rgba(13, 0, 95, 22);
+  border-top: 0.3px solid rgba(255, 255, 255, 66);*/
+  border-bottom: 0.3px solid rgb(45 93 111 / 18%);
+  border-top: 0.3px solid rgb(173 207 229 / 55%);
 }
 .node:hover {
   /*mix-blend-mode: color-dodge;*/
+  transform: scale(1.03);
   filter: brightness(1.1);
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);

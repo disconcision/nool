@@ -10,4 +10,5 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  assetsInclude: ['**/*.m4a', '**/*.wav'],
 });

@@ -39,6 +39,11 @@ export const sound = (model: Model, action: Action): void => {
     case "setSelect":
       Sound.select(action.path.length);
       break;
+    case "cycleSelectKids":
+    case "selectParent":
+    case "selectFirstChild":
+      Sound.select(model.selection.length);
+      break;
     case "setHover":
     case "flipTransform":
     case "setSetting":

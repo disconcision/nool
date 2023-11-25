@@ -75,7 +75,6 @@ export const NodeExp: Component<{
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
-        //data-flip-key={`flip-${node.id}`}
         <div
           //data-flip-parent={`flip-${props.node.id}`}
           {...opts}

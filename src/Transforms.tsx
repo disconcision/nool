@@ -54,28 +54,28 @@ export const commute_plus: Transform = {
   name: "⇿",
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
   result: p_comp_id(-2, [plus_1, var_b, var_a]),
-  sound: Sound.mk("F2", "8n"),
+  sound: Sound.sfx("tiup"), //Sound.mk("F2", "8n"),
 };
 
 export const associate_plus: Transform = {
   name: "⥂",
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
-  sound: Sound.mk("D2", "8n"),
+  sound: Sound.sfx("shwoph") //Sound.mk("D2", "8n"),
 };
 
 export const identity_plus: Transform = {
   name: "⟲",
   source: var_a,
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
-  sound: Sound.mk("A2", "8n"),
+  sound: Sound.sfx("chchiu"), //Sound.mk("A2", "8n"),
 };
 
 export const inverse_plus: Transform = {
   name: "⇿",
   source: plus_x(var_a, neg_x(var_a)),
   result: p_const("🌑"),
-  sound: Sound.mk("C3", "8n"),
+  sound: Sound.sfx("klohk"), //Sound.mk("C3", "8n"),
 };
 
 export const transforms: Transform[] = [
