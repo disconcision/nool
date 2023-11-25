@@ -29,7 +29,7 @@ export const sound = (model: Model, action: Action): void => {
       if (result != "NoMatch") {
         return action.transform.sound();
       } else {
-         Sound.noop();
+        Sound.noop();
       }
       break;
     case "setSelect":
@@ -47,14 +47,21 @@ export const update = (model: Model, action: Action): Model => {
     case "transformNode":
       let result = action.f(model.stage);
       if (result != "NoMatch") {
-        //console.log("info:", Statics.mk(result));
-        return { ...model, info: Statics.mk(result),
-          stage: result };
+        console.log("info:", Statics.mk(result));
+        return { ...model, info: Statics.mk(result), stage: result };
       } else {
         return model;
       }
     case "setSelect":
-      return { ...model, selection: { id: action.id } };
+      console.log("id:", action.id);
+      const getted_path = (model.info.get(action.id))?.path;
+      if (getted_path == undefined) {
+        console.log("Error: Update: undefined path");
+        return model;
+      } else {
+        //console.log("getted_path:", getted_path);
+      //console.log("path:", getted_path);
+      return { ...model, selection: getted_path };}
     case "setHover":
       return { ...model, hover: action.target };
     case "flipTransform":

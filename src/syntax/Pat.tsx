@@ -1,5 +1,5 @@
 import { zip } from "../Util";
-import { Node, new_id } from "./Node";
+import { Node, Path, new_id } from "./Node";
 import * as Exp from "./Exp";
 
 export type Symbol = { t: "Var"; name: string } | { t: "Const"; name: string };
@@ -192,6 +192,24 @@ export const matches_at_id = (
   }
 };
 
+export const matches_at_path = (
+  exp: Exp.t,
+  pat: Pat,
+  path: Path
+): MatchResult => {
+  if (path.length === 0) {
+    return matches(pat, exp);
+  } else {
+    let [hd, ...tl] = path;
+    switch (exp.t) {
+      case "Atom":
+        return "NoMatch";
+      case "Comp":
+        return matches_at_path(exp.kids[hd], pat, tl);
+    }
+  }
+};
+
 let map_or = (
   acc: Exp.t[] | "NoMatch",
   b: TransformResult
@@ -219,5 +237,36 @@ export const transform_at_id = (
           .reduce(map_or, []);
         return kids === "NoMatch" ? "NoMatch" : { ...exp, kids };
       }
+  }
+};
+
+export const transform_at_path = (
+  exp: Exp.t,
+  pat: Pat,
+  template: Pat,
+  path: Path
+): TransformResult => {
+  if (path.length === 0) {
+    return transform(exp, pat, template);
+  } else {
+    let [hd, ...tl] = path;
+    switch (exp.t) {
+      case "Atom":
+        return "NoMatch";
+      case "Comp":
+        //TODO: cleanup...
+        const res = transform_at_path(exp.kids[hd], pat, template, tl);
+        if (res === "NoMatch") return "NoMatch";
+        let kids = exp.kids
+          .map((kid, index) => {
+            if (index === hd) {
+              const res = transform_at_path(kid, pat, template, tl);
+              if (res === "NoMatch") return kid;
+              else return res;
+            } else return kid;
+            })
+        return { ...exp, kids };
+      
+    }
   }
 };

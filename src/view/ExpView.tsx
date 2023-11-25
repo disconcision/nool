@@ -5,6 +5,7 @@ import { Binding } from "../syntax/Pat";
 import { Exp } from "../syntax/Exp";
 import { Model } from "../Model";
 import { Inject } from "../Update";
+import { path_eq } from "../syntax/Node";
 
 const node_mask_cls = (id: number, mask: Binding[]): string => {
   const binding = mask.find(
@@ -32,7 +33,27 @@ export const NodeExp: Component<{
   /* TODO: figure out why below has to be a function. if it's not,
      then the stage doesn't get redrawn after selects other than
      the first one. this only started occuring after the previous commits */
-  let is_selected = (props:any) => props.node.id == props.model.selection.id;
+  const is_selected = (props: { node: Exp; model: Model }): boolean => {
+    let getted_path = props.model.info.get(props.node.id)?.path;
+    if (getted_path == undefined) {
+      console.log("Error: Update: undefined path");
+      return false;
+    } else {
+      console.log("props.node.id:", props.node.id);
+      console.log("is_selected: selection:", Array.from(props.model.selection));
+      console.log(
+        "is_selected: getted_path:",
+        Array.from(getted_path) 
+      );
+      console.log(
+        "is_selected: selection == path:",
+        Array.from(props.model.selection) == Array.from(getted_path) 
+      );
+      return path_eq(getted_path,props.model.selection);
+    }
+  };
+
+  //props.node.id === props.model.selection.id;
   const node_mask = node_mask_cls(props.node.id, props.mask);
   //const yolo = new Rand(`${props.node.id}`);
   switch (props.node.t) {
@@ -78,7 +99,9 @@ export const NodeExp: Component<{
         <div
           data-flip-parent={`flip-${props.node.id}`}
           {...opts}
-          class={`node comp ${is_selected(props) ? "selected" : ""} ${node_mask}`}
+          class={`node comp ${
+            is_selected(props) ? "selected" : ""
+          } ${node_mask}`}
           // for granite style:
           /*style={`background-position: ${Math.floor(yolo.next() * 10)}0% 77.8%;`}*/
           onpointerdown={setSelect(props.node.id)}

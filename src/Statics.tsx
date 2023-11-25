@@ -18,7 +18,7 @@ export const mk = (exp: Exp.t): InfoMap => {
     map.set(id, info);
     switch (exp.t) {
       case "Comp":
-        exp.kids.forEach((kid) => visit(kid, [...path, id]));
+        exp.kids.forEach((kid, index) => visit(kid, [...path, index]));
         break;
       case "Atom":
         // No operation for Atom case so far

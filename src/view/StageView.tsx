@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
-import { Binding, matches_at_id } from "../syntax/Pat";
+import { Binding, matches_at_path } from "../syntax/Pat";
 import { Model } from "../Model";
 import { Action } from "../Update";
 import { AdjacentPossible } from "./PreView";
@@ -14,17 +14,17 @@ const get_hover_binding = (model: Model): Binding[] => {
     case "StageNode":
       return [];
     case "TransformSource":
-      const rs = matches_at_id(
+      const rs = matches_at_path(
         model.stage,
         model.hover.pat,
-        model.selection.id
+        model.selection
       );
       return rs == "NoMatch" ? [] : rs;
     case "TransformResult":
-      const rr = matches_at_id(
+      const rr = matches_at_path(
         model.stage,
         model.hover.pat,
-        model.selection.id
+        model.selection
       );
       return rr == "NoMatch" ? [] : rr;
   }
@@ -40,7 +40,7 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
     <div id="stage">
       {SettingsView({ model: props.model, inject: props.inject })}
       <div id="debug" style="display:none">
-        <div>selection.id: {props.model.selection.id}</div>
+        <div>selection.path: {props.model.selection}</div>
       </div>
       <div class="node-container">
         {NodeExp({

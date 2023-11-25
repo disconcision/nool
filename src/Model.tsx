@@ -3,6 +3,7 @@ import { Exp, atom, comp } from "./syntax/Exp";
 import { Transform, transforms, transforms_directed } from "./Transforms";
 import * as Settings from "./Settings";
 import * as Statics from "./Statics";
+import * as Node from "./syntax/Node";
 
 export type Id = number;
 
@@ -12,14 +13,10 @@ export type HoverTarget =
   | { t: "TransformSource"; pat: Pat }
   | { t: "TransformResult"; pat: Pat };
 
-type Selection = {
-  id: Id;
-};
-
 export type Model = {
   stage: Exp;
   info: Statics.InfoMap;
-  selection: Selection;
+  selection: Node.Path;
   hover: HoverTarget;
   transforms: Transform[];
   transforms_directed: Transform[];
@@ -57,9 +54,11 @@ const _stage2: Exp = comp([
 export const init_model: Model = {
   stage: stage,
   info: Statics.mk(stage),
-  selection: { id: -1 },
+  selection: [],
   hover: { t: "NoHover" },
   transforms: transforms,
   transforms_directed: transforms_directed,
   settings: Settings.init,
 };
+
+console.log("info: init:", Statics.mk(stage));

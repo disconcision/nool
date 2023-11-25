@@ -1,10 +1,10 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
-import { Pat, matches_at_id } from "../syntax/Pat";
+import { Pat, matches_at_path } from "../syntax/Pat";
 import { HoverTarget, Model } from "../Model";
 import { Action, Inject } from "../Update";
-import { Transform, rev, do_at } from "../Transforms";
+import { Transform, rev, do_at_path } from "../Transforms";
  
 export const Toolbar: Component<{ model: Model; inject: Inject }> = (props) => {
   return (
@@ -53,18 +53,18 @@ const TransformView: Component<{
   inject: (_: Action) => void;
 }> = (props) => {
 
-  const source_matches_cls = (props:any) => {
-    console.log('selection id src:', props.model.selection.id);
-    const res = matches_at_id(props.model.stage, props.t.source, props.model.selection.id);
+  const source_matches_cls = (props: { model: Model; t: Transform }) => {
+    console.log('selection src:', props.model.selection);
+    const res = matches_at_path(props.model.stage, props.t.source, props.model.selection);
     console.log('res:', res);
-    return res == 'NoMatch' /*|| res.length == 0*/ || props.model.selection.id < 0 ? 'no-match' : 'match';
+    return res == 'NoMatch' /*|| res.length == 0* || props.model.selection.length > 0 */? 'no-match' : 'match';
   };
 
-  const result_matches_cls = (props:any) => {
-    console.log('selection id res:', props.model.selection.id);
-    const res = matches_at_id(props.model.stage, props.t.result, props.model.selection.id);
+  const result_matches_cls = (props: { model: Model; t: Transform })=> {
+    console.log('selection res:', props.model.selection);
+    const res = matches_at_path(props.model.stage, props.t.result, props.model.selection);
     console.log('res:', res);
-    return res == 'NoMatch' /*|| res.length == 0*/ || props.model.selection.id < 0 ? 'no-match' : 'match';
+    return res == 'NoMatch' /*|| res.length == 0*|| props.model.selection.length > 0*/  ? 'no-match' : 'match';
   };
   
   const transformNode = (e: Event) => {
@@ -77,7 +77,7 @@ const TransformView: Component<{
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
-      f: do_at(props.t, props.model.selection.id),
+      f: do_at_path(props.t, props.model.selection),
     });
   };
   const transformNodeReverse = (e: Event) => {
@@ -90,7 +90,7 @@ const TransformView: Component<{
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
-      f: do_at(rev(props.t), props.model.selection.id),
+      f: do_at_path(rev(props.t), props.model.selection),
     });
   };
   const setHover = (target: HoverTarget) => (_: Event) =>

@@ -2,6 +2,7 @@ import {
   Pat,
   TransformResult,
   transform_at_id,
+  transform_at_path,
   p_var,
   p_const,
   p_comp,
@@ -9,6 +10,7 @@ import {
   p_const_id,
 } from "./syntax/Pat";
 import { Exp } from "./syntax/Exp";
+import * as Node from "./syntax/Node";
 import * as Sound from "./Sound";
 
 export type Transform = {
@@ -29,6 +31,11 @@ export const do_at =
   ({ source, result }: Transform, id: number) =>
   (exp: Exp): TransformResult =>
     transform_at_id(exp, source, result, id);
+
+export const do_at_path =
+  ({ source, result }: Transform, path: Node.Path) =>
+  (exp: Exp): TransformResult =>
+    transform_at_path(exp, source, result, path);
 
 const var_a = p_var("♫");
 const var_b = p_var("♥");

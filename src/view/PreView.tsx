@@ -52,7 +52,7 @@ export const AdjacentPossible: Component<{ model: Model; inject: Inject }> = (
     <div
       class="previews"
       style={
-        props.model.selection.id == -1 ? "display: none;" : "display: flex;"
+        props.model.selection.length === 0 ? "display: none;" : "display: flex;"
       }
     >
       <For each={props.model.transforms_directed}>
@@ -60,7 +60,7 @@ export const AdjacentPossible: Component<{ model: Model; inject: Inject }> = (
           Preview({
             node: props.model.stage,
             t,
-            indicated: props.model.selection.id,
+            indicated: -1, //TODO: update to paths
             inject: (_) => {},
           })
         }
