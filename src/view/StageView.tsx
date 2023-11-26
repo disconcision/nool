@@ -38,16 +38,18 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
           path: props.model.selection,
           mask: get_hover_binding(props.model),
           node: props.model.stage,
-          is_head: false,
           inject: props.inject,
+          is_head: false,
           animate: true,
         })}
-        {props.model.settings.preview ? AdjacentPossible({
-          path: props.model.selection,
-          stage: props.model.stage,
-          model: props.model,
-          inject: props.inject,
-        }) : null}
+        {props.model.settings.preview
+          ? AdjacentPossible({
+              path: props.model.selection,
+              stage: props.model.stage,
+              transforms: props.model.transforms,
+              inject: props.inject,
+            })
+          : null}
       </div>
     </div>
   );
