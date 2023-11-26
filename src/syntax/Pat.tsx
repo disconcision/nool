@@ -1,32 +1,25 @@
 import { zip } from "../Util";
-import { Node, Path, new_id } from "./Node";
+import * as Node from "./Node";
 import * as Exp from "./Exp";
+import * as ID from "./ID";
+import * as Path from "./Path";
 
 export type Symbol = { t: "Var"; name: string } | { t: "Const"; name: string };
 
-export type Pat = Node<Symbol>;
+export type Pat = Node.t<Symbol>;
 
-export const p_const_id = (id: number, name: string): Pat => ({
-  t: "Atom",
-  id,
-  sym: { t: "Const", name },
-});
+export const p_const_id = (id: number, name: string): Pat =>
+  Node.atom_id({ t: "Const", name }, id);
 
-export const p_var_id = (id: number, name: string): Pat => ({
-  t: "Atom",
-  id,
-  sym: { t: "Var", name },
-});
+export const p_var_id = (id: number, name: string): Pat =>
+  Node.atom_id({ t: "Var", name }, id);
 
-export const p_comp_id = (id: number, kids: Pat[]): Pat => ({
-  t: "Comp",
-  id,
-  kids,
-});
+export const p_comp_id = (id: number, kids: Pat[]): Pat =>
+  Node.comp_id(kids, id);
 
-export const p_const = (name: string): Pat => p_const_id(new_id(), name);
-export const p_var = (name: string): Pat => p_var_id(new_id(), name);
-export const p_comp = (kids: Pat[]): Pat => p_comp_id(new_id(), kids);
+export const p_const = (name: string): Pat => p_const_id(ID.mk(), name);
+export const p_var = (name: string): Pat => p_var_id(ID.mk(), name);
+export const p_comp = (kids: Pat[]): Pat => p_comp_id(ID.mk(), kids);
 
 type NameBinding = [string, Exp.t];
 
@@ -36,22 +29,22 @@ export type Binding =
   | { t: "Val"; ids: IdBinding; val: NameBinding }
   | { t: "Ids"; ids: IdBinding };
 
-let val = (id1: number, id2: number, name: string, exp: Exp.t): Binding => ({
+type MatchResult = Binding[] | "NoMatch";
+
+export type TransformResult = Exp.t | "NoMatch";
+
+export const val = (id1: number, id2: number, name: string, exp: Exp.t): Binding => ({
   t: "Val",
   val: [name, exp],
   ids: [id1, id2],
 });
 
-let ids = (id1: number, id2: number): Binding => ({
+const ids = (id1: number, id2: number): Binding => ({
   t: "Ids",
   ids: [id1, id2],
 });
 
-type MatchResult = Binding[] | "NoMatch";
-
-export type TransformResult = Exp.t | "NoMatch";
-
-let name_bindings = (bindings: Binding[]): NameBinding[] =>
+const name_bindings = (bindings: Binding[]): NameBinding[] =>
   bindings
     .map((bind) => {
       switch (bind.t) {
@@ -63,23 +56,23 @@ let name_bindings = (bindings: Binding[]): NameBinding[] =>
     })
     .flat();
 
-/* Enforces linearity: Duplicate bindings must have the same value */
-let concat_bindings = (a: MatchResult, b: MatchResult): MatchResult => {
+/* Enforces linearity: Duplicate bindings must have the same value.
+   Leaves duplicates intact as they are used for highlighting. */
+const concat_bindings = (a: MatchResult, b: MatchResult): MatchResult => {
   if (a === "NoMatch" || b === "NoMatch") return "NoMatch";
   let a_names = name_bindings(a);
-  let b_contains_dupe_with_different_value = b.find(
+  let b_has_different_valud_dupe = b.find(
     (bind) =>
       bind.t == "Val" &&
       a_names.find(
         ([name, exp]) => name == bind.val[0] && !Exp.equals(exp, bind.val[1])
       )
   );
-  if (b_contains_dupe_with_different_value) return "NoMatch";
-  // don't filter dupes, otherwise highlighting doesn't work. may want to firm this up later
+  if (b_has_different_valud_dupe) return "NoMatch";
   return a.concat(b);
 };
 
-let kidsmatch = (pats: Pat[], exps: Exp.t[]): MatchResult => {
+const kidsmatch = (pats: Pat[], exps: Exp.t[]): MatchResult => {
   if (pats.length !== exps.length) return "NoMatch";
   return zip(pats, exps)
     .map(([p, t]) => matches(p, t))
@@ -90,21 +83,18 @@ let kidsmatch = (pats: Pat[], exps: Exp.t[]): MatchResult => {
 export const matches = (pat: Pat, exp: Exp.t): MatchResult => {
   switch (pat.t) {
     case "Atom":
-      {
-        switch (pat.sym.t) {
-          case "Var":
-            return [val(pat.id, exp.id, pat.sym.name, exp)];
-          case "Const": {
-            switch (exp.t) {
-              case "Atom":
-                return pat.sym.name == exp.sym
-                  ? [ids(pat.id, exp.id)]
-                  : "NoMatch";
-              case "Comp":
-                return "NoMatch";
-            }
+      switch (pat.sym.t) {
+        case "Var":
+          return [val(pat.id, exp.id, pat.sym.name, exp)];
+        case "Const":
+          switch (exp.t) {
+            case "Atom":
+              return pat.sym.name == exp.sym
+                ? [ids(pat.id, exp.id)]
+                : "NoMatch";
+            case "Comp":
+              return "NoMatch";
           }
-        }
       }
       break;
     case "Comp": {
@@ -121,7 +111,7 @@ export const matches = (pat: Pat, exp: Exp.t): MatchResult => {
 };
 
 const var_hydrate = (bindings: Binding[], pat_name: string): Exp.t => {
-  let binding = bindings.find(
+  const binding = bindings.find(
     (guy) => guy.t == "Val" && guy.val[0] == pat_name
   );
   if (binding && binding.t == "Val") return binding.val[1];
@@ -129,11 +119,11 @@ const var_hydrate = (bindings: Binding[], pat_name: string): Exp.t => {
 };
 
 const ids_hydrate = (bindings: Binding[], pat_id: number): number => {
-  let binding = bindings.find(
+  const binding = bindings.find(
     ({ ids: [id, _], t }) => id == pat_id && t == "Ids"
   );
   if (binding && binding.t == "Ids") return binding.ids[1];
-  else return new_id(); //TODO: error instead?
+  else return ID.mk(); //TODO: error instead?
 };
 
 /* Recursively substitute the provided bindings into the Pat template */
@@ -187,7 +177,7 @@ export const matches_at_id = (
       case "Comp":
         return exp.kids
           .map((kid) => matches_at_id(kid, pat, id))
-          .reduce(matchresult_map_or, "NoMatch");
+          .reduce((acc, b) => (acc != "NoMatch" ? acc : b), "NoMatch");
     }
   }
 };
@@ -195,7 +185,7 @@ export const matches_at_id = (
 export const matches_at_path = (
   exp: Exp.t,
   pat: Pat,
-  path: Path
+  path: Path.t
 ): MatchResult => {
   if (path.length === 0) {
     return matches(pat, exp);
@@ -244,7 +234,7 @@ export const transform_at_path = (
   exp: Exp.t,
   pat: Pat,
   template: Pat,
-  path: Path
+  path: Path.t
 ): TransformResult => {
   if (path.length === 0) {
     return transform(exp, pat, template);
@@ -257,16 +247,14 @@ export const transform_at_path = (
         //TODO: cleanup...
         const res = transform_at_path(exp.kids[hd], pat, template, tl);
         if (res === "NoMatch") return "NoMatch";
-        let kids = exp.kids
-          .map((kid, index) => {
-            if (index === hd) {
-              const res = transform_at_path(kid, pat, template, tl);
-              if (res === "NoMatch") return kid;
-              else return res;
-            } else return kid;
-            })
+        let kids = exp.kids.map((kid, index) => {
+          if (index === hd) {
+            const res = transform_at_path(kid, pat, template, tl);
+            if (res === "NoMatch") return kid;
+            else return res;
+          } else return kid;
+        });
         return { ...exp, kids };
-      
     }
   }
 };

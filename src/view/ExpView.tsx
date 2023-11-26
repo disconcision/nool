@@ -3,9 +3,8 @@ import { For, Show } from "solid-js";
 //import Rand from "rand-seed";
 import { Binding } from "../syntax/Pat";
 import { Exp } from "../syntax/Exp";
-import { Model } from "../Model";
 import { Inject } from "../Update";
-import { path_eq } from "../syntax/Node";
+import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
 
 const node_mask_cls = (id: number, mask: Binding[]): string => {
@@ -17,7 +16,8 @@ const node_mask_cls = (id: number, mask: Binding[]): string => {
 
 export const NodeExp: Component<{
   node: Exp;
-  model: Model;
+  info: Statics.InfoMap;
+  path: Path.t;
   animate: boolean;
   is_head: boolean;
   inject: Inject;
@@ -29,12 +29,16 @@ export const NodeExp: Component<{
     e.stopPropagation();
     props.inject({
       t: "setSelect",
-      path: Statics.get(props.model.info, id).path,
+      path: Statics.get(props.info, id).path,
     });
   };
-  const is_selected = (props: { node: Exp; model: Model }): boolean => {
-    let node_path = Statics.get(props.model.info, props.node.id).path;
-    return path_eq(node_path, props.model.selection);
+  const is_selected = (props: {
+    node: Exp;
+    info: Statics.InfoMap;
+    path: Path.t;
+  }): boolean => {
+    let node_path = Statics.get(props.info, props.node.id).path;
+    return Path.eq(node_path, props.path);
   };
   const node_mask = node_mask_cls(props.node.id, props.mask);
   //const yolo = new Rand(`${props.node.id}`);
@@ -87,7 +91,8 @@ export const NodeExp: Component<{
         >
           <div class="id-view">{props.node.id}</div>
           <NodeExp
-            model={props.model}
+            info={props.info}
+            path={props.path}
             node={props.node.kids[0]}
             animate={props.animate}
             is_head={true}
@@ -98,7 +103,8 @@ export const NodeExp: Component<{
             <For each={props.node.kids.slice(1)}>
               {(kid) => (
                 <NodeExp
-                  model={props.model}
+                  info={props.info}
+                  path={props.path}
                   node={kid}
                   animate={props.animate}
                   is_head={false}
@@ -112,3 +118,16 @@ export const NodeExp: Component<{
       );
   }
 };
+
+export const ViewOnly: Component<{
+  node: Exp;
+}> = (props) =>
+  NodeExp({
+    info: Statics.mk(props.node),
+    path: [],
+    node: props.node,
+    animate: false,
+    is_head: false,
+    inject: (_) => {},
+    mask: [],
+  });

@@ -34,7 +34,8 @@ export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
       </div>
       <div class="node-container">
         {NodeExp({
-          model: props.model,
+          info: props.model.info,
+          path: props.model.selection,
           mask: get_hover_binding(props.model),
           node: props.model.stage,
           is_head: false,

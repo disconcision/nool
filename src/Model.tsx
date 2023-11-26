@@ -1,9 +1,9 @@
 import { Pat } from "./syntax/Pat";
 import { Exp, atom, comp } from "./syntax/Exp";
-import { Transform, transforms, transforms_directed } from "./Transforms";
+import { Transform, transforms } from "./Transforms";
 import * as Settings from "./Settings";
 import * as Statics from "./Statics";
-import * as Node from "./syntax/Node";
+import * as Path from "./syntax/Path";
 
 export type Id = number;
 
@@ -13,17 +13,25 @@ export type HoverTarget =
   | { t: "TransformSource"; pat: Pat }
   | { t: "TransformResult"; pat: Pat };
 
+
+//TODO:
+type Stage = {
+  exp: Exp;
+  selection: Path.t;
+  info: Statics.InfoMap;
+  //project: Projectors.Map
+};
+
 export type Model = {
   stage: Exp;
   info: Statics.InfoMap;
-  selection: Node.Path;
+  selection: Path.t;
   hover: HoverTarget;
   transforms: Transform[];
-  transforms_directed: Transform[];
   settings: Settings.t;
 };
 
-// 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕
+// 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕 0️⃣
 
 const stage: Exp = comp([
   atom("➕"),
@@ -39,25 +47,12 @@ const stage: Exp = comp([
   ]),
 ]);
 
-const _stage1: Exp = comp([
-  atom("➕"),
-  atom("🌕"),
-  comp([atom("➕"), comp([atom("✖️"), atom("🌘"), atom("🌕")]), atom("🌘")]),
-]);
-
-const _stage2: Exp = comp([
-  atom("➕"),
-  atom("🐝"),
-  comp([atom("➕"), atom("🌸"), atom("🍄")]),
-]);
-
 export const init_model: Model = {
   stage: stage,
   info: Statics.mk(stage),
   selection: [],
   hover: { t: "NoHover" },
   transforms: transforms,
-  transforms_directed: transforms_directed,
   settings: Settings.init,
 };
 

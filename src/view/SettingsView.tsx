@@ -2,13 +2,14 @@ import { Component } from "solid-js";
 import { Model } from "../Model";
 import { Action, Inject } from "../Update";
 import * as Settings from "../Settings";
-import sound_icon_on from "../assets/sound-on.svg";
-import sound_icon_off from "../assets/sound-off.svg";
-import motion_on from "../assets/motion-on.svg";
-import motion_off from "../assets/motion-off.svg";
-import motion_half from "../assets/motion-half.svg";
-import preview_on from "../assets/eye-open.svg";
-import preview_off from "../assets/eye-closed.svg";
+import sound_icon_on from "../assets/icons/sound-on.svg";
+import sound_icon_off from "../assets/icons/sound-off.svg";
+import motion_on from "../assets/icons/motion-on.svg";
+import motion_off from "../assets/icons/motion-off.svg";
+import motion_half from "../assets/icons/motion-half.svg";
+import preview_on from "../assets/icons/eye-open.svg";
+import preview_off from "../assets/icons/eye-closed.svg";
+import qr_code from "../assets/icons/qr-code.svg";
 
 const setSetting = (inject: Inject, action: Settings.Action) => (e: Event) => {
   e.preventDefault();

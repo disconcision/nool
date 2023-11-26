@@ -1,9 +1,9 @@
 import { TransformResult } from "./syntax/Pat";
-import { Transform } from "./Transforms";
-import { Path } from "./syntax/Node";
-import { Exp } from "./syntax/Exp";
-import { Model, Id, HoverTarget } from "./Model";
-import { flip_at_index, do_at_path } from "./Transforms";
+import { Transform, rev } from "./Transforms";
+import * as Path from "./syntax/Path";
+import * as Exp from "./syntax/Exp";
+import { Model, HoverTarget } from "./Model";
+import { do_at_path } from "./Transforms";
 import Flipping from "flipping/lib/adapters/web";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
@@ -16,9 +16,9 @@ export type Action =
       t: "transformNode";
       idx: number;
       transform: Transform;
-      f: (_: Exp) => TransformResult;
+      f: (_: Exp.t) => TransformResult;
     }
-  | { t: "setSelect"; path: Path }
+  | { t: "setSelect"; path: Path.t }
   | { t: "setHover"; target: HoverTarget }
   | { t: "flipTransform"; idx: number }
   | { t: "setSetting"; action: Settings.Action }
@@ -54,6 +54,9 @@ export const sound = (model: Model, action: Action): void => {
       undefined;
   }
 };
+
+const flip_at_index = (ts: Transform[], index: number): Transform[] =>
+  ts.map((t, i) => (i === index ? rev(t) : t));
 
 export const update = (model: Model, action: Action): Model => {
   switch (action.t) {
@@ -99,13 +102,10 @@ export const update = (model: Model, action: Action): Model => {
       return { ...model, selection: selection2 };
     case "applyTransform":
       if (action.idx < 0 || action.idx >= model.transforms.length) return model;
-      let transform =  model.transforms[action.idx];
-      let result2 = do_at_path(
-       transform,
-        model.selection
-      )(model.stage);
+      let transform = model.transforms[action.idx];
+      let result2 = do_at_path(transform, model.selection)(model.stage);
       if (result2 != "NoMatch") {
-        transform.sound();
+        transform.sound(); //TODO
         return { ...model, info: Statics.mk(result2), stage: result2 };
       } else {
         return model;

@@ -10,7 +10,7 @@ import {
   p_const_id,
 } from "./syntax/Pat";
 import { Exp } from "./syntax/Exp";
-import * as Node from "./syntax/Node";
+import * as Path from "./syntax/Path";
 import * as Sound from "./Sound";
 
 export type Transform = {
@@ -31,13 +31,13 @@ export const rev = (t: Transform): Transform => ({
   reversed: !t.reversed,
 });
 
-export const do_at =
+const do_at =
   ({ source, result }: Transform, id: number) =>
   (exp: Exp): TransformResult =>
     transform_at_id(exp, source, result, id);
 
 export const do_at_path =
-  ({ source, result }: Transform, path: Node.Path) =>
+  ({ source, result }: Transform, path: Path.t) =>
   (exp: Exp): TransformResult =>
     transform_at_path(exp, source, result, path);
 
@@ -75,7 +75,7 @@ export const associate_plus: Transform = {
 export const identity_plus: Transform = {
   name: "⟲",
   source: var_a,
-  result: p_comp([p_const("➕"), p_const("🌑"), var_a]), //0️⃣
+  result: p_comp([p_const("➕"), p_const("🌑"), var_a]),
   sound: Sound.sfx("chchiu"), //Sound.mk("A2", "8n"),
   sound_rev: Sound.sfx_reverse("chchiu"),
   reversed: false,
@@ -96,16 +96,3 @@ export const transforms: Transform[] = [
   associate_plus,
   inverse_plus,
 ];
-
-export const transforms_directed: Transform[] = [
-  commute_plus,
-  associate_plus,
-  rev(associate_plus),
-  identity_plus,
-  rev(identity_plus),
-  inverse_plus,
-  rev(inverse_plus),
-];
-
-export const flip_at_index = (ts: Transform[], index: number): Transform[] =>
-  ts.map((t, i) => (i === index ? rev(t) : t));
