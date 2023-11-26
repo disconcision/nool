@@ -4,7 +4,7 @@ import { Path } from "./syntax/Node";
 import { Exp } from "./syntax/Exp";
 import { Model, Id, HoverTarget } from "./Model";
 import { flip_at_index, do_at_path } from "./Transforms";
-import Flipping from "flipping/src/adapters/web";
+import Flipping from "flipping/lib/adapters/web";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
 import * as Statics from "./Statics";
