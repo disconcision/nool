@@ -1,45 +1,15 @@
 import {
   Pat,
-  TransformResult,
-  transform_at_id,
-  transform_at_path,
   p_var,
   p_const,
   p_comp,
   p_comp_id,
   p_const_id,
 } from "./syntax/Pat";
-import { Exp } from "./syntax/Exp";
-import * as Path from "./syntax/Path";
 import * as Sound from "./Sound";
+import * as Transform from "./Transform";
 
-export type Transform = {
-  name: string;
-  source: Pat;
-  result: Pat;
-  sound: () => void;
-  sound_rev: () => void;
-  reversed: boolean;
-};
-
-export const rev = (t: Transform): Transform => ({
-  name: t.name,
-  source: t.result,
-  result: t.source,
-  sound: t.sound,
-  sound_rev: t.sound_rev,
-  reversed: !t.reversed,
-});
-
-const do_at =
-  ({ source, result }: Transform, id: number) =>
-  (exp: Exp): TransformResult =>
-    transform_at_id(exp, source, result, id);
-
-export const do_at_path =
-  ({ source, result }: Transform, path: Path.t) =>
-  (exp: Exp): TransformResult =>
-    transform_at_path(exp, source, result, path);
+export type t = Transform.t[];
 
 const var_a = p_var("♫");
 const var_b = p_var("♥");
@@ -54,7 +24,7 @@ const plus_y = (a: Pat, b: Pat) =>
 const neg_1 = p_const_id(-60, "➖");
 const neg_x = (a: Pat) => p_comp_id(-40, [neg_1, a]);
 
-export const commute_plus: Transform = {
+export const commute_plus: Transform.t = {
   name: "⇿",
   source: p_comp_id(-2, [plus_1, var_a, var_b]),
   result: p_comp_id(-2, [plus_1, var_b, var_a]),
@@ -63,7 +33,7 @@ export const commute_plus: Transform = {
   reversed: false,
 };
 
-export const associate_plus: Transform = {
+export const associate_plus: Transform.t = {
   name: "⥂",
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
@@ -72,7 +42,7 @@ export const associate_plus: Transform = {
   reversed: false,
 };
 
-export const identity_plus: Transform = {
+export const identity_plus: Transform.t = {
   name: "⟲",
   source: var_a,
   result: p_comp([p_const("➕"), p_const("🌑"), var_a]),
@@ -81,7 +51,7 @@ export const identity_plus: Transform = {
   reversed: false,
 };
 
-export const inverse_plus: Transform = {
+export const inverse_plus: Transform.t = {
   name: "⇿",
   source: plus_x(var_a, neg_x(var_a)),
   result: p_const("🌑"),
@@ -90,7 +60,7 @@ export const inverse_plus: Transform = {
   reversed: false,
 };
 
-export const transforms: Transform[] = [
+export const init: t = [
   identity_plus,
   commute_plus,
   associate_plus,

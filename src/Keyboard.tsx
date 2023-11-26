@@ -1,10 +1,8 @@
-import { Inject } from "./Update";
+import * as Action from "./Action";
 
-export const keydown = (inject: Inject) => (event: KeyboardEvent) => {
-  const keyName = event.key;
-  
+export const keydown = (inject: Action.Inject) => (event: KeyboardEvent) => {
   //console.log("keydown:" + keyName);
-  switch (keyName) {
+  switch (event.key) {
     case "ArrowLeft":
       inject({ t: "selectParent" });
       break;
@@ -32,9 +30,8 @@ export const keydown = (inject: Inject) => (event: KeyboardEvent) => {
   }
 };
 
-export const keyup = (_inject: Inject) => (event: KeyboardEvent) => {
-  const keyName = event.key;
+export const keyup = (_inject: Action.Inject) => (event: KeyboardEvent) => {
   //console.log("keyup:" + keyName);
-  switch (keyName) {
+  switch (event.key) {
   }
 };

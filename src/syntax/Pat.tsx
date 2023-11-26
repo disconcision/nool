@@ -7,6 +7,7 @@ import * as Path from "./Path";
 export type Symbol = { t: "Var"; name: string } | { t: "Const"; name: string };
 
 export type Pat = Node.t<Symbol>;
+export type t = Pat;
 
 export const p_const_id = (id: number, name: string): Pat =>
   Node.atom_id({ t: "Const", name }, id);

@@ -1,36 +1,16 @@
-import { TransformResult } from "./syntax/Pat";
-import { Transform, rev } from "./Transforms";
-import * as Path from "./syntax/Path";
-import * as Exp from "./syntax/Exp";
-import { Model, HoverTarget } from "./Model";
-import { do_at_path } from "./Transforms";
+import { Transform, rev } from "./Transform";
+import { Model } from "./Model";
+import { at_path } from "./Transform";
 import Flipping from "flipping/lib/adapters/web";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
-import * as Statics from "./Statics";
+import * as Stage from "./Stage";
+import * as Action from "./Action";
 
-export type Inject = (_: Action) => void;
-
-export type Action =
-  | {
-      t: "transformNode";
-      idx: number;
-      transform: Transform;
-      f: (_: Exp.t) => TransformResult;
-    }
-  | { t: "setSelect"; path: Path.t }
-  | { t: "setHover"; target: HoverTarget }
-  | { t: "flipTransform"; idx: number }
-  | { t: "setSetting"; action: Settings.Action }
-  | { t: "cycleSelectKids"; direction: "up" | "down" }
-  | { t: "selectParent" }
-  | { t: "selectFirstChild" }
-  | { t: "applyTransform"; idx: number };
-
-export const sound = (model: Model, action: Action): void => {
+export const sound = (model: Model, action: Action.t): void => {
   switch (action.t) {
     case "transformNode":
-      let result = action.f(model.stage);
+      let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
         return action.transform.reversed
           ? action.transform.sound_rev()
@@ -45,7 +25,7 @@ export const sound = (model: Model, action: Action): void => {
     case "cycleSelectKids":
     case "selectParent":
     case "selectFirstChild":
-      Sound.select(model.selection.length);
+      Sound.select(model.stage.selection.length);
       break;
     case "setHover":
     case "flipTransform":
@@ -58,24 +38,24 @@ export const sound = (model: Model, action: Action): void => {
 const flip_at_index = (ts: Transform[], index: number): Transform[] =>
   ts.map((t, i) => (i === index ? rev(t) : t));
 
-export const update = (model: Model, action: Action): Model => {
+export const update = (model: Model, action: Action.t): Model => {
   switch (action.t) {
     case "transformNode":
-      let result = action.f(model.stage);
+      let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
-        //console.log("info:", Statics.mk(result));
-        return { ...model, info: Statics.mk(result), stage: result };
+        const new_stage = Stage.put_exp(model.stage, result);
+        return { ...model, stage: new_stage };
       } else {
         return model;
       }
     case "setSelect":
-      return { ...model, selection: action.path };
+      return { ...model, stage: Stage.put_selection(model.stage, action.path) };
     case "setHover":
       return { ...model, hover: action.target };
     case "flipTransform":
       return {
         ...model,
-        transforms: flip_at_index(model.transforms, action.idx),
+        tools: flip_at_index(model.tools, action.idx),
       };
     case "setSetting":
       return {
@@ -84,29 +64,29 @@ export const update = (model: Model, action: Action): Model => {
       };
     case "cycleSelectKids":
       //TODO: robustify this
-      const old_path = [...model.selection].reverse();
+      const old_path = [...model.stage.selection].reverse();
       if (old_path.length == 0) return model;
       const [hd, ...tl] = old_path;
       const new_hd = hd == 1 ? 2 : 2 ? 1 : hd;
       const selection3 = [new_hd, ...tl].reverse();
-      return { ...model, selection: selection3 };
+      return { ...model, stage: Stage.put_selection(model.stage, selection3) };
     case "selectParent":
-      const path = model.selection;
+      const path = model.stage.selection;
       const selection =
         path.length == 0 ? path : path.slice(0, path.length - 1);
-      return { ...model, selection };
+      return { ...model, stage: Stage.put_selection(model.stage, selection) };
     case "selectFirstChild":
       //TODO: this goes too far. also not robust
-      const path2 = model.selection;
+      const path2 = model.stage.selection;
       const selection2 = path2.concat([1]);
-      return { ...model, selection: selection2 };
+      return { ...model, stage: Stage.put_selection(model.stage, selection2) };
     case "applyTransform":
-      if (action.idx < 0 || action.idx >= model.transforms.length) return model;
-      let transform = model.transforms[action.idx];
-      let result2 = do_at_path(transform, model.selection)(model.stage);
+      if (action.idx < 0 || action.idx >= model.tools.length) return model;
+      let transform = model.tools[action.idx];
+      let result2 = at_path(transform, model.stage.selection)(model.stage.exp);
       if (result2 != "NoMatch") {
         transform.sound(); //TODO
-        return { ...model, info: Statics.mk(result2), stage: result2 };
+        return { ...model, stage: Stage.put_exp(model.stage, result2) };
       } else {
         return model;
       }
@@ -130,7 +110,7 @@ const flipping_comp = new Flipping({
   easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
 });
 
-export const go = (model: Model, setModel: any, action: Action): void => {
+export const go = (model: Model, setModel: any, action: Action.t): void => {
   if (model.settings.sound) sound(model, action);
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();

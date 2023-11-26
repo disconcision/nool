@@ -3,9 +3,10 @@ import { For, Show } from "solid-js";
 //import Rand from "rand-seed";
 import { Binding } from "../syntax/Pat";
 import { Exp } from "../syntax/Exp";
-import { Inject } from "../Update";
+import * as Action from "../Action";
 import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
+import * as Stage from "../Stage";
 
 const node_mask_cls = (id: number, mask: Binding[]): string => {
   const binding = mask.find(
@@ -14,13 +15,13 @@ const node_mask_cls = (id: number, mask: Binding[]): string => {
   return binding?.t == "Val" ? "mask " + binding?.val[0] : "";
 };
 
-export const NodeExp: Component<{
+const ExpViewGo: Component<{
   node: Exp;
   info: Statics.InfoMap;
   path: Path.t;
   animate: boolean;
   is_head: boolean;
-  inject: Inject;
+  inject: Action.Inject;
   mask: Binding[];
 }> = (props) => {
   const setSelect = (id: number) => (e: Event) => {
@@ -90,7 +91,7 @@ export const NodeExp: Component<{
           onpointerdown={setSelect(props.node.id)}
         >
           <div class="id-view">{props.node.id}</div>
-          <NodeExp
+          <ExpViewGo
             info={props.info}
             path={props.path}
             node={props.node.kids[0]}
@@ -102,7 +103,7 @@ export const NodeExp: Component<{
           <div class="tail">
             <For each={props.node.kids.slice(1)}>
               {(kid) => (
-                <NodeExp
+                <ExpViewGo
                   info={props.info}
                   path={props.path}
                   node={kid}
@@ -119,10 +120,25 @@ export const NodeExp: Component<{
   }
 };
 
+export const ExpView: Component<{
+  stage: Stage.t;
+  inject: Action.Inject;
+  mask: Binding[];
+}> = (props) =>
+  ExpViewGo({
+    info: props.stage.info,
+    path: props.stage.selection,
+    node: props.stage.exp,
+    inject: props.inject,
+    mask: props.mask,
+    is_head: false,
+    animate: true,
+  });
+
 export const ViewOnly: Component<{
   node: Exp;
 }> = (props) =>
-  NodeExp({
+  ExpViewGo({
     info: Statics.mk(props.node),
     path: [],
     node: props.node,

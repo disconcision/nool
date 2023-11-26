@@ -260,7 +260,8 @@ code {
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
-#stage .node.comp {
+#stage .node.comp,
+.previews .node.comp  {
   background-color: #005bff26;
   /*background-image: url(src/assets/marble.jpeg);*/
   background-size: 10em;
@@ -401,8 +402,8 @@ code {
   mix-blend-mode: color-burn;
 }
 .previews:hover {
-  filter: hue-rotate(277deg) saturate(1.5);
-  mix-blend-mode: normal;
+  filter: hue-rotate(277deg) saturate(1) brightness(0.6);
+    mix-blend-mode: color-burn;
 }
 
 #toolbar {

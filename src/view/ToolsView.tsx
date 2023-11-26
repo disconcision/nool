@@ -2,11 +2,14 @@ import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
 import { Pat, matches_at_path } from "../syntax/Pat";
-import { HoverTarget, Model } from "../Model";
-import { Action, Inject } from "../Update";
-import { Transform, rev, do_at_path } from "../Transforms";
+import { Model } from "../Model";
+import * as Hover from "../Hover";
+import * as Action from "../Action";
+import { Transform, rev, at_path } from "../Transform";
 
-export const Toolbar: Component<{ model: Model; inject: Inject }> = (props) => {
+export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
+  props
+) => {
   return (
     <div id="toolbar" style={`background-image: url(${toolbarbkg})`}>
       .
@@ -50,14 +53,14 @@ const TransformView: Component<{
   idx: any;
   t: Transform;
   model: Model;
-  inject: (_: Action) => void;
+  inject: (_: Action.t) => void;
 }> = (props) => {
   const source_matches_cls = (props: { model: Model; t: Transform }) => {
     //console.log('selection src:', props.model.selection);
     const res = matches_at_path(
-      props.model.stage,
+      props.model.stage.exp,
       props.t.source,
-      props.model.selection
+      props.model.stage.selection
     );
     //console.log('res:', res);
     return res ==
@@ -69,9 +72,9 @@ const TransformView: Component<{
   const result_matches_cls = (props: { model: Model; t: Transform }) => {
     //console.log('selection res:', props.model.selection);
     const res = matches_at_path(
-      props.model.stage,
+      props.model.stage.exp,
       props.t.result,
-      props.model.selection
+      props.model.stage.selection
     );
     //console.log('res:', res);
     return res ==
@@ -90,7 +93,7 @@ const TransformView: Component<{
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
-      f: do_at_path(props.t, props.model.selection),
+      f: at_path(props.t, props.model.stage.selection),
     });
   };
   const transformNodeReverse = (e: Event) => {
@@ -103,10 +106,10 @@ const TransformView: Component<{
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
-      f: do_at_path(rev(props.t), props.model.selection),
+      f: at_path(rev(props.t), props.model.stage.selection),
     });
   };
-  const setHover = (target: HoverTarget) => (_: Event) =>
+  const setHover = (target: Hover.t) => (_: Event) =>
     props.inject({
       t: "setHover",
       target,
@@ -156,13 +159,13 @@ const TransformView: Component<{
   );
 };
 
-export const TransformsBox: Component<{
+export const ToolsView: Component<{
   model: Model;
-  inject: (_: Action) => void;
+  inject: (_: Action.t) => void;
 }> = (props) => {
   return (
     <div class="transforms-box">
-      <For each={props.model.transforms}>
+      <For each={props.model.tools}>
         {(t: Transform, idx) =>
           TransformView({
             idx: idx(),

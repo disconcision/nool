@@ -1,7 +1,7 @@
 import { Component } from "solid-js";
 import { Model } from "../Model";
-import { Action, Inject } from "../Update";
 import * as Settings from "../Settings";
+import * as Action from "../Action";
 import sound_icon_on from "../assets/icons/sound-on.svg";
 import sound_icon_off from "../assets/icons/sound-off.svg";
 import motion_on from "../assets/icons/motion-on.svg";
@@ -11,18 +11,20 @@ import preview_on from "../assets/icons/eye-open.svg";
 import preview_off from "../assets/icons/eye-closed.svg";
 import qr_code from "../assets/icons/qr-code.svg";
 
-const setSetting = (inject: Inject, action: Settings.Action) => (e: Event) => {
-  e.preventDefault();
-  e.stopPropagation();
-  inject({
-    t: "setSetting",
-    action,
-  });
-};
+//TODO: qr code to disable id display
+
+const setSetting =
+  (inject: Action.Inject, action: Settings.Action) => (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    inject({
+      t: "setSetting",
+      action,
+    });
+  };
 
 const sound_icon = (sound: boolean): string =>
   sound ? sound_icon_on : sound_icon_off;
-
 
 const motion_icon = (motion: Settings.motion): string => {
   switch (motion) {
@@ -35,7 +37,7 @@ const motion_icon = (motion: Settings.motion): string => {
   }
 };
 
-const preview_icon = (preview: boolean): string => 
+const preview_icon = (preview: boolean): string =>
   preview ? preview_on : preview_off;
 
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
@@ -49,7 +51,11 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   }
 };
 
-let icon = (inject: Inject, settings: Settings.t, action: Settings.Action) => (
+let icon = (
+  inject: Action.Inject,
+  settings: Settings.t,
+  action: Settings.Action
+) => (
   <img
     class="icon"
     src={action_icon(action, settings)}
@@ -59,7 +65,7 @@ let icon = (inject: Inject, settings: Settings.t, action: Settings.Action) => (
 
 export const SettingsView: Component<{
   model: Model;
-  inject: (_: Action) => void;
+  inject: (_: Action.t) => void;
 }> = (props) => (
   <div id="settings-panel">
     {icon(props.inject, props.model.settings, "ToggleSound")}

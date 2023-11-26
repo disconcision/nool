@@ -2,10 +2,8 @@ import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import { Binding, matches_at_path } from "../syntax/Pat";
 import { Model } from "../Model";
-import { Action } from "../Update";
-import { AdjacentPossible } from "./PreView";
-import { NodeExp } from "./ExpView";
-import { SettingsView } from "./SettingsView";
+import * as Action from "../Action";
+import { ExpView } from "./ExpView";
 
 const get_hover_binding = (model: Model): Binding[] => {
   switch (model.hover.t) {
@@ -14,77 +12,39 @@ const get_hover_binding = (model: Model): Binding[] => {
     case "StageNode":
       return [];
     case "TransformSource":
-      const rs = matches_at_path(model.stage, model.hover.pat, model.selection);
+      const rs = matches_at_path(
+        model.stage.exp,
+        model.hover.pat,
+        model.stage.selection
+      );
       return rs == "NoMatch" ? [] : rs;
     case "TransformResult":
-      const rr = matches_at_path(model.stage, model.hover.pat, model.selection);
+      const rr = matches_at_path(
+        model.stage.exp,
+        model.hover.pat,
+        model.stage.selection
+      );
       return rr == "NoMatch" ? [] : rr;
   }
 };
 
-export const Stage: Component<{ model: Model; inject: (_: Action) => void }> = (
-  props
-) => {
+export const StageView: Component<{
+  model: Model;
+  inject: (_: Action.t) => void;
+}> = (props) => {
   //console.log("rendering stage. selection.id is", props.model.selection.id);
   return (
     <div id="stage">
-      {SettingsView({ model: props.model, inject: props.inject })}
       <div id="debug" style="display:none">
-        <div>selection.path: {props.model.selection}</div>
+        <div>selection.path: {props.model.stage.selection}</div>
       </div>
       <div class="node-container">
-        {NodeExp({
-          info: props.model.info,
-          path: props.model.selection,
-          mask: get_hover_binding(props.model),
-          node: props.model.stage,
+        {ExpView({
+          stage: props.model.stage,
           inject: props.inject,
-          is_head: false,
-          animate: true,
+          mask: get_hover_binding(props.model),
         })}
-        {props.model.settings.preview
-          ? AdjacentPossible({
-              path: props.model.selection,
-              stage: props.model.stage,
-              transforms: props.model.transforms,
-              inject: props.inject,
-            })
-          : null}
       </div>
     </div>
   );
 };
-
-/*
-paint plan:
-
-this version only label nodes; does not replace them
-we have a map from ids to (user-specified) attributes including paint color
-paint colors come from a fixed palette which includes emojicon labels
-
-flavor: Unflavored | {color: string, label: string}
-palette: list(flavor)
-attributes: {
-  flavor,
-  show = Overlay | Collapsed // overlay is color if flavored, collapsed is color + label or "..." if unflavored
-}
-
-model 1:
-  model.paint = map(ids, attributes) 
-
-view 1:
-  for now implictly supress child Overlays, though retained Collapsed
-
-actions 1:
-  paintNode(id, flavor)
-  showNode(id, show)
-  unpaintAllOf(flavor)
-  unpaintAll()
-  
-and then after that works, we can add a second painting abstraction, antipainting:
-  add new flavor 'EscapePaint' (name needs work)
-  this is only meaningful on decendents of a painted node
-  and conceptually it creates a delimited multi-holed context
-  simple use case: quasi-folding everything above a selected node
-
-*/

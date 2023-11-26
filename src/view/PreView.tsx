@@ -1,20 +1,22 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
 import { TransformResult } from "../syntax/Pat";
-import { Inject } from "../Update";
-import { Transform, do_at_path, rev } from "../Transforms";
+import { Transform, at_path, rev } from "../Transform";
 import { ViewOnly } from "./ExpView";
 import * as Exp from "../syntax/Exp";
 import * as Path from "../syntax/Path";
+import * as Stage from "../Stage";
+import * as Action from "../Action";
 import { subtree_at } from "../syntax/Node";
 
 const transformer =
-  (inject: Inject, transform: Transform, path: Path.t) => (_e: Event) => {
+  (inject: Action.Inject, transform: Transform, path: Path.t) =>
+  (_e: Event) => {
     inject({
       t: "transformNode",
       idx: -1,
       transform,
-      f: do_at_path(transform, path),
+      f: at_path(transform, path),
     });
   };
 
@@ -26,7 +28,7 @@ const do_transforms = (
   transforms: Transform[]
 ): [Transform, Exp.t][] =>
   directed(transforms)
-    .map((t) => [t, do_at_path(t, [])(exp)] as [Transform, TransformResult])
+    .map((t) => [t, at_path(t, [])(exp)] as [Transform, TransformResult])
     .filter((res): res is [Transform, Exp.t] => res[1] !== "NoMatch")
     // filter duplicate expressions
     .filter(
@@ -41,18 +43,20 @@ const preview = (node: Exp.t, transformer: (_e: Event) => void) => (
 );
 
 export const AdjacentPossible: Component<{
-  path: Path.t;
-  stage: Exp.t;
-  transforms: Transform[];
-  inject: Inject;
+  stage: Stage.t;
+  tools: Transform[];
+  inject: Action.Inject;
 }> = (props) => {
-  const selection = subtree_at(props.path, props.stage);
+  const selection = subtree_at(props.stage.selection, props.stage.exp);
   if (selection === undefined) return <div></div>;
   return (
     <div class="previews" style={"display: flex;"}>
-      <For each={do_transforms(selection, props.transforms)}>
+      <For each={do_transforms(selection, props.tools)}>
         {([transform, node]) =>
-          preview(node, transformer(props.inject, transform, props.path))
+          preview(
+            node,
+            transformer(props.inject, transform, props.stage.selection)
+          )
         }
       </For>
     </div>
