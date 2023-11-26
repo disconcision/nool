@@ -1,34 +1,38 @@
-## Usage
+## Nool
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+is `Nool`.
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+## Is Nool?
 
-```bash
-$ npm install # or pnpm install or yarn install
-```
+is: https://andrewblinn.com/nool/
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+## Nool Noob?
+0. `zoom in`?
+1. `do clicks`.
 
-## Available Scripts
+## Experimental Features
 
-In the project directory, you can run:
+### `↑` `↓` `→` `←` `1` `2` `3` `4`
 
-### `npm dev` or `npm start`
+## Make Nool
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### `nool` ⊃ `typescript`, `solid.js`
 
-The page will reload if you make edits.<br>
+1. install node (21.2.0 works)
+   - see https://nodejs.org/en/learn/getting-started/how-to-install-nodejs
+   - `node --version`
+2. install pnpm (8.10.5 works)<
+   - `npm install --global pnpm@8.10.5 && SHELL=bash pnpm setup`
+   - `source /home/runner/.bashrc`
+3. build deps and run
+   - `pnpm install`
+   - `pnpm run build`
 
-### `npm run build`
+### `pnpm dev` or `pnpm start`
 
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
+run in dev mode. reload on edits.
+open [http://localhost:3000](http://localhost:3000)
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+### `pnpm run build`
 
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+builds deployable in `dist` folder
