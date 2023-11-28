@@ -41,8 +41,37 @@ const ExpViewGo: Component<{
     let node_path = Statics.get(props.info, props.node.id).path;
     return Path.eq(node_path, props.path);
   };
+  //TODO: anys
+  const head = (props: any) => (
+    <ExpViewGo
+      info={props.info}
+      path={props.path}
+      node={props.node.kids[0]}
+      animate={props.animate}
+      is_head={true}
+      inject={props.inject}
+      mask={props.mask}
+    />
+  );
+  const tail = (props: any) => (
+    <div class="tail">
+      <For each={props.node.kids.slice(1)}>
+        {(kid) => (
+          <ExpViewGo
+            info={props.info}
+            path={props.path}
+            node={kid}
+            animate={props.animate}
+            is_head={false}
+            inject={props.inject}
+            mask={props.mask}
+          />
+        )}
+      </For>
+    </div>
+  );
+  const selected = is_selected(props) ? "selected" : "";
   const node_mask = node_mask_cls(props.node.id, props.mask);
-  //const yolo = new Rand(`${props.node.id}`);
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
@@ -55,9 +84,7 @@ const ExpViewGo: Component<{
           fallback={
             <div
               {...opts}
-              class={`node atom ${props.node.sym} ${
-                is_selected(props) ? "selected" : ""
-              } ${node_mask}`}
+              class={`node atom ${props.node.sym} ${selected} ${node_mask}`}
               onpointerdown={setSelect(props.node.id)}
             >
               {props.node.sym}
@@ -80,45 +107,27 @@ const ExpViewGo: Component<{
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
-        <div
-          //data-flip-parent={`flip-${props.node.id}`}
-          {...opts}
-          class={`node comp ${
-            is_selected(props) ? "selected" : ""
-          } ${node_mask}`}
-          // for granite style:
-          /*style={`background-position: ${Math.floor(yolo.next() * 10)}0% 77.8%;`}*/
-          onpointerdown={setSelect(props.node.id)}
-        >
-          <div class="id-view">{props.node.id}</div>
-          <ExpViewGo
-            info={props.info}
-            path={props.path}
-            node={props.node.kids[0]}
-            animate={props.animate}
-            is_head={true}
-            inject={props.inject}
-            mask={props.mask}
-          />
-          <div class="tail">
-            <For each={props.node.kids.slice(1)}>
-              {(kid) => (
-                <ExpViewGo
-                  info={props.info}
-                  path={props.path}
-                  node={kid}
-                  animate={props.animate}
-                  is_head={false}
-                  inject={props.inject}
-                  mask={props.mask}
-                />
-              )}
-            </For>
+       // <div style="position: relative">
+          <div
+            //data-flip-parent={`flip-${props.node.id}`}
+            {...opts}
+            class={`node comp ${selected} ${node_mask}`}
+            onpointerdown={setSelect(props.node.id)}
+          >
+            <div class="id-view">{props.node.id}</div>
+            {head(props)}
+            {tail(props)}
           </div>
-        </div>
+        //</div>
       );
   }
 };
+/*
+ {is_selected(props) ? (
+          <div class="node comp floatselect" data-flip-key-comp={`flip-${666}`}>{head(props)}
+          {tail(props)}</div>
+        ) : null}
+ */
 
 export const ExpView: Component<{
   stage: Stage.t;

@@ -8,8 +8,6 @@ export type t<T> =
 
 export type Node<T> = t<T>;
 
-
-
 export function atom_id<T>(sym: T, id: number): t<T> {
   return { t: "Atom", id, sym };
 }

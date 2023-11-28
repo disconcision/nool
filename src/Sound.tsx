@@ -16,9 +16,9 @@ const player_klohk = new Tone.Player(klohk).toDestination().connect(revsfx);
 const player_chchiu = new Tone.Player(chchiu).toDestination().connect(revsfx);
 //let ps = new Tone.PitchShift(-3).toDestination();
 //player_chchiu.connect(ps);
-player_chchiu.playbackRate = 1.6;
+player_chchiu.playbackRate = 1.7;
 const player_shwoph = new Tone.Player(shwoph).toDestination().connect(revsfx);
-player_shwoph.playbackRate = 1.4;
+player_shwoph.playbackRate = 1.7;
 const player_tiup = new Tone.Player(tiup).toDestination().connect(revsfx);
 player_tiup.volume.value = -12;
 
