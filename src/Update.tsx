@@ -6,6 +6,7 @@ import * as Sound from "./Sound";
 import * as Settings from "./Settings";
 import * as Stage from "./Stage";
 import * as Action from "./Action";
+import * as Path from "./syntax/Path";
 
 export const sound = (model: Model, action: Action.t): void => {
   switch (action.t) {
@@ -115,6 +116,7 @@ export const go = (model: Model, setModel: any, action: Action.t): void => {
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();
   setModel(update(model, action));
+  const new_model = update(model, action);
   if (model.settings.motion == "On") flipping_comp.flip();
   if (model.settings.motion != "Off") flipping.flip();
 };

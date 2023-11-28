@@ -31,14 +31,14 @@ const exp: Exp = comp([
 export const init: Stage = {
   exp: exp,
   selection: [],
-  info: Statics.mk(exp),
+  info: Statics.mk(exp,[]),
   projectors: Projector.init,
 };
 
 export const put_exp = (stage: Stage, exp: Exp): Stage => ({
   ...stage,
   exp: exp,
-  info: Statics.mk(exp),
+  info: Statics.mk(exp,[]),
 });
 
 export const put_selection = (stage: Stage, path: Path.t): Stage => ({

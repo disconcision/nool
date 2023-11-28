@@ -67,6 +67,15 @@ export function equals<T>(a: t<T>, b: t<T>): boolean {
   }
 }
 
+export function size<T>(node: t<T>): number {
+  switch (node.t) {
+    case "Atom":
+      return 1;
+    case "Comp":
+      return 1 + node.kids.reduce((acc, n) => acc + size(n), 0);
+  }
+}
+
 /* Replace the id of the root node with new_id */
 function replace_root_id<T>(e: t<T>, new_id: number): t<T> {
   switch (e.t) {

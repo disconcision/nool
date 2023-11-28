@@ -7,6 +7,7 @@ import * as Action from "../Action";
 import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
 import * as Stage from "../Stage";
+import * as Hover from "../Hover";
 
 const node_mask_cls = (id: number, mask: Binding[]): string => {
   const binding = mask.find(
@@ -42,7 +43,9 @@ const ExpViewGo: Component<{
     return Path.eq(node_path, props.path);
   };
   //TODO: anys
-  const head = (props: any) => (
+  const head = (props: any) => {
+    //console.log("head", props.node.id);
+    return(
     <ExpViewGo
       info={props.info}
       path={props.path}
@@ -52,7 +55,7 @@ const ExpViewGo: Component<{
       inject={props.inject}
       mask={props.mask}
     />
-  );
+  )};
   const tail = (props: any) => (
     <div class="tail">
       <For each={props.node.kids.slice(1)}>
@@ -70,8 +73,18 @@ const ExpViewGo: Component<{
       </For>
     </div>
   );
+  /*
+  {is_selected(props) ? (
+          <div class="node comp floatselect" data-flip-key-comp={`flip-${666}`}>{head(props)}
+          {tail(props)}</div>
+        ) : null}
+  */
   const selected = is_selected(props) ? "selected" : "";
   const node_mask = node_mask_cls(props.node.id, props.mask);
+  const size = Statics.get(props.info, props.node.id).depth;
+  //TODO: betterize bucketing
+  //const bucket = Math.min(5, Math.max(1, Math.floor(size / 2)));
+  const size_class = `size-${size}`;
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
@@ -84,8 +97,9 @@ const ExpViewGo: Component<{
           fallback={
             <div
               {...opts}
-              class={`node atom ${props.node.sym} ${selected} ${node_mask}`}
+              class={`node atom ${props.node.sym} ${selected} ${node_mask} ${size_class}`}
               onpointerdown={setSelect(props.node.id)}
+              //onpointerenter={is_selected(props)?null:setSelect(props.node.id)}
             >
               {props.node.sym}
               <div class="id-view">{props.node.id}</div>
@@ -107,27 +121,21 @@ const ExpViewGo: Component<{
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
-       // <div style="position: relative">
-          <div
-            //data-flip-parent={`flip-${props.node.id}`}
-            {...opts}
-            class={`node comp ${selected} ${node_mask}`}
-            onpointerdown={setSelect(props.node.id)}
-          >
-            <div class="id-view">{props.node.id}</div>
-            {head(props)}
-            {tail(props)}
-          </div>
+        // <div style="position: relative">
+        <div
+          //data-flip-parent={`flip-${props.node.id}`}
+          {...opts}
+          class={`node comp ${selected} ${node_mask} ${size_class}`}
+          onpointerdown={setSelect(props.node.id)}
+        >
+          <div class="id-view">{props.node.id}</div>
+          {head(props)}
+          {tail(props)}
+        </div>
         //</div>
       );
   }
 };
-/*
- {is_selected(props) ? (
-          <div class="node comp floatselect" data-flip-key-comp={`flip-${666}`}>{head(props)}
-          {tail(props)}</div>
-        ) : null}
- */
 
 export const ExpView: Component<{
   stage: Stage.t;
@@ -148,7 +156,7 @@ export const ViewOnly: Component<{
   node: Exp;
 }> = (props) =>
   ExpViewGo({
-    info: Statics.mk(props.node),
+    info: Statics.mk(props.node,[]),
     path: [],
     node: props.node,
     animate: false,

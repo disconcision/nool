@@ -233,6 +233,14 @@ code {
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
 }
+.node.size-0:hover { transform: scale(1.02) }
+.node.size-1:hover { transform: scale(1.04) }
+.node.size-2:hover { transform: scale(1.06) }
+.node.size-3:hover { transform: scale(1.08) }
+.node.size-4:hover { transform: scale(1.10) }
+.node.size-5:hover { transform: scale(1.12) }
+.node.size-6:hover { transform: scale(1.14) }
+
 .node.selected,
 .node.selected:hover {
   border: 0;
@@ -554,11 +562,11 @@ code {
 
 .id-view {
   display: contents;
-  position: absolute;
-  /* left: 1em; */
   font-size: 3pt;
+  /* position: absolute;
+  left: 1em; 
   color: #c8cfff;
-  text-shadow: 0.3px 0.2px 0.5px #7856ba;
+  text-shadow: 0.3px 0.2px 0.5px #7856ba;*/
 }
 
 .🌑 {
