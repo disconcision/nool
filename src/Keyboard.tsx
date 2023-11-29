@@ -3,6 +3,9 @@ import * as Action from "./Action";
 export const keydown = (inject: Action.Inject) => (event: KeyboardEvent) => {
   //console.log("keydown:" + keyName);
   switch (event.key) {
+    case "Escape":
+      inject({ t: "restart" });
+      break;
     case "ArrowLeft":
       inject({ t: "moveStage", direction: "left" });
       break;

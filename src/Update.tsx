@@ -1,6 +1,6 @@
-import { Model } from "./Model";
 import { at_path } from "./Transform";
 import Flipping from "flipping/lib/adapters/web";
+import * as Model from "./Model";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
 import * as Stage from "./Stage";
@@ -8,7 +8,7 @@ import * as Action from "./Action";
 import * as Transform from "./Transform";
 import * as Tools from "./Tools";
 
-export const sound = (model: Model, action: Action.t): void => {
+export const sound = (model: Model.t, action: Action.t): void => {
   switch (action.t) {
     case "transformNode":
       let result = action.f(model.stage.exp);
@@ -38,8 +38,10 @@ export const sound = (model: Model, action: Action.t): void => {
   }
 };
 
-export const update = (model: Model, action: Action.t): Model => {
+export const update = (model: Model.t, action: Action.t): Model.t => {
   switch (action.t) {
+    case "restart":
+      return Model.init;
     case "setSetting":
       return {
         ...model,
@@ -120,7 +122,7 @@ const flipping_comp = new Flipping({
   easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
 });
 
-export const go = (model: Model, setModel: any, action: Action.t): void => {
+export const go = (model: Model.t, setModel: any, action: Action.t): void => {
   if (model.settings.sound) sound(model, action);
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();

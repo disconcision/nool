@@ -80,11 +80,21 @@
     transform: translateX(0%);
     transform-origin: 50% 50%;
   }
-  15% {transform: translateX(0.2%) rotate(-3deg);}
-  30% {transform: translateX(-0.2%) rotate(-1deg);}
-  45% {transform: translateX(0.2%) rotate(0deg);}
-  60% {transform: translateX(-0.2%) rotate(1deg);}
-  75% {transform: translateX(0%) rotate(3deg);}
+  15% {
+    transform: translateX(0.2%) rotate(-3deg);
+  }
+  30% {
+    transform: translateX(-0.2%) rotate(-1deg);
+  }
+  45% {
+    transform: translateX(0.2%) rotate(0deg);
+  }
+  60% {
+    transform: translateX(-0.2%) rotate(1deg);
+  }
+  75% {
+    transform: translateX(0%) rotate(3deg);
+  }
 }
 
 @keyframes wobbleH {
@@ -93,11 +103,21 @@
     transform: translateX(0%);
     transform-origin: 50% 50%;
   }
-  15% {transform: translateX(0.8%) rotate(-3deg);}
-  30% {transform: translateX(-4.8%);}
-  45% {transform: translateX(0.8%);}
-  60% {transform: translateX(-0.8%);}
-  75% {transform: translateX(0%);}
+  15% {
+    transform: translateX(0.8%) rotate(-3deg);
+  }
+  30% {
+    transform: translateX(-4.8%);
+  }
+  45% {
+    transform: translateX(0.8%);
+  }
+  60% {
+    transform: translateX(-0.8%);
+  }
+  75% {
+    transform: translateX(0%);
+  }
 }
 
 @keyframes pulse {
@@ -154,7 +174,7 @@ code {
 }
 
 .logo {
-  position:absolute;
+  position: absolute;
   margin: 0.7em;
   width: 5em;
   height: 2em;
@@ -196,7 +216,8 @@ code {
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
 }
 
-.transform .source, .result {
+.transform .source,
+.result {
   transition: filter 0.2s cubic-bezier(0.4, 0, 1, 1);
 }
 
@@ -204,8 +225,9 @@ code {
    clicking the arrow to reverse the transform doesn't
    end up moving the arrow */
 .transform .source > .node.atom,
-.transform .result > .node.atom
-{ margin: 1.1em 0.5em 1.1em 1.8em; }
+.transform .result > .node.atom {
+  margin: 1.1em 0.5em 1.1em 1.8em;
+}
 
 .node {
   transition: all 0.5s ease-in-out;
@@ -228,20 +250,34 @@ code {
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
 }
-.node.size-0:hover { transform: scale(1.02) }
-.node.size-1:hover { transform: scale(1.04) }
-.node.size-2:hover { transform: scale(1.06) }
-.node.size-3:hover { transform: scale(1.04) }
-.node.size-4:hover { transform: scale(1.02) }
-.node.size-5:hover { transform: scale(1.01) }
-.node.size-6:hover { transform: scale(1.01) }
+.node.size-0:hover {
+  transform: scale(1.02);
+}
+.node.size-1:hover {
+  transform: scale(1.04);
+}
+.node.size-2:hover {
+  transform: scale(1.06);
+}
+.node.size-3:hover {
+  transform: scale(1.04);
+}
+.node.size-4:hover {
+  transform: scale(1.02);
+}
+.node.size-5:hover {
+  transform: scale(1.01);
+}
+.node.size-6:hover {
+  transform: scale(1.01);
+}
 
 .node.selected,
 .node.selected:hover {
   border: 0;
   outline: 0.6px solid #ffffff;
-    box-shadow: 0px 0px 9px #ffffff;
-    /* mix-blend-mode: color-dodge;*/
+  box-shadow: 0px 0px 9px #ffffff;
+  /* mix-blend-mode: color-dodge;*/
   /*outline: 1px solid #258b86;*/
   /*outline: 1px solid #a043b8;
   background-color: #c264d366 !important;*/
@@ -276,7 +312,7 @@ code {
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
-#stage .node.comp  {
+#stage .node.comp {
   background-color: #005bff26;
 }
 .node.comp .head {
@@ -343,7 +379,7 @@ code {
 }
 .transform-view .label {
   position: absolute;
-  top:  -0.1em; /*0.5em;*/
+  top: -0.1em; /*0.5em;*/
   font-size: 0.6em;
   /*right: 3.7em;*/
   left: 0em;
@@ -360,11 +396,11 @@ code {
   animation-duration: 0.15s;
 }
 .transform-view .result .node,
-.transform-view .source .node{
+.transform-view .source .node {
   transition: all 0.1s ease-in;
 }
 .transform-view .result.selected > .node,
-.transform-view .source.selected > .node{
+.transform-view .source.selected > .node {
   outline: 0.9px solid #9e00ff;
   background-color: #c8e6df;
 }
@@ -386,9 +422,8 @@ code {
   /*background-color: #7ce5bb;*/
   /* box-shadow: inset 0px -10px 10px #ad91ff !important; */
   /* filter: brightness(1); */
-
 }
-.transform-view  .node:hover + .node  {
+.transform-view .node:hover + .node {
   animation-name: wobbleH;
   animation-duration: 1.2s;
 }
@@ -426,7 +461,7 @@ code {
   border-radius: 3em 0 0 3em;
   padding: 2em 0 2em 2em;
   border-top: 0.5px solid #d4a4d8;
-  border-bottom: 0.5px solid #7ae0e6; 
+  border-bottom: 0.5px solid #7ae0e6;
 }
 .previews .node-container {
   mix-blend-mode: color-burn;
@@ -436,11 +471,11 @@ code {
   filter: saturate(1) brightness(0.1) invert(1) opacity(1) hue-rotate(210deg);
   mix-blend-mode: exclusion;
 }
-.previews .node.comp  {
+.previews .node.comp {
   background-color: #005bff26;
   transition: all 0.05s ease-in-out;
 }
-.previews .node-container:hover .node.comp  {
+.previews .node-container:hover .node.comp {
   box-shadow: none;
   background-color: #0000;
   transform: none;
@@ -617,13 +652,10 @@ code {
 }
 
 .toolbar2 {
-
 }
 .toolbar2 ul {
-
 }
 .toolbar2 li {
-
 }
 
 .superstage {

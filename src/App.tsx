@@ -1,14 +1,13 @@
 import { Component } from "solid-js";
 import { createStore } from "solid-js/store";
 import { go } from "./Update";
-import { init_model } from "./Model";
+import * as Model from "./Model";
 import { StageView } from "./view/StageView";
 import { Toolbar, ToolsView } from "./view/ToolsView";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
 import { AdjacentPossible } from "./view/PreView";
 import * as Action from "./Action";
-import { Model } from "./Model";
 
 const blah = () => (
   <div class="toolbar2">
@@ -23,7 +22,7 @@ const blah = () => (
   </div>
 );
 
-const SuperStage: Component<{ model: Model; inject: Action.Inject }> = (
+const SuperStage: Component<{ model: Model.t; inject: Action.Inject }> = (
   props
 ) => (
   <div class="superstage">
@@ -40,7 +39,7 @@ const SuperStage: Component<{ model: Model; inject: Action.Inject }> = (
 );
 
 const App: Component = () => {
-  const [model, setModel] = createStore(init_model);
+  const [model, setModel] = createStore({...Model.init});
   const inject = (a: Action.t) => {
     console.log(a);
     go(model, setModel, a);

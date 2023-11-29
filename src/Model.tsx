@@ -11,7 +11,9 @@ export type Model = {
   hover: Hover.t;
 };
 
-export const init_model: Model = {
+export type t = Model;
+
+export const init: Model = {
   stage: Stage.init,
   tools: Tools.init,
   settings: Settings.init,
