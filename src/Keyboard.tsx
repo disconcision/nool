@@ -4,29 +4,43 @@ export const keydown = (inject: Action.Inject) => (event: KeyboardEvent) => {
   //console.log("keydown:" + keyName);
   switch (event.key) {
     case "ArrowLeft":
-      inject({ t: "selectParent" });
+      inject({ t: "moveStage", direction: "left" });
       break;
     case "ArrowRight":
-      inject({ t: "selectFirstChild" });
+      inject({ t: "moveStage", direction: "right" });
       break;
     case "ArrowUp":
-      inject({ t: "cycleSelectKids", direction: "up" });
+      inject({ t: "moveStage", direction: "up" });
       break;
     case "ArrowDown":
-      inject({ t: "cycleSelectKids", direction: "down" });
+      inject({ t: "moveStage", direction: "down" });
       break;
     case "1":
-      inject({ t: "applyTransform", idx: 0 });
+      inject({ t: "applyTransform", idx: 0, direction: "forward" });
       break;
     case "2":
-      inject({ t: "applyTransform", idx: 1 });
+      inject({ t: "applyTransform", idx: 1, direction: "forward" });
       break;
     case "3":
-      inject({ t: "applyTransform", idx: 2 });
+      inject({ t: "applyTransform", idx: 2, direction: "forward" });
       break;
     case "4":
-      inject({ t: "applyTransform", idx: 3 });
+      inject({ t: "applyTransform", idx: 3, direction: "forward" });
       break;
+    case "w":
+      inject({ t: "moveTool", direction: "up" });
+      break;
+    case "s":
+      inject({ t: "moveTool", direction: "down" });
+      break;
+    case "a":
+      inject({ t: "moveTool", direction: "left" });
+      break;
+    case "d":
+      inject({ t: "moveTool", direction: "right" });
+      break;
+    case " ":
+      inject({ t: "applyTransformSelected" });
   }
 };
 

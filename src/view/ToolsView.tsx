@@ -6,6 +6,7 @@ import { Model } from "../Model";
 import * as Hover from "../Hover";
 import * as Action from "../Action";
 import { Transform, rev, at_path } from "../Transform";
+import * as Tools from "../Tools";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -44,45 +45,45 @@ const PatView: Component<{ p: Pat; is_head: boolean }> = (props) => {
   }
 };
 
+const source_matches_cls = (props: { model: Model; t: Transform }) => {
+  //console.log('selection src:', props.model.selection);
+  const res = matches_at_path(
+    props.model.stage.exp,
+    props.t.source,
+    props.model.stage.selection
+  );
+  //console.log('res:', res);
+  return res ==
+    "NoMatch" /*|| res.length == 0* || props.model.selection.length > 0 */
+    ? "no-match"
+    : "match";
+};
+
+const result_matches_cls = (props: { model: Model; t: Transform }) => {
+  //console.log('selection res:', props.model.selection);
+  const res = matches_at_path(
+    props.model.stage.exp,
+    props.t.result,
+    props.model.stage.selection
+  );
+  //console.log('res:', res);
+  return res ==
+    "NoMatch" /*|| res.length == 0*|| props.model.selection.length > 0*/
+    ? "no-match"
+    : "match";
+};
+
 /* arrows:
    → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
    ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
    ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
   ⇨ ➥ ➫ ➬ */
 const TransformView: Component<{
-  idx: any;
+  idx: number;
   t: Transform;
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
-  const source_matches_cls = (props: { model: Model; t: Transform }) => {
-    //console.log('selection src:', props.model.selection);
-    const res = matches_at_path(
-      props.model.stage.exp,
-      props.t.source,
-      props.model.stage.selection
-    );
-    //console.log('res:', res);
-    return res ==
-      "NoMatch" /*|| res.length == 0* || props.model.selection.length > 0 */
-      ? "no-match"
-      : "match";
-  };
-
-  const result_matches_cls = (props: { model: Model; t: Transform }) => {
-    //console.log('selection res:', props.model.selection);
-    const res = matches_at_path(
-      props.model.stage.exp,
-      props.t.result,
-      props.model.stage.selection
-    );
-    //console.log('res:', res);
-    return res ==
-      "NoMatch" /*|| res.length == 0*|| props.model.selection.length > 0*/
-      ? "no-match"
-      : "match";
-  };
-
   const transformNode = (e: Event) => {
     e.preventDefault();
     //e.stopPropagation();
@@ -122,12 +123,19 @@ const TransformView: Component<{
       idx: props.idx,
     });
   };
+  const selected_res = (tools: Tools.t, c: number) =>
+    tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
+  const selected_src = (tools: Tools.t, c: number) =>
+    tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
   return (
-    <div class="transform-view" onpointerdown={flipTransform}>
-      <div class="label">{props.t.name}</div>
+    <div class={`transform-view`} onpointerdown={flipTransform}>
+      {/*<div class="label">{props.t.name}</div>*/}
       <div class="transform">
         <div
-          class={"source " + source_matches_cls(props)}
+          class={`source ${selected_src(
+            props.model.tools,
+            props.idx
+          )} ${source_matches_cls(props)}`}
           onmouseenter={setHover({
             t: "TransformSource",
             pat: props.t.source,
@@ -144,7 +152,10 @@ const TransformView: Component<{
           </Switch>
         </div>
         <div
-          class={"result " + result_matches_cls(props)}
+          class={`result ${selected_res(
+            props.model.tools,
+            props.idx
+          )} ${result_matches_cls(props)}`}
           onmouseenter={setHover({
             t: "TransformResult",
             pat: props.t.result,
@@ -164,8 +175,8 @@ export const ToolsView: Component<{
   inject: (_: Action.t) => void;
 }> = (props) => {
   return (
-    <div class="transforms-box">
-      <For each={props.model.tools}>
+    <div class="toolbox">
+      <For each={props.model.tools.transforms}>
         {(t: Transform, idx) =>
           TransformView({
             idx: idx(),

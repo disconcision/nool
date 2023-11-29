@@ -8,8 +8,12 @@ import {
 } from "./syntax/Pat";
 import * as Sound from "./Sound";
 import * as Transform from "./Transform";
+import * as Path from "./syntax/Path";
 
-export type t = Transform.t[];
+export type t = {
+  selector: Path.t;
+  transforms: Transform.t[];
+};
 
 const var_a = p_var("♫");
 const var_b = p_var("♥");
@@ -60,9 +64,14 @@ export const inverse_plus: Transform.t = {
   reversed: false,
 };
 
-export const init: t = [
+export const init_transforms = [
   identity_plus,
   commute_plus,
   associate_plus,
   inverse_plus,
 ];
+
+export const init: t = {
+  selector: [],
+  transforms: init_transforms,
+};

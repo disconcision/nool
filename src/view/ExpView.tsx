@@ -26,7 +26,7 @@ const ExpViewGo: Component<{
   mask: Binding[];
 }> = (props) => {
   const setSelect = (id: number) => (e: Event) => {
-    //e.preventDefault();
+    //e.preventDefault();pcs
     //above modulates whether shake occurs for some reason
     e.stopPropagation();
     props.inject({
@@ -99,7 +99,7 @@ const ExpViewGo: Component<{
               {...opts}
               class={`node atom ${props.node.sym} ${selected} ${node_mask} ${size_class}`}
               onpointerdown={setSelect(props.node.id)}
-              //onpointerenter={is_selected(props)?null:setSelect(props.node.id)}
+              //onpointerenter={setSelect(props.node.id)}
             >
               {props.node.sym}
               <div class="id-view">{props.node.id}</div>
@@ -127,6 +127,7 @@ const ExpViewGo: Component<{
           {...opts}
           class={`node comp ${selected} ${node_mask} ${size_class}`}
           onpointerdown={setSelect(props.node.id)}
+          //onpointerenter={setSelect(props.node.id)}
         >
           <div class="id-view">{props.node.id}</div>
           {head(props)}

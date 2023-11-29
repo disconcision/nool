@@ -104,3 +104,7 @@ export function id_at<T>(p: Path.t, n: t<T>): ID.t | undefined {
   if (subtree == undefined) return undefined;
   else return subtree.id;
 }
+
+export function is_path_valid<T>(p: Path.t, n: t<T>): boolean {
+  return subtree_at(p, n) != undefined;
+}

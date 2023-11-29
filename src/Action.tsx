@@ -7,6 +7,8 @@ import { TransformResult } from "./syntax/Pat";
 
 export type Inject = (_: Action) => void;
 
+export type Direction = "up" | "down" | "left" | "right";
+
 export type Action =
   | {
       t: "transformNode";
@@ -14,13 +16,14 @@ export type Action =
       transform: Transform.t;
       f: (_: Exp.t) => TransformResult;
     }
-  | { t: "setSelect"; path: Path.t }
-  | { t: "setHover"; target: Hover.t }
-  | { t: "flipTransform"; idx: number }
   | { t: "setSetting"; action: Settings.Action }
-  | { t: "cycleSelectKids"; direction: "up" | "down" }
-  | { t: "selectParent" }
-  | { t: "selectFirstChild" }
-  | { t: "applyTransform"; idx: number };
+  | { t: "setHover"; target: Hover.t }
+  | { t: "setSelect"; path: Path.t }
+  | { t: "moveStage"; direction: Direction}
+  | { t: "moveTool"; direction: Direction }
+  | { t: "applyTransform"; idx: number; direction: "forward" | "reverse" }
+  | { t: "applyTransformSelected" }
+  | { t: "flipTransform"; idx: number };
+
 
 export type t = Action;

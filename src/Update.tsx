@@ -1,4 +1,3 @@
-import { Transform, rev } from "./Transform";
 import { Model } from "./Model";
 import { at_path } from "./Transform";
 import Flipping from "flipping/lib/adapters/web";
@@ -6,7 +5,7 @@ import * as Sound from "./Sound";
 import * as Settings from "./Settings";
 import * as Stage from "./Stage";
 import * as Action from "./Action";
-import * as Path from "./syntax/Path";
+import * as Transform from "./Transform";
 
 export const sound = (model: Model, action: Action.t): void => {
   switch (action.t) {
@@ -23,21 +22,44 @@ export const sound = (model: Model, action: Action.t): void => {
     case "setSelect":
       Sound.select(action.path.length);
       break;
-    case "cycleSelectKids":
-    case "selectParent":
-    case "selectFirstChild":
+    case "moveStage":
       Sound.select(model.stage.selection.length);
       break;
     case "setHover":
     case "flipTransform":
     case "setSetting":
     case "applyTransform":
+    case "moveTool":
       undefined;
   }
 };
 
-const flip_at_index = (ts: Transform[], index: number): Transform[] =>
-  ts.map((t, i) => (i === index ? rev(t) : t));
+const update_selector = (
+  f: (_: number[]) => number[],
+  model: Model
+): Model => ({
+  ...model,
+  tools: {
+    ...model.tools,
+    selector: f(model.tools.selector),
+  },
+});
+
+const moveTool = (
+  model: Model,
+  direction: "up" | "down" | "left" | "right"
+): Model => {
+  switch (direction) {
+    case "up":
+      return update_selector(Transform.move_up, model);
+    case "down":
+      return update_selector(Transform.move_down, model);
+    case "left":
+      return update_selector(Transform.move_left, model);
+    case "right":
+      return update_selector(Transform.move_right, model);
+  }
+};
 
 export const update = (model: Model, action: Action.t): Model => {
   switch (action.t) {
@@ -56,41 +78,51 @@ export const update = (model: Model, action: Action.t): Model => {
     case "flipTransform":
       return {
         ...model,
-        tools: flip_at_index(model.tools, action.idx),
+        tools: {
+          ...model.tools,
+          transforms: Transform.flip_at_index(
+            model.tools.transforms,
+            action.idx
+          ),
+        },
       };
     case "setSetting":
       return {
         ...model,
         settings: Settings.update(model.settings, action.action),
       };
-    case "cycleSelectKids":
-      //TODO: robustify this
-      const old_path = [...model.stage.selection].reverse();
-      if (old_path.length == 0) return model;
-      const [hd, ...tl] = old_path;
-      const new_hd = hd == 1 ? 2 : 2 ? 1 : hd;
-      const selection3 = [new_hd, ...tl].reverse();
-      return { ...model, stage: Stage.put_selection(model.stage, selection3) };
-    case "selectParent":
-      const path = model.stage.selection;
-      const selection =
-        path.length == 0 ? path : path.slice(0, path.length - 1);
-      return { ...model, stage: Stage.put_selection(model.stage, selection) };
-    case "selectFirstChild":
-      //TODO: this goes too far. also not robust
-      const path2 = model.stage.selection;
-      const selection2 = path2.concat([1]);
-      return { ...model, stage: Stage.put_selection(model.stage, selection2) };
+    case "moveStage":
+      return { ...model, stage: Stage.move(model.stage, action.direction) };
     case "applyTransform":
-      if (action.idx < 0 || action.idx >= model.tools.length) return model;
-      let transform = model.tools[action.idx];
-      let result2 = at_path(transform, model.stage.selection)(model.stage.exp);
+      if (action.idx < 0 || action.idx >= model.tools.transforms.length)
+        return model;
+      const transform1 = model.tools.transforms[action.idx];
+      const transform =
+        action.direction == "forward" ? transform1 : Transform.rev(transform1);
+      const result2 = at_path(
+        transform,
+        model.stage.selection
+      )(model.stage.exp);
       if (result2 != "NoMatch") {
         transform.sound(); //TODO
         return { ...model, stage: Stage.put_exp(model.stage, result2) };
       } else {
         return model;
       }
+    case "applyTransformSelected":
+      const model2 = {
+        ...model,
+        tools: {
+          ...model.tools,
+          selector: Transform.init_selector(model.tools.selector),
+        },
+      };
+      return update(
+        model2,
+        Transform.get(Transform.init_selector(model.tools.selector))
+      );
+    case "moveTool":
+      return moveTool(model, action.direction);
   }
 };
 
@@ -116,7 +148,15 @@ export const go = (model: Model, setModel: any, action: Action.t): void => {
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();
   setModel(update(model, action));
-  const new_model = update(model, action);
+  //if (action.t != 'setSelect') return setModel(update(model, action));
+  //const new_model = update(model, action);
+  //console.log("path old:",model.stage.selection);
+  //console.log("path new:",new_model.stage.selection);
+  //console.log("path eq:",Path.eq(new_model.stage.selection, model.stage.selection));
+  //console.log("path_eq_2:",JSON.stringify(new_model.stage.selection) == JSON.stringify(model.stage.selection));
+  /*if (action.t == 'setSelect' &&  !Path.doesp1startwithp2( model.stage.selection,new_model.stage.selection)) {
+    console.log("setSelect new model");
+   setModel(new_model)};*/
   if (model.settings.motion == "On") flipping_comp.flip();
   if (model.settings.motion != "Off") flipping.flip();
 };
