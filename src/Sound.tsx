@@ -11,7 +11,9 @@ let revsfx = new Tone.Reverb({ decay: 4, wet: 0.3 }).toDestination();
 type Sfxbank = "pew" | "pshew" | "klohk" | "chchiu" | "shwoph" | "tiup";
 
 const player_pew = new Tone.Player(pew).toDestination().connect(revsfx);
+player_pew.playbackRate = 1.3;
 const player_pshew = new Tone.Player(pshew).toDestination().connect(revsfx);
+player_pshew.playbackRate = 1.3;
 const player_klohk = new Tone.Player(klohk).toDestination().connect(revsfx);
 const player_chchiu = new Tone.Player(chchiu).toDestination().connect(revsfx);
 //let ps = new Tone.PitchShift(-3).toDestination();
@@ -24,12 +26,13 @@ player_tiup.volume.value = -12;
 
 const sfx_bank = (sfx: Sfxbank): Tone.Player =>
   ({
+    tiup: player_tiup,
+    shwoph: player_shwoph,
+    chchiu: player_chchiu,
+    klohk: player_klohk,
     pew: player_pew,
     pshew: player_pshew,
-    klohk: player_klohk,
-    chchiu: player_chchiu,
-    shwoph: player_shwoph,
-    tiup: player_tiup,
+    
   }[sfx]);
 
 export const sfx = (sfx: Sfxbank) => () => {

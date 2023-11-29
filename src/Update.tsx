@@ -6,6 +6,7 @@ import * as Settings from "./Settings";
 import * as Stage from "./Stage";
 import * as Action from "./Action";
 import * as Transform from "./Transform";
+import * as Tools from "./Tools";
 
 export const sound = (model: Model, action: Action.t): void => {
   switch (action.t) {
@@ -22,47 +23,36 @@ export const sound = (model: Model, action: Action.t): void => {
     case "setSelect":
       Sound.select(action.path.length);
       break;
+    case "moveTool":
     case "moveStage":
       Sound.select(model.stage.selection.length);
       break;
+    case "setSetting":
+      Sound.sfx("pew")();
+      break;
     case "setHover":
     case "flipTransform":
-    case "setSetting":
     case "applyTransform":
-    case "moveTool":
+    case "applyTransformSelected":
       undefined;
-  }
-};
-
-const update_selector = (
-  f: (_: number[]) => number[],
-  model: Model
-): Model => ({
-  ...model,
-  tools: {
-    ...model.tools,
-    selector: f(model.tools.selector),
-  },
-});
-
-const moveTool = (
-  model: Model,
-  direction: "up" | "down" | "left" | "right"
-): Model => {
-  switch (direction) {
-    case "up":
-      return update_selector(Transform.move_up, model);
-    case "down":
-      return update_selector(Transform.move_down, model);
-    case "left":
-      return update_selector(Transform.move_left, model);
-    case "right":
-      return update_selector(Transform.move_right, model);
   }
 };
 
 export const update = (model: Model, action: Action.t): Model => {
   switch (action.t) {
+    case "setSetting":
+      return {
+        ...model,
+        settings: Settings.update(model.settings, action.action),
+      };
+    case "setSelect":
+      return { ...model, stage: Stage.put_selection(model.stage, action.path) };
+    case "setHover":
+      return { ...model, hover: action.target };
+    case "moveStage":
+      return { ...model, stage: Stage.move(model.stage, action.direction) };
+    case "moveTool":
+      return { ...model, tools: Tools.move(model.tools, action.direction) };
     case "transformNode":
       let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
@@ -71,28 +61,6 @@ export const update = (model: Model, action: Action.t): Model => {
       } else {
         return model;
       }
-    case "setSelect":
-      return { ...model, stage: Stage.put_selection(model.stage, action.path) };
-    case "setHover":
-      return { ...model, hover: action.target };
-    case "flipTransform":
-      return {
-        ...model,
-        tools: {
-          ...model.tools,
-          transforms: Transform.flip_at_index(
-            model.tools.transforms,
-            action.idx
-          ),
-        },
-      };
-    case "setSetting":
-      return {
-        ...model,
-        settings: Settings.update(model.settings, action.action),
-      };
-    case "moveStage":
-      return { ...model, stage: Stage.move(model.stage, action.direction) };
     case "applyTransform":
       if (action.idx < 0 || action.idx >= model.tools.transforms.length)
         return model;
@@ -121,8 +89,17 @@ export const update = (model: Model, action: Action.t): Model => {
         model2,
         Transform.get(Transform.init_selector(model.tools.selector))
       );
-    case "moveTool":
-      return moveTool(model, action.direction);
+    case "flipTransform":
+      return {
+        ...model,
+        tools: {
+          ...model.tools,
+          transforms: Transform.flip_at_index(
+            model.tools.transforms,
+            action.idx
+          ),
+        },
+      };
   }
 };
 

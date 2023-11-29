@@ -47,50 +47,60 @@ export const put_selection = (stage: Stage, path: Path.t): Stage => ({
   selection: path,
 });
 
-/*
-we want left to select first child, unless path is innvalid; then select the root
-we want right to select parent, unless already at root, then do nothing
-we want up to select the 'previous' node at the same depth in the path;
-by this we mean a prev sibling if it has one, otherwise try the parent's last sibling's last child.
-if no children, the the parent's last sibling itself, and so on.
-similarly for down, but in the other direction.
-*/
+const rev = (path: Path.t): Path.t => {
+  const blah = [...path];
+  return blah.reverse();
+};
+
+const move_up = (exp: Exp, selection: number[]): Path.t => {
+  if (selection.length === 0) return selection;
+  const [last, ...tl] = rev(selection);
+  const new_path = rev([last - 1, ...tl]);
+  //TODO: hack, hardcoded skipping of head via !=1 check
+  if (last != 1 && is_path_valid(new_path, exp)) {
+    return new_path;
+  } else return selection;
+};
+
+const move_down = (exp: Exp, selection: number[]): Path.t => {
+  if (selection.length === 0) return selection;
+  const [last, ...tl] = rev(selection);
+  const new_path = rev([last + 1, ...tl]);
+  if (is_path_valid(new_path, exp)) {
+    return new_path;
+  } else return selection;
+};
+
+const move_left = (_exp: Exp, selection: number[]): Path.t => {
+  if (selection.length === 0) {
+    return selection;
+  } else {
+    return selection.slice(0, selection.length - 1);
+  }
+};
+
+const move_right = (exp: Exp, selection: number[]): Path.t => {
+  const new_selection = [...selection, 1];
+  if (is_path_valid(new_selection, exp)) {
+    return new_selection;
+  } else {
+    return selection;
+  }
+};
+
 export const move_ = (
   stage: Stage,
   direction: "up" | "down" | "left" | "right"
 ): Path.t => {
-  const { selection } = stage;
   switch (direction) {
     case "up":
-      if (selection.length === 0) return selection;
-      const blah = [...selection];
-      const [last, ...tl] = blah.reverse();
-      const new_path = [last - 1, ...tl].reverse();
-      //TODO: hack, hardcoded skipping of head via !=1 check
-      if (last != 1 && is_path_valid(new_path, stage.exp)) {
-        return new_path;
-      } else return selection;
+      return move_up(stage.exp, stage.selection);
     case "down":
-      if (selection.length === 0) return selection;
-      const blah1 = [...selection];
-      const [last1, ...tl1] = blah1.reverse();
-      const new_path1 = [last1 + 1, ...tl1].reverse();
-      if (is_path_valid(new_path1, stage.exp)) {
-        return new_path1;
-      } else return selection;
+      return move_down(stage.exp, stage.selection);
     case "left":
-      if ((selection.length = 0)) {
-        return selection;
-      } else {
-        return selection.slice(0, selection.length - 1);
-      }
+      return move_left(stage.exp, stage.selection);
     case "right":
-      const new_selection = [...selection, 1];
-      if (is_path_valid(new_selection, stage.exp)) {
-        return new_selection;
-      } else {
-        return selection;
-      }
+      return move_right(stage.exp, stage.selection);
   }
 };
 

@@ -75,3 +75,24 @@ export const init: t = {
   selector: [],
   transforms: init_transforms,
 };
+
+const update_selector = (tools: t, f: (_: Path.t) => Path.t): t => ({
+  ...tools,
+  selector: f(tools.selector),
+});
+
+export const move = (
+  tools: t,
+  direction: "up" | "down" | "left" | "right"
+): t => {
+  switch (direction) {
+    case "up":
+      return update_selector(tools, Transform.move_up);
+    case "down":
+      return update_selector(tools, Transform.move_down);
+    case "left":
+      return update_selector(tools, Transform.move_left);
+    case "right":
+      return update_selector(tools, Transform.move_right);
+  }
+};
