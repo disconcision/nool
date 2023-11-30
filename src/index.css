@@ -250,25 +250,25 @@ code {
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
 }
-.node.size-0:hover {
+.node.depth-0:hover {
   transform: scale(1.02);
 }
-.node.size-1:hover {
+.node.depth-1:hover {
   transform: scale(1.04);
 }
-.node.size-2:hover {
+.node.depth-2:hover {
   transform: scale(1.06);
 }
-.node.size-3:hover {
+.node.depth-3:hover {
   transform: scale(1.04);
 }
-.node.size-4:hover {
+.node.depth-4:hover {
   transform: scale(1.02);
 }
-.node.size-5:hover {
+.node.depth-5:hover {
   transform: scale(1.01);
 }
-.node.size-6:hover {
+.node.depth-6:hover {
   transform: scale(1.01);
 }
 
@@ -322,6 +322,7 @@ code {
   -webkit-background-clip: text;
   -moz-background-clip: text;
   background-clip: text;
+  padding: 0.15em;
 }
 .node.comp .tail {
   display: flex;

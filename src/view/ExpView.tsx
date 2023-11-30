@@ -45,17 +45,18 @@ const ExpViewGo: Component<{
   //TODO: anys
   const head = (props: any) => {
     //console.log("head", props.node.id);
-    return(
-    <ExpViewGo
-      info={props.info}
-      path={props.path}
-      node={props.node.kids[0]}
-      animate={props.animate}
-      is_head={true}
-      inject={props.inject}
-      mask={props.mask}
-    />
-  )};
+    return (
+      <ExpViewGo
+        info={props.info}
+        path={props.path}
+        node={props.node.kids[0]}
+        animate={props.animate}
+        is_head={true}
+        inject={props.inject}
+        mask={props.mask}
+      />
+    );
+  };
   const tail = (props: any) => (
     <div class="tail">
       <For each={props.node.kids.slice(1)}>
@@ -81,10 +82,9 @@ const ExpViewGo: Component<{
   */
   const selected = is_selected(props) ? "selected" : "";
   const node_mask = node_mask_cls(props.node.id, props.mask);
-  const size = Statics.get(props.info, props.node.id).depth;
   //TODO: betterize bucketing
   //const bucket = Math.min(5, Math.max(1, Math.floor(size / 2)));
-  const size_class = `size-${size}`;
+  const size_class = `depth-${Statics.get(props.info, props.node.id).depth}`;
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
@@ -102,13 +102,13 @@ const ExpViewGo: Component<{
               //onpointerenter={setSelect(props.node.id)}
             >
               {props.node.sym}
-              <div class="id-view">{props.node.id}</div>
+              {/*<div class="id-view">{props.node.id}</div>*/}
             </div>
           }
         >
           <div class="head" {...opts}>
             {props.node.sym}
-            <div class="id-view">{props.node.id}</div>
+            {/*<div class="id-view">{props.node.id}</div>*/}
           </div>
         </Show>
       );
@@ -129,7 +129,7 @@ const ExpViewGo: Component<{
           onpointerdown={setSelect(props.node.id)}
           //onpointerenter={setSelect(props.node.id)}
         >
-          <div class="id-view">{props.node.id}</div>
+          {/*<div class="id-view">{props.node.id}</div>*/}
           {head(props)}
           {tail(props)}
         </div>
@@ -157,7 +157,7 @@ export const ViewOnly: Component<{
   node: Exp;
 }> = (props) =>
   ExpViewGo({
-    info: Statics.mk(props.node,[]),
+    info: Statics.mk(props.node, []),
     path: [],
     node: props.node,
     animate: false,
