@@ -63,12 +63,24 @@ const move_up = (exp: Exp, selection: number[]): Path.t => {
 };
 
 const move_down = (exp: Exp, selection: number[]): Path.t => {
+  /* first, try to increment last idx of selection.
+  if that gives a valid path, return it.
+  then try to increment second last index, etc.
+  If none of those are valid,
+  drop the last element of the selection, and recurse.
+   */
   if (selection.length === 0) return selection;
-  const [last, ...tl] = rev(selection);
-  const new_path = rev([last + 1, ...tl]);
-  if (is_path_valid(new_path, exp)) {
-    return new_path;
-  } else return selection;
+  for (let i = selection.length - 1; i >= 0; i--) {
+    const new_path = [...selection];
+    new_path[i]++;
+    for (let j = i + 1; j < new_path.length; j++) {
+      new_path[j] = 1; /* 1 is starting index as we're skipping the head */
+    }
+    if (is_path_valid(new_path, exp)) {
+      return new_path;
+    }
+  }
+ return move_down(exp,Array(selection.length).fill(0));
 };
 
 const move_left = (_exp: Exp, selection: number[]): Path.t => {

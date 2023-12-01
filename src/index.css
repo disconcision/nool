@@ -230,7 +230,7 @@ code {
 }
 
 .node {
-  transition: all 0.5s ease-in-out;
+  transition: all 0.3s ease-in-out;
   width: fit-content;
   display: flex;
   border-radius: 3em 1.2em 0.6em 32%;
@@ -303,8 +303,8 @@ code {
 }
 
 .node.comp {
-  /* display: flex; */
-  color: transparent;
+  /* display: flex; 
+  color: transparent; */
   text-shadow: 0 0 0 #50b0ff;
 }
 .node:active {
@@ -313,7 +313,10 @@ code {
   animation-iteration-count: infinite;
 }
 #stage .node.comp {
-  background-color: #005bff26;
+  /*background-color: #005bff26;*/
+  background: linear-gradient(222deg, #00f3ff6b, #00fffd1a, #00ffba1a, #ff00bc0d, #0025ff0f, transparent);
+  border-bottom: 0.3px solid rgb(255 0 220 / 53%);
+  border-top: 0.3px solid rgb(226 255 244);
 }
 .node.comp .head {
   background-color: #273b82;

@@ -94,6 +94,7 @@ export function subtree_at<T>(p: Path.t, n: t<T>): t<T> | undefined {
     case "Comp":
       if (p.length === 0) return n;
       let [hd, ...tl] = p;
+      if (n.kids[hd] == undefined) return undefined;
       return subtree_at(tl, n.kids[hd]);
   }
 }
