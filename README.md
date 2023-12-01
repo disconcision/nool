@@ -10,9 +10,15 @@ is: https://andrewblinn.com/nool/
 0. `zoom in`?
 1. `do clicks`.
 
+## Noolnatomy
+`| nool      |  settings |`<br>
+`| tools | stage | peeks |`
+
 ## Experimental Features
 
-### `↑` `↓` `→` `←` `1` `2` `3` `4`
+### `↑` `↓` `→` `←` (stage hand)
+### `w` `a` `s` `d` (tool hand)
+### `SPACE` (sing) `ESCAPE` (die)
 
 ## Make Nool
 
