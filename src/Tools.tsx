@@ -65,10 +65,10 @@ export const inverse_plus: Transform.t = {
 };
 
 export const init_transforms = [
-  identity_plus,
-  commute_plus,
   associate_plus,
-  inverse_plus,
+  commute_plus,
+  identity_plus,
+  Transform.rev(inverse_plus),
 ];
 
 export const init: t = {

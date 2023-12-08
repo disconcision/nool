@@ -130,7 +130,6 @@ const TransformView: Component<{
   return (
     <div class={`transform-view`} onpointerdown={flipTransform}>
       {/*<div class="label">{props.t.name}</div>*/}
-      <div class="transform">
         <div
           class={`source ${selected_src(
             props.model.tools,
@@ -165,7 +164,6 @@ const TransformView: Component<{
         >
           <PatView p={props.t.result} is_head={false} />
         </div>
-      </div>
     </div>
   );
 };
