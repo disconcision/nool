@@ -7,7 +7,6 @@ is `Nool`.
 is: https://andrewblinn.com/nool/
 
 ## Nool Noob?
-0. `zoom in`?
 1. `do clicks`.
 
 ## Noolnatomy
