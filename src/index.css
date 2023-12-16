@@ -208,7 +208,7 @@ code {
   padding: 0 0.25em;
   justify-content: center;
 }
-.node.atom:hover,
+#stage .node.atom:hover,
 .transform .result.match:hover,
 .transform .source.match:hover {
   animation-name: pulse;
@@ -409,7 +409,7 @@ code {
 }
 .transform-view .result .node,
 .transform-view .source .node {
-  transition: all 0.1s ease-in;
+  /*transition: all 0.1s ease-in;*/
 }
 .transform-view .result.selected > .node,
 .transform-view .source.selected > .node {
@@ -423,21 +423,26 @@ code {
 }
 
 .transform-view .node.comp {
-  transition: all 0.1s ease-in-out;
-  box-shadow: 0.25em 0.25em 0.5em #55ac8740;
+  /*transition: all 0.1s ease-in-out;
+  box-shadow: 0.25em 0.25em 0.5em #55ac8740;*/
+  box-shadow: 0.1em 0.1em 1.4em #55ac8740;
   border-bottom: 0.1px solid #8ee347;
 }
 .transform-view .node:hover {
-  border-top: 0.3px solid #a147c3 !important;
+  /*border-top: 0.3px solid #a147c3 !important;
   border-bottom: 0.5px solid white !important;
-  background-color: #005bff26;
+  background-color: #005bff26;*/
+  filter: drop-shadow(0 0 0.5em white);
   /*background-color: #7ce5bb;*/
   /* box-shadow: inset 0px -10px 10px #ad91ff !important; */
   /* filter: brightness(1); */
 }
+.transform-view:hover .node.pat.atom {
+  filter: brightness(0.6) contrast(8);
+}
 .transform-view .node:hover + .node {
-  animation-name: wobbleH;
-  animation-duration: 1.2s;
+  /*animation-name: wobbleH;
+  animation-duration: 1.2s;*/
 }
 /*.transform-view:hover::before {
   box-shadow: 0pt 5pt 8pt 0 #0fdc, 0 0.5px 2px 0 #6f00ff;
@@ -452,14 +457,8 @@ code {
   bottom: 0;
 }*/
 .transform-view:active {
-  text-shadow: 0 -0.5px 0 #ff00ff;
-  background-color: #38fbf5;
-  box-shadow: inset 0 -10px 10px #ad91ff;
-  padding-bottom: 6px;
-  border-top: 0.6px solid #000000;
-  border-bottom: 0px solid white;
   color: black;
-  filter: brightness(1) contrast(1) drop-shadow(0px 5px 6px #f0f9);
+  filter: drop-shadow(0 0 1.2em #f0f9);
   mix-blend-mode: plus-lighter;
 }
 .transform-view:active::before {
@@ -528,62 +527,62 @@ code {
   /*font-family: "Segoe UI Emoji";*/
 }
 .pat.node.atom.♫ {
-  background-color: cyan;
-  color: rgb(29, 182, 182);
+  background-color: #b8fbfe;
+  color: #b2d2ca;
+  box-shadow: none;
+  border-color: #0000;
+  /*box-shadow: 0 0 1em #0ffa;
+  mix-blend-mode: lighten;*/
 }
 .pat.node.atom.♥ {
-  background-color: #f772f7;
-  color: rgb(189 49 255);
+  background-color: #f4dcfb;
+  color: #b2d2ca;
+  box-shadow: none;
+  border-color: #0000;
+  /*box-shadow: 0 0 1em #f0fa;
+  mix-blend-mode: lighten;*/
 }
 .pat.node.atom.✿ {
-  background-color: yellow;
-  color: rgb(213, 176, 91);
+  background-color: #ffff92;
+  color: #b2d2ca;
+  box-shadow: none;
+  border-color: #0000;
+  /*box-shadow: 0 0 1em #ff0a;
+  mix-blend-mode: lighten;*/
 }
 
 /* styles for mask */
 @keyframes mask-pulse-✿ {
-  0% {
+  0%,100% {
     transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(0deg);
+    filter: sepia(1) saturate(4) hue-rotate(0deg);
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(100%) saturate(400%) hue-rotate(0deg) brightness(1.2)
+    filter: sepia(1) saturate(4) hue-rotate(0deg) brightness(1.1)
       drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6));
-  }
-  100% {
-    transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(0deg);
   }
 }
 @keyframes mask-pulse-♫ {
-  0% {
+  0%,100% {
     transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(160deg);
+    filter: sepia(1) saturate(4) hue-rotate(160deg);
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(100%) saturate(400%) hue-rotate(160deg) brightness(1.2)
+    filter: sepia(1) saturate(4) hue-rotate(160deg) brightness(1.1)
       drop-shadow(0px 0px 20px rgba(0, 153, 255, 0.6));
-  }
-  100% {
-    transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(160deg);
   }
 }
 @keyframes mask-pulse-♥ {
-  0% {
+  0%,100%  {
     transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(210deg);
+    filter: sepia(1) saturate(4) hue-rotate(210deg);
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(100%) saturate(400%) hue-rotate(210deg) brightness(1.2)
+    filter: sepia(1) saturate(4) hue-rotate(210deg) brightness(1.1)
       drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6));
-  }
-  100% {
-    transform: scale(1);
-    filter: sepia(100%) saturate(400%) hue-rotate(210deg);
   }
 }
 
@@ -614,10 +613,6 @@ code {
   position: relative;
   display: flex;
   flex-direction: row;
-}
-
-.transform-view:active .pat {
-  color: black !important;
 }
 
 .source.no-match,
