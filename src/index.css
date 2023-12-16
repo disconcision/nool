@@ -615,9 +615,23 @@ code {
   flex-direction: row;
 }
 
+.source.no-match .node.pat.atom,
+.source.no-match .head,
+.result.no-match .node.pat.atom,
+.result.no-match .head {
+  color: #682828;
+  opacity: 20%;
+  
+}
+
+.source.no-match .node.comp,
+.result.no-match .node.comp {
+  box-shadow: 0.1em 0.1em 1.4em #55ac8740;
+}
+
 .source.no-match,
 .result.no-match {
-  filter: opacity(0.7) sepia(1) saturate(0);
+  filter: opacity(0.6) sepia(1) saturate(0) brightness(0.6) contrast(5);
 }
 
 .id-view {
