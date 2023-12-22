@@ -16,6 +16,7 @@ export type Action =
   | { t: "setSelect"; path: Path.t }
   | { t: "moveStage"; direction: Direction }
   | { t: "moveTool"; direction: Direction }
+  | { t: "unsetTool"}
   | {
       t: "transformNode";
       idx: number;

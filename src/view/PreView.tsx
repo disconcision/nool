@@ -47,16 +47,18 @@ export const AdjacentPossible: Component<{
   tools: Transform[];
   inject: Action.Inject;
 }> = (props) => {
+  if (props.stage.selection === "unselected") return <div></div>;
   const selection = subtree_at(props.stage.selection, props.stage.exp);
   if (selection === undefined) return <div></div>;
   return (
     <div class="previews" style={"display: flex;"}>
       <For each={do_transforms(selection, props.tools)}>
-        {([transform, node]) =>
-          preview(
+        {([transform, node]) => {
+           if (props.stage.selection === "unselected") return <div></div>;
+          return preview(
             node,
             transformer(props.inject, transform, props.stage.selection)
-          )
+          )}
         }
       </For>
     </div>

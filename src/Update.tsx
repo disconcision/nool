@@ -7,6 +7,7 @@ import * as Stage from "./Stage";
 import * as Action from "./Action";
 import * as Transform from "./Transform";
 import * as Tools from "./Tools";
+import * as Hover from "./Hover";
 
 export const sound = (model: Model.t, action: Action.t): void => {
   switch (action.t) {
@@ -54,7 +55,16 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
     case "moveStage":
       return { ...model, stage: Stage.move(model.stage, action.direction) };
     case "moveTool":
-      return { ...model, tools: Tools.move(model.tools, action.direction) };
+      let tools = Tools.move(model.tools, action.direction);
+      const hover: Hover.t = {
+        t: "TransformSource",
+        pat: Tools.get_pat(tools),
+      };
+      return { ...model, tools, hover: hover };
+    case "unsetTool":
+      return {...model,
+        stage: Stage.unset_selection(model.stage),
+         tools: Tools.unset(model.tools)}
     case "transformNode":
       let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
@@ -64,7 +74,8 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
         return model;
       }
     case "applyTransform":
-      if (action.idx < 0 || action.idx >= model.tools.transforms.length)
+      if (action.idx < 0 || action.idx >= model.tools.transforms.length
+        || model.stage.selection === "unselected")
         return model;
       const transform1 = model.tools.transforms[action.idx];
       const transform =
@@ -112,7 +123,7 @@ const flipping = new Flipping({
   //parent: document.getElementById("stage")!,
   //stagger: 1,
   //selector:  (_el:Element) => {return [_el]},
-  //parent: this,
+  parent: this,
   //activeSelector: (_el:any) => {return (true)},
 });
 

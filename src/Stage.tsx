@@ -4,9 +4,11 @@ import * as Path from "./syntax/Path";
 import * as Projector from "./Projector";
 import { is_path_valid } from "./syntax/Node";
 
+export type selection = "unselected" | Path.t;
+
 export type Stage = {
   exp: Exp;
-  selection: Path.t;
+  selection: selection;
   info: Statics.InfoMap; //derived from exp
   projectors: Projector.PMap; //annotations
 };
@@ -31,7 +33,7 @@ const exp: Exp = comp([
 
 export const init: Stage = {
   exp: exp,
-  selection: [],
+  selection: "unselected",
   info: Statics.mk(exp, []),
   projectors: Projector.init,
 };
@@ -42,10 +44,13 @@ export const put_exp = (stage: Stage, exp: Exp): Stage => ({
   info: Statics.mk(exp, []),
 });
 
-export const put_selection = (stage: Stage, path: Path.t): Stage => ({
+export const put_selection = (stage: Stage, path: selection): Stage => ({
   ...stage,
   selection: path,
 });
+
+export const unset_selection = (stage: Stage): Stage =>
+  put_selection(stage, "unselected");
 
 const rev = (path: Path.t): Path.t => {
   const blah = [...path];
@@ -80,7 +85,7 @@ const move_down = (exp: Exp, selection: number[]): Path.t => {
       return new_path;
     }
   }
- return move_down(exp,Array(selection.length).fill(0));
+  return move_down(exp, Array(selection.length).fill(0));
 };
 
 const move_left = (_exp: Exp, selection: number[]): Path.t => {
@@ -104,15 +109,16 @@ export const move_ = (
   stage: Stage,
   direction: "up" | "down" | "left" | "right"
 ): Path.t => {
+  const selection = stage.selection === "unselected" ? [] : stage.selection;
   switch (direction) {
     case "up":
-      return move_up(stage.exp, stage.selection);
+      return move_up(stage.exp, selection);
     case "down":
-      return move_down(stage.exp, stage.selection);
+      return move_down(stage.exp, selection);
     case "left":
-      return move_left(stage.exp, stage.selection);
+      return move_left(stage.exp, selection);
     case "right":
-      return move_right(stage.exp, stage.selection);
+      return move_right(stage.exp, selection);
   }
 };
 

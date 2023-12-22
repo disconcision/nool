@@ -46,6 +46,7 @@ const PatView: Component<{ p: Pat; is_head: boolean }> = (props) => {
 };
 
 const source_matches_cls = (props: { model: Model; t: Transform }) => {
+  if (props.model.stage.selection == "unselected") return "no-match";
   //console.log('selection src:', props.model.selection);
   const res = matches_at_path(
     props.model.stage.exp,
@@ -60,6 +61,7 @@ const source_matches_cls = (props: { model: Model; t: Transform }) => {
 };
 
 const result_matches_cls = (props: { model: Model; t: Transform }) => {
+  if (props.model.stage.selection == "unselected") return "no-match";
   //console.log('selection res:', props.model.selection);
   const res = matches_at_path(
     props.model.stage.exp,
@@ -90,12 +92,13 @@ const TransformView: Component<{
     /* HACK(ish): by not stopping propagation,
        transform also flips the rule, which is
        kind of cool */
+    if (props.model.stage.selection != "unselected"){
     props.inject({
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
       f: at_path(props.t, props.model.stage.selection),
-    });
+    })};
   };
   const transformNodeReverse = (e: Event) => {
     e.preventDefault();
@@ -103,12 +106,13 @@ const TransformView: Component<{
     /* HACK(ish): by not stopping propagation,
        transform also flips the rule, which is
        kind of cool */
+       if (props.model.stage.selection != "unselected"){
     props.inject({
       t: "transformNode",
       idx: props.idx,
       transform: props.t,
       f: at_path(rev(props.t), props.model.stage.selection),
-    });
+    })};
   };
   const setHover = (target: Hover.t) => (_: Event) =>
     props.inject({

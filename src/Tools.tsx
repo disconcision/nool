@@ -96,3 +96,15 @@ export const move = (
       return update_selector(tools, Transform.move_right);
   }
 };
+
+const get_transform = (tools: t) => tools.transforms[tools.selector[0]];
+
+export const get_pat = (tools: t) => {
+  let t = get_transform(tools);
+  return tools.selector[1] === 1 ? t.result : t.source;
+};
+
+export const unset = (tools: t): t => ({
+  ...tools,
+  selector: [],
+});

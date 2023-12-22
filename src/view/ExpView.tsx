@@ -19,15 +19,15 @@ const node_mask_cls = (id: number, mask: Binding[]): string => {
 const ExpViewGo: Component<{
   node: Exp;
   info: Statics.InfoMap;
-  path: Path.t;
+  selection: Stage.selection;
   animate: boolean;
   is_head: boolean;
   inject: Action.Inject;
   mask: Binding[];
 }> = (props) => {
   const setSelect = (id: number) => (e: Event) => {
-    //e.preventDefault();pcs
-    //above modulates whether shake occurs for some reason
+    e.preventDefault();
+    //above modulates whether shake occurs for some reason?
     e.stopPropagation();
     props.inject({
       t: "setSelect",
@@ -37,18 +37,17 @@ const ExpViewGo: Component<{
   const is_selected = (props: {
     node: Exp;
     info: Statics.InfoMap;
-    path: Path.t;
+    selection: Stage.selection;
   }): boolean => {
     let node_path = Statics.get(props.info, props.node.id).path;
-    return Path.eq(node_path, props.path);
+    return (props.selection === "unselected")? false :Path.eq(node_path, props.selection);
   };
   //TODO: anys
   const head = (props: any) => {
-    //console.log("head", props.node.id);
     return (
       <ExpViewGo
         info={props.info}
-        path={props.path}
+        selection={props.selection}
         node={props.node.kids[0]}
         animate={props.animate}
         is_head={true}
@@ -63,7 +62,7 @@ const ExpViewGo: Component<{
         {(kid) => (
           <ExpViewGo
             info={props.info}
-            path={props.path}
+            selection={props.selection}
             node={kid}
             animate={props.animate}
             is_head={false}
@@ -74,22 +73,15 @@ const ExpViewGo: Component<{
       </For>
     </div>
   );
-  /*
-  {is_selected(props) ? (
-          <div class="node comp floatselect" data-flip-key-comp={`flip-${666}`}>{head(props)}
-          {tail(props)}</div>
-        ) : null}
-  */
+
   const selected = is_selected(props) ? "selected" : "";
   const node_mask = node_mask_cls(props.node.id, props.mask);
-  //TODO: betterize bucketing
-  //const bucket = Math.min(5, Math.max(1, Math.floor(size / 2)));
   const size_class = `depth-${Statics.get(props.info, props.node.id).depth}`;
   switch (props.node.t) {
     case "Atom":
       var opts: any = {};
       if (props.animate) {
-        opts[`data-flip-key`] = `flip-${props.node.id}`;
+       opts[`data-flip-key`] = `flip-${props.node.id}`;
       }
       return (
         <Show
@@ -115,13 +107,14 @@ const ExpViewGo: Component<{
     case "Comp":
       var opts: any = {};
       if (
-        props.animate &&
+        //props.animate 
+        //&&
         props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)
+        //||is_selected(props)
       ) {
         opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
       }
       return (
-        // <div style="position: relative">
         <div
           //data-flip-parent={`flip-${props.node.id}`}
           {...opts}
@@ -133,7 +126,6 @@ const ExpViewGo: Component<{
           {head(props)}
           {tail(props)}
         </div>
-        //</div>
       );
   }
 };
@@ -145,7 +137,7 @@ export const ExpView: Component<{
 }> = (props) =>
   ExpViewGo({
     info: props.stage.info,
-    path: props.stage.selection,
+    selection: props.stage.selection,
     node: props.stage.exp,
     inject: props.inject,
     mask: props.mask,
@@ -158,7 +150,7 @@ export const ViewOnly: Component<{
 }> = (props) =>
   ExpViewGo({
     info: Statics.mk(props.node, []),
-    path: [],
+    selection: "unselected",
     node: props.node,
     animate: false,
     is_head: false,

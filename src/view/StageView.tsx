@@ -12,6 +12,7 @@ const get_hover_binding = (model: Model): Binding[] => {
     case "StageNode":
       return [];
     case "TransformSource":
+      if (model.stage.selection == "unselected") return [];
       const rs = matches_at_path(
         model.stage.exp,
         model.hover.pat,
@@ -19,6 +20,7 @@ const get_hover_binding = (model: Model): Binding[] => {
       );
       return rs == "NoMatch" ? [] : rs;
     case "TransformResult":
+      if (model.stage.selection == "unselected") return [];
       const rr = matches_at_path(
         model.stage.exp,
         model.hover.pat,
