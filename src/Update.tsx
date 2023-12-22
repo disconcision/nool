@@ -61,10 +61,13 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
         pat: Tools.get_pat(tools),
       };
       return { ...model, tools, hover: hover };
-    case "unsetTool":
-      return {...model,
+    case "unsetSelections":
+      return {
+        ...model,
         stage: Stage.unset_selection(model.stage),
-         tools: Tools.unset(model.tools)}
+        tools: Tools.unset(model.tools),
+        hover: Hover.init,
+      };
     case "transformNode":
       let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
@@ -74,8 +77,11 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
         return model;
       }
     case "applyTransform":
-      if (action.idx < 0 || action.idx >= model.tools.transforms.length
-        || model.stage.selection === "unselected")
+      if (
+        action.idx < 0 ||
+        action.idx >= model.tools.transforms.length ||
+        model.stage.selection === "unselected"
+      )
         return model;
       const transform1 = model.tools.transforms[action.idx];
       const transform =

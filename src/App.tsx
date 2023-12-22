@@ -28,7 +28,7 @@ const SuperStage: Component<{ model: Model.t; inject: Action.Inject }> = (
   <div class="superstage"
   onmousedown={(e) => {
     e.preventDefault();
-    props.inject({ t: "unsetTool" });
+    props.inject({ t: "unsetSelections" });
   }}
   >
     {ToolsView({ model: props.model, inject: props.inject })}

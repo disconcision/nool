@@ -9,14 +9,7 @@ import * as Statics from "../Statics";
 import * as Stage from "../Stage";
 import * as Hover from "../Hover";
 
-const node_mask_cls = (id: number, mask: Binding[]): string => {
-  const binding = mask.find(
-    ({ ids: [_, id_stage], t }) => id_stage == id && t == "Val"
-  );
-  return binding?.t == "Val" ? "mask " + binding?.val[0] : "";
-};
-
-const ExpViewGo: Component<{
+type expviewprops = {
   node: Exp;
   info: Statics.InfoMap;
   selection: Stage.selection;
@@ -24,31 +17,36 @@ const ExpViewGo: Component<{
   is_head: boolean;
   inject: Action.Inject;
   mask: Binding[];
-}> = (props) => {
-  const setSelect = (id: number) => (e: Event) => {
-    e.preventDefault();
-    //above modulates whether shake occurs for some reason?
-    e.stopPropagation();
-    props.inject({
-      t: "setSelect",
-      path: Statics.get(props.info, id).path,
-    });
-  };
-  const is_selected = (props: {
-    node: Exp;
-    info: Statics.InfoMap;
-    selection: Stage.selection;
-  }): boolean => {
-    let node_path = Statics.get(props.info, props.node.id).path;
-    return (props.selection === "unselected")? false :Path.eq(node_path, props.selection);
-  };
-  //TODO: anys
-  const head = (props: any) => {
+};
+
+const setSelect = (props: expviewprops) => (e: Event) => {
+  e.preventDefault();
+  //above modulates whether shake occurs for some reason?
+  e.stopPropagation();
+  props.inject({
+    t: "setSelect",
+    path: Statics.get(props.info, props.node.id).path,
+  });
+};
+
+const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
+  const { path, depth } = Statics.get(info, node.id);
+  const is_selected =
+    selection == "unselected" ? false : Path.eq(path, selection);
+  const binding = mask.find(
+    ({ ids: [_, id_stage], t }) => id_stage == node.id && t == "Val"
+  );
+  const mask_cls = binding?.t == "Val" ? "mask " + binding?.val[0] : "";
+  return `node ${is_selected ? "selected" : ""} ${mask_cls} depth-${depth}`;
+};
+
+const ExpViewGo: Component<expviewprops> = (props) => {
+  const head = (props: expviewprops, head: Exp) => {
     return (
       <ExpViewGo
         info={props.info}
         selection={props.selection}
-        node={props.node.kids[0]}
+        node={head}
         animate={props.animate}
         is_head={true}
         inject={props.inject}
@@ -56,9 +54,9 @@ const ExpViewGo: Component<{
       />
     );
   };
-  const tail = (props: any) => (
+  const tail = (props: expviewprops, nodes: Exp[]) => (
     <div class="tail">
-      <For each={props.node.kids.slice(1)}>
+      <For each={nodes}>
         {(kid) => (
           <ExpViewGo
             info={props.info}
@@ -74,57 +72,45 @@ const ExpViewGo: Component<{
     </div>
   );
 
-  const selected = is_selected(props) ? "selected" : "";
-  const node_mask = node_mask_cls(props.node.id, props.mask);
-  const size_class = `depth-${Statics.get(props.info, props.node.id).depth}`;
+  const atom_flip = (animate: boolean, id: number): Record<string, string> =>
+    animate ? { "data-flip-key": `flip-${id}` } : {};
+
+  const comp_flip = (animate: boolean, mask: Binding[], id: number) =>
+    animate && mask.some(({ ids }) => ids[1] === id)
+      ? { "data-flip-key-comp": `flip-${id}` }
+      : {};
+
   switch (props.node.t) {
     case "Atom":
-      var opts: any = {};
-      if (props.animate) {
-       opts[`data-flip-key`] = `flip-${props.node.id}`;
-      }
       return (
         <Show
           when={props.is_head}
           fallback={
             <div
-              {...opts}
-              class={`node atom ${props.node.sym} ${selected} ${node_mask} ${size_class}`}
-              onpointerdown={setSelect(props.node.id)}
-              //onpointerenter={setSelect(props.node.id)}
+              id={`node-${props.node.id}`}
+              class={`atom ${props.node.sym} ` + common_clss(props)}
+              onpointerdown={setSelect(props)}
+              {...atom_flip(props.animate, props.node.id)}
             >
               {props.node.sym}
-              {/*<div class="id-view">{props.node.id}</div>*/}
             </div>
           }
         >
-          <div class="head" {...opts}>
+          <div class="head" {...atom_flip(props.animate, props.node.id)}>
             {props.node.sym}
-            {/*<div class="id-view">{props.node.id}</div>*/}
           </div>
         </Show>
       );
     case "Comp":
-      var opts: any = {};
-      if (
-        //props.animate 
-        //&&
-        props.mask.map((x) => x.ids[1]).find((id) => id == props.node.id)
-        //||is_selected(props)
-      ) {
-        opts[`data-flip-key-comp`] = `flip-${props.node.id}`;
-      }
       return (
         <div
-          //data-flip-parent={`flip-${props.node.id}`}
-          {...opts}
-          class={`node comp ${selected} ${node_mask} ${size_class}`}
-          onpointerdown={setSelect(props.node.id)}
-          //onpointerenter={setSelect(props.node.id)}
+          id={`node-${props.node.id}`}
+          class={`comp ` + common_clss(props)}
+          onpointerdown={setSelect(props)}
+          {...comp_flip(props.animate, props.mask, props.node.id)}
         >
-          {/*<div class="id-view">{props.node.id}</div>*/}
-          {head(props)}
-          {tail(props)}
+          {head(props, props.node.kids[0])}
+          {tail(props, props.node.kids.slice(1))}
         </div>
       );
   }
