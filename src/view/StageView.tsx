@@ -40,7 +40,7 @@ export const StageView: Component<{
       <div id="debug" style="display:none">
         <div>selection.path: {props.model.stage.selection}</div>
       </div>
-      <div class="node-container">
+      <div class={`node-container ${props.model.settings.projection}`} >
         {ExpView({
           stage: props.model.stage,
           inject: props.inject,

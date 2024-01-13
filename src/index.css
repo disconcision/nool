@@ -1,12 +1,12 @@
-.notransition * { 
-  transition: none !important; 
+.notransition * {
+  transition: none !important;
 }
-.noanimation * { 
+.noanimation * {
   animation: none !important;
-} 
-.notransformation * { 
+}
+.notransformation * {
   transform: none !important;
-} 
+}
 
 @keyframes jello {
   0% {
@@ -349,18 +349,56 @@ code {
   padding: 0.15em;
 }
 
-#stage .node.comp {
+.node-container.TreeTop .node.comp {
+  align-items: end;
   display: grid;
-  /* grid-template-columns: fit-content(1.5em) 1fr; */
-  grid-auto-flow: column;
-  align-items: center;
+  grid-auto-flow: row;
+  justify-items: center;
+  border-radius: 3em 3em 1em 1em;
 }
-#stage .node.comp .head {
+.node-container.TreeTop .node.comp .head {
+  grid-column: 1/3;
+}
+
+.node-container.TreeLeft .node.comp {
+  /* grid-template-columns: fit-content(1.5em) 1fr; */
+  /*align-items: center;*/
+  display: grid;
+  grid-auto-flow: column;
+}
+.node-container.TreeLeft .node.comp .head {
   grid-column: 1;
   grid-row: 1/3;
 }
+.node-container.LinearPrefix .node.comp,
+.node-container.LinearInfix .node.comp {
+  margin: 0;
+  padding: 0;
+  border-radius: 1.5em;
+  box-shadow: none;
+}
+.node-container.LinearPrefix .node.atom,
+.node-container.LinearInfix .node.atom {
+  border-radius: 1.5em;
+}
 
-.toolbox {
+.node-container.LinearInfix .node.comp *:nth-child(1) {
+  order: 2;
+}
+.node-container.LinearInfix .node.comp *:nth-child(2) {
+  order: 1;
+}
+.node-container.LinearInfix .node.comp *:nth-child(3) {
+  order: 3;
+}
+
+.seed.LinearPrefix {
+  flex-direction: column-reverse;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+#noolbox {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 0.7em 1fr;
@@ -373,13 +411,12 @@ code {
   border-top: 0.04em solid #d4a4d8;
   width: fit-content;
   padding: 0.3em;
-  margin-left: 2em;
 }
-.toolbox .result .node.comp,
-.toolbox .source .node.comp {
+/*#noolbox .result .node.comp,
+#noolbox .source .node.comp {
   border-radius: 0.6em 2em 2.5em 0.5em;
   flex-direction: row-reverse;
-}
+}*/
 
 .transform-view {
   position: relative;
@@ -522,7 +559,6 @@ code {
   background-size: 1.63em;
   background-repeat: no-repeat;
   box-shadow: 4px 4px 10px #0663;
-  margin-left: 1em;
   mix-blend-mode: overlay;
   opacity: 80%;
 }
@@ -544,21 +580,24 @@ code {
   /*font-family: "Segoe UI Emoji";*/
 }
 .pat.node.atom.♫ {
-  background-color: #7df9ff; color: #00e6f0;
+  background-color: #7df9ff;
+  color: #00e6f0;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #0ffa;
   mix-blend-mode: lighten;*/
 }
 .pat.node.atom.♥ {
-  background-color: #ffd5fc; color: #f8abf2;
+  background-color: #ffd5fc;
+  color: #f8abf2;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #f0fa;
   mix-blend-mode: lighten;*/
 }
 .pat.node.atom.✿ {
-  background-color: #ffffb2; color: #f7e300;
+  background-color: #ffffb2;
+  color: #f7e300;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #ff0a;
@@ -567,7 +606,8 @@ code {
 
 /* styles for mask */
 @keyframes mask-pulse-✿ {
-  0%,100% {
+  0%,
+  100% {
     transform: scale(1);
     /* filter: sepia(1) saturate(4) hue-rotate(0deg); */
   }
@@ -578,7 +618,8 @@ code {
   }
 }
 @keyframes mask-pulse-♫ {
-  0%,100% {
+  0%,
+  100% {
     transform: scale(1);
     /* filter: sepia(1) saturate(4) hue-rotate(160deg); */
   }
@@ -588,7 +629,8 @@ code {
   }
 }
 @keyframes mask-pulse-♥ {
-  0%,100%  {
+  0%,
+  100% {
     transform: scale(1);
     /* filter: sepia(1) saturate(2) hue-rotate(210deg); */
   }
@@ -645,7 +687,6 @@ code {
 .result.no-match .head {
   color: #682828;
   opacity: 20%;
-  
 }
 
 .source.no-match .node.comp,
@@ -699,7 +740,7 @@ code {
 .toolbar2 li {
 }
 
-.superstage {
+.seed {
   display: flex;
   align-items: center;
   height: 100vh;

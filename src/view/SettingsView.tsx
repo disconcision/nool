@@ -9,7 +9,9 @@ import motion_off from "../assets/icons/motion-off.svg";
 import motion_half from "../assets/icons/motion-half.svg";
 import preview_on from "../assets/icons/eye-open.svg";
 import preview_off from "../assets/icons/eye-closed.svg";
-import qr_code from "../assets/icons/qr-code.svg";
+import linear_prefix from "../assets/icons/noun-tree-1052096.svg";
+import linear_infix from "../assets/icons/noun-tree-1039106.svg";
+import tree_left from "../assets/icons/noun-tree-1052083.svg";
 
 //TODO: qr code to disable id display
 
@@ -40,6 +42,19 @@ const motion_icon = (motion: Settings.motion): string => {
 const preview_icon = (preview: boolean): string =>
   preview ? preview_on : preview_off;
 
+const projection_icon = (projection: Settings.projection): string => {
+  switch (projection) {
+    case "LinearPrefix":
+      return linear_prefix;
+    case "LinearInfix":
+      return linear_infix;
+    case "TreeLeft":
+      return tree_left;
+    case "TreeTop":
+      return linear_prefix;
+  }
+};
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
@@ -48,6 +63,8 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return motion_icon(settings.motion);
     case "TogglePreview":
       return preview_icon(settings.preview);
+    case "ToggleProjection":
+      return projection_icon(settings.projection);
   }
 };
 
@@ -71,5 +88,6 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleSound")}
     {icon(props.inject, props.model.settings, "ToggleMotion")}
     {icon(props.inject, props.model.settings, "TogglePreview")}
+    {icon(props.inject, props.model.settings, "ToggleProjection")}
   </div>
 );

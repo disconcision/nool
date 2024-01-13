@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import { For, Show, Switch, Match } from "solid-js";
+import { For, Index, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
 import { Pat, matches_at_path } from "../syntax/Pat";
 import { Model } from "../Model";
@@ -34,12 +34,9 @@ const PatView: Component<{ p: Pat; is_head: boolean }> = (props) => {
     case "Comp":
       return (
         <div class="node comp pat">
-          {PatView({ p: props.p.kids[0], is_head: true })}
-          <div>
-            <For each={props.p.kids.slice(1)}>
-              {(kid) => PatView({ p: kid, is_head: false })}
-            </For>
-          </div>
+          <Index each={props.p.kids}>
+            {(kid, i) => PatView({ p: kid(), is_head: i === 0 })}
+          </Index>
         </div>
       );
   }
@@ -92,13 +89,14 @@ const TransformView: Component<{
     /* HACK(ish): by not stopping propagation,
        transform also flips the rule, which is
        kind of cool */
-    if (props.model.stage.selection != "unselected"){
-    props.inject({
-      t: "transformNode",
-      idx: props.idx,
-      transform: props.t,
-      f: at_path(props.t, props.model.stage.selection),
-    })};
+    if (props.model.stage.selection != "unselected") {
+      props.inject({
+        t: "transformNode",
+        idx: props.idx,
+        transform: props.t,
+        f: at_path(props.t, props.model.stage.selection),
+      });
+    }
   };
   const transformNodeReverse = (e: Event) => {
     e.preventDefault();
@@ -106,13 +104,14 @@ const TransformView: Component<{
     /* HACK(ish): by not stopping propagation,
        transform also flips the rule, which is
        kind of cool */
-       if (props.model.stage.selection != "unselected"){
-    props.inject({
-      t: "transformNode",
-      idx: props.idx,
-      transform: props.t,
-      f: at_path(rev(props.t), props.model.stage.selection),
-    })};
+    if (props.model.stage.selection != "unselected") {
+      props.inject({
+        t: "transformNode",
+        idx: props.idx,
+        transform: props.t,
+        f: at_path(rev(props.t), props.model.stage.selection),
+      });
+    }
   };
   const setHover = (target: Hover.t) => (_: Event) =>
     props.inject({
@@ -134,40 +133,42 @@ const TransformView: Component<{
   return (
     <div class={`transform-view`} onpointerdown={flipTransform}>
       {/*<div class="label">{props.t.name}</div>*/}
-        <div
-          class={`source ${selected_src(
-            props.model.tools,
-            props.idx
-          )} ${source_matches_cls(props)}`}
-          onmouseenter={setHover({
-            t: "TransformSource",
-            pat: props.t.source,
-          })}
-          onpointerleave={setHover({ t: "NoHover" })}
-          onpointerdown={transformNode}
-        >
-          <PatView p={props.t.source} is_head={false} />
-        </div>
-        <div class="transform-arrow">
-          <Switch fallback="⇋">
-            <Match when={props.model.hover.t === "TransformSource"}>→</Match>
-            <Match when={props.model.hover.t === "TransformResult"}>←</Match>
-          </Switch>
-        </div>
-        <div
-          class={`result ${selected_res(
-            props.model.tools,
-            props.idx
-          )} ${result_matches_cls(props)}`}
-          onmouseenter={setHover({
-            t: "TransformResult",
-            pat: props.t.result,
-          })}
-          onpointerleave={setHover({ t: "NoHover" })}
-          onpointerdown={transformNodeReverse}
-        >
-          <PatView p={props.t.result} is_head={false} />
-        </div>
+      <div
+        class={`source node-container ${
+          props.model.settings.projection
+        } ${selected_src(props.model.tools, props.idx)} ${source_matches_cls(
+          props
+        )}`}
+        onmouseenter={setHover({
+          t: "TransformSource",
+          pat: props.t.source,
+        })}
+        onpointerleave={setHover({ t: "NoHover" })}
+        onpointerdown={transformNode}
+      >
+        <PatView p={props.t.source} is_head={false} />
+      </div>
+      <div class="transform-arrow">
+        <Switch fallback="⇋">
+          <Match when={props.model.hover.t === "TransformSource"}>→</Match>
+          <Match when={props.model.hover.t === "TransformResult"}>←</Match>
+        </Switch>
+      </div>
+      <div
+        class={`result node-container ${
+          props.model.settings.projection
+        } ${selected_res(props.model.tools, props.idx)} ${result_matches_cls(
+          props
+        )}`}
+        onmouseenter={setHover({
+          t: "TransformResult",
+          pat: props.t.result,
+        })}
+        onpointerleave={setHover({ t: "NoHover" })}
+        onpointerdown={transformNodeReverse}
+      >
+        <PatView p={props.t.result} is_head={false} />
+      </div>
     </div>
   );
 };
@@ -177,7 +178,7 @@ export const ToolsView: Component<{
   inject: (_: Action.t) => void;
 }> = (props) => {
   return (
-    <div class="toolbox">
+    <div id="noolbox">
       <For each={props.model.tools.transforms}>
         {(t: Transform, idx) =>
           TransformView({
