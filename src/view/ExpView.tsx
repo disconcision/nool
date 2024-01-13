@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import { For, Show } from "solid-js";
+import { For, Show, Index } from "solid-js";
 //import Rand from "rand-seed";
 import { Binding } from "../syntax/Pat";
 import { Exp } from "../syntax/Exp";
@@ -41,44 +41,16 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
 };
 
 const ExpViewGo: Component<expviewprops> = (props) => {
-  const head = (props: expviewprops, head: Exp) => {
-    return (
-      <ExpViewGo
-        info={props.info}
-        selection={props.selection}
-        node={head}
-        animate={props.animate}
-        is_head={true}
-        inject={props.inject}
-        mask={props.mask}
-      />
-    );
-  };
-  const tail = (props: expviewprops, nodes: Exp[]) => (
-    <div class="tail">
-      <For each={nodes}>
-        {(kid) => (
-          <ExpViewGo
-            info={props.info}
-            selection={props.selection}
-            node={kid}
-            animate={props.animate}
-            is_head={false}
-            inject={props.inject}
-            mask={props.mask}
-          />
-        )}
-      </For>
-    </div>
-  );
-
-  const atom_flip = (animate: boolean, id: number): Record<string, string> =>
+  const atom_flip = (
+    animate: boolean,
+    mask: Binding[],
+    id: number
+  ): Record<string, string> =>
     animate ? { "data-flip-key": `flip-${id}` } : {};
 
+  //&& mask.some(({ ids, t }) => t === "Val" &&ids[1] === id)
   const comp_flip = (animate: boolean, mask: Binding[], id: number) =>
-    animate && mask.some(({ ids }) => ids[1] === id)
-      ? { "data-flip-key-comp": `flip-${id}` }
-      : {};
+    animate ? { "data-flip-key-comp": `flip-${id}` } : {};
 
   switch (props.node.t) {
     case "Atom":
@@ -90,13 +62,17 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               id={`node-${props.node.id}`}
               class={`atom ${props.node.sym} ` + common_clss(props)}
               onpointerdown={setSelect(props)}
-              {...atom_flip(props.animate, props.node.id)}
+              {...atom_flip(props.animate, props.mask, props.node.id)}
             >
               {props.node.sym}
             </div>
           }
         >
-          <div class="head" {...atom_flip(props.animate, props.node.id)}>
+          <div
+            id={`node-${props.node.id}`}
+            class="head"
+            {...atom_flip(props.animate, props.mask, props.node.id)}
+          >
             {props.node.sym}
           </div>
         </Show>
@@ -109,8 +85,21 @@ const ExpViewGo: Component<expviewprops> = (props) => {
           onpointerdown={setSelect(props)}
           {...comp_flip(props.animate, props.mask, props.node.id)}
         >
-          {head(props, props.node.kids[0])}
-          {tail(props, props.node.kids.slice(1))}
+          {
+            <Index each={props.node.kids}>
+              {(kid, i) => (
+                <ExpViewGo
+                  info={props.info}
+                  selection={props.selection}
+                  node={kid()}
+                  animate={props.animate}
+                  is_head={i === 0}
+                  inject={props.inject}
+                  mask={props.mask}
+                />
+              )}
+            </Index>
+          }
         </div>
       );
   }

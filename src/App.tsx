@@ -25,11 +25,18 @@ const blah = () => (
 const SuperStage: Component<{ model: Model.t; inject: Action.Inject }> = (
   props
 ) => (
-  <div class="superstage"
-  onmousedown={(e) => {
-    e.preventDefault();
-    props.inject({ t: "unsetSelections" });
-  }}
+  <div
+    class="superstage"
+    classList={{
+      notransition: props.model.settings.motion === "Off",
+      noanimation:
+        props.model.settings.motion === "Off",
+      notransformation: props.model.settings.motion === "Off",
+    }}
+    onmousedown={(e) => {
+      e.preventDefault();
+      props.inject({ t: "unsetSelections" });
+    }}
   >
     {ToolsView({ model: props.model, inject: props.inject })}
     {StageView({ model: props.model, inject: props.inject })}
@@ -44,12 +51,12 @@ const SuperStage: Component<{ model: Model.t; inject: Action.Inject }> = (
 );
 
 const App: Component = () => {
-  const [model, setModel] = createStore({...Model.init});
+  const [model, setModel] = createStore({ ...Model.init });
   const inject = (a: Action.t) => {
     console.log(a);
     go(model, setModel, a);
   };
-  
+
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
   return (

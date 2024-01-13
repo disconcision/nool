@@ -1,3 +1,13 @@
+.notransition * { 
+  transition: none !important; 
+}
+.noanimation * { 
+  animation: none !important;
+} 
+.notransformation * { 
+  transform: none !important;
+} 
+
 @keyframes jello {
   0% {
     transform: scale3d(1, 1, 1);
@@ -338,9 +348,16 @@ code {
   background-clip: text;
   padding: 0.15em;
 }
-.node.comp .tail {
-  display: flex;
-  flex-direction: column;
+
+#stage .node.comp {
+  display: grid;
+  /* grid-template-columns: fit-content(1.5em) 1fr; */
+  grid-auto-flow: column;
+  align-items: center;
+}
+#stage .node.comp .head {
+  grid-column: 1;
+  grid-row: 1/3;
 }
 
 .toolbox {
@@ -438,7 +455,7 @@ code {
   /* filter: brightness(1); */
 }
 .transform-view:hover .node.pat.atom {
-  filter: brightness(0.6) contrast(8);
+  filter: brightness(0.6) contrast(6);
 }
 .transform-view .node:hover + .node {
   /*animation-name: wobbleH;
@@ -527,24 +544,21 @@ code {
   /*font-family: "Segoe UI Emoji";*/
 }
 .pat.node.atom.♫ {
-  background-color: #b8fbfe;
-  color: #b2d2ca;
+  background-color: #7df9ff; color: #00e6f0;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #0ffa;
   mix-blend-mode: lighten;*/
 }
 .pat.node.atom.♥ {
-  background-color: #f4dcfb;
-  color: #b2d2ca;
+  background-color: #ffd5fc; color: #f8abf2;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #f0fa;
   mix-blend-mode: lighten;*/
 }
 .pat.node.atom.✿ {
-  background-color: #ffff92;
-  color: #b2d2ca;
+  background-color: #ffffb2; color: #f7e300;
   box-shadow: none;
   border-color: #0000;
   /*box-shadow: 0 0 1em #ff0a;
@@ -555,51 +569,56 @@ code {
 @keyframes mask-pulse-✿ {
   0%,100% {
     transform: scale(1);
-    filter: sepia(1) saturate(4) hue-rotate(0deg);
+    /* filter: sepia(1) saturate(4) hue-rotate(0deg); */
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(1) saturate(4) hue-rotate(0deg) brightness(1.1)
-      drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6));
+    /* filter: sepia(1) saturate(4) hue-rotate(0deg) brightness(1.1)
+      drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6)); */
   }
 }
 @keyframes mask-pulse-♫ {
   0%,100% {
     transform: scale(1);
-    filter: sepia(1) saturate(4) hue-rotate(160deg);
+    /* filter: sepia(1) saturate(4) hue-rotate(160deg); */
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(1) saturate(4) hue-rotate(160deg) brightness(1.1)
-      drop-shadow(0px 0px 20px rgba(0, 153, 255, 0.6));
+    /* filter: brightness(1.1)*/
   }
 }
 @keyframes mask-pulse-♥ {
   0%,100%  {
     transform: scale(1);
-    filter: sepia(1) saturate(4) hue-rotate(210deg);
+    /* filter: sepia(1) saturate(2) hue-rotate(210deg); */
   }
   50% {
     transform: scale(1.03);
-    filter: sepia(1) saturate(4) hue-rotate(210deg) brightness(1.1)
-      drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6));
+    /* filter: sepia(1) saturate(2) hue-rotate(210deg) brightness(1.1)
+      drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6)); */
   }
 }
 
 #stage .node.mask.✿ {
   animation-name: mask-pulse-✿;
   background-color: yellow !important;
+  filter: sepia(1) saturate(4) hue-rotate(0deg);
   /*filter: sepia(100%) saturate(400%) brightness(90%) hue-rotate(0deg);*/
+  filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(-10deg);
 }
 #stage .node.mask.♫ {
   animation-name: mask-pulse-♫;
   background-color: cyan !important;
+  filter: sepia(1) saturate(4) hue-rotate(120deg);
   /*filter: sepia(100%) saturate(400%) hue-rotate(160deg);*/
+  filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(140deg);
 }
 #stage .node.mask.♥ {
   animation-name: mask-pulse-♥;
   background-color: #f772f7 !important;
+  filter: sepia(1) saturate(4) hue-rotate(240deg);
   /*filter: sepia(100%) saturate(400%) hue-rotate(210deg);*/
+  filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(280deg);
 }
 
 #stage .node.mask {
@@ -607,6 +626,11 @@ code {
   animation-iteration-count: infinite;
   animation-timing-function: cubic-bezier(0.35, 0, 0.25, 0.35);
   /*filter: brightness(1.1) drop-shadow(2px 4px 6px #f5f6);*/
+}
+
+.node.mask .node {
+  /* border-top: 1px solid #a3a3a3; */
+  border-bottom: 1px solid #0007;
 }
 
 .pat.node.comp {
