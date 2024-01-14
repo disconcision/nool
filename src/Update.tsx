@@ -145,14 +145,16 @@ export const go = (model: Model.t, setModel: any, action: Action.t): void => {
   if (model.settings.motion == "On") flipping_comp.read();
   setModel(update(model, action));
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
-  * retain their duplicate ids for animations, but then we need to freshen
-  * them so that they don't get confused with the original subtree. So we
-  * freshen them after a delay. THIS WILL CAUSE PROBLEMS!!!! */
+   * retain their duplicate ids for animations, but then we need to freshen
+   * them so that they don't get confused with the original subtree. So we
+   * freshen them after a delay. THIS WILL CAUSE PROBLEMS!!!! */
   setTimeout(() => {
-    setModel({
-      ...model,
-      stage: Stage.put_exp(model.stage, freshen(model.stage.exp)),
-    });
+    const freshened = freshen(model.stage.exp);
+    if (!Exp.equals_id(model.stage.exp, freshened))
+      setModel({
+        ...model,
+        stage: Stage.put_exp(model.stage, freshened),
+      });
   }, 250);
   //if (action.t != 'setSelect') return setModel(update(model, action));
   //const new_model = update(model, action);

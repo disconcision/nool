@@ -8,5 +8,6 @@ export const comp_id = Node.comp_id;
 export const atom = Node.atom;
 export const comp = Node.comp;
 export const equals = Node.equals;
+export const equals_id = Node.equals_id;
 export const erase = Node.erase;
 export const depth = Node.depth;

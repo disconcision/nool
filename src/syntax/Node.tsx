@@ -67,6 +67,30 @@ export function equals<T>(a: t<T>, b: t<T>): boolean {
   }
 }
 
+/* Structural equality including equal ids */
+export function equals_id<T>(a: t<T>, b: t<T>): boolean {
+  switch (a.t) {
+    case "Atom":
+      switch (b.t) {
+        case "Atom":
+          return a.sym == b.sym && a.id == b.id;
+        case "Comp":
+          return false;
+      }
+    case "Comp":
+      switch (b.t) {
+        case "Atom":
+          return false;
+        case "Comp":
+          return (
+            a.id == b.id &&
+            a.kids.length == b.kids.length &&
+            zip(a.kids, b.kids).every(([a, b]) => equals_id(a, b))
+          );
+      }
+  }
+}
+
 export function size<T>(node: t<T>): number {
   switch (node.t) {
     case "Atom":
