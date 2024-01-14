@@ -109,3 +109,32 @@ export function id_at<T>(p: Path.t, n: t<T>): ID.t | undefined {
 export function is_path_valid<T>(p: Path.t, n: t<T>): boolean {
   return subtree_at(p, n) != undefined;
 }
+
+export function freshen_traverse<T>(
+  node: t<T>,
+  seen: Set<ID.t>,
+  replace: (id: ID.t) => ID.t
+): t<T> {
+  const blah = seen.has(node.id)
+    ? replace_root_id(node, replace(node.id))
+    : node;
+  if (!seen.has(node.id)) seen.add(node.id);
+  switch (blah.t) {
+    case "Atom":
+      return blah;
+    case "Comp":
+      return comp_id(
+        blah.kids.map((k) => freshen_traverse(k, seen, replace)),
+        blah.id
+      );
+  }
+}
+
+/**
+ * Traverse a node tree. Keep track of ids seen.
+ * When an id is seen twice, replace it with a new id.
+ */
+export function freshen<T>(node: t<T>): t<T> {
+  console.log("freshening");
+  return freshen_traverse(node, new Set(), (_) => ID.mk());
+}

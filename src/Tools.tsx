@@ -25,6 +25,48 @@ const plus_x = (a: Pat, b: Pat) =>
 const plus_y = (a: Pat, b: Pat) =>
   p_comp_id(-20, [p_const_id(-30, "➕"), a, b]);
 
+const times_1 = p_const_id(-11, "✖️");
+const times_x = (a: Pat, b: Pat) =>
+  p_comp_id(-41, [p_const_id(-51, "✖️"), a, b]);
+const times_y = (a: Pat, b: Pat) =>
+  p_comp_id(-21, [p_const_id(-31, "✖️"), a, b]);
+
+export const commute_times: Transform.t = {
+  name: "⇿",
+  source: p_comp_id(-2, [times_1, var_a, var_b]),
+  result: p_comp_id(-2, [times_1, var_b, var_a]),
+  sound: Sound.sfx("tiup"), //Sound.mk("F2", "8n"),
+  sound_rev: Sound.sfx_reverse("tiup"),
+  reversed: false,
+};
+
+export const associate_times: Transform.t = {
+  name: "⥂",
+  source: times_y(var_a, times_x(var_b, var_c)),
+  result: times_y(times_x(var_a, var_b), var_c),
+  sound: Sound.sfx("shwoph"), //Sound.mk("D2", "8n"),
+  sound_rev: Sound.sfx_reverse("shwoph"),
+  reversed: false,
+};
+
+export const identity_times: Transform.t = {
+  name: "⟲",
+  source: var_a,
+  result: p_comp([p_const("✖️"), p_const("🌘"), var_a]),
+  sound: Sound.sfx("chchiu"), //Sound.mk("A2", "8n"),
+  sound_rev: Sound.sfx_reverse("chchiu"),
+  reversed: false,
+};
+
+export const distribute_times_plus: Transform.t = {
+  name: "⥂",
+  source: plus_x(times_x(var_a, var_b), times_x(var_a, var_c)),
+  result: times_x(var_a, plus_x(var_b, var_c)),
+  sound: Sound.sfx("shwoph"), //Sound.mk("D2", "8n"),
+  sound_rev: Sound.sfx_reverse("shwoph"),
+  reversed: false,
+};
+
 const neg_1 = p_const_id(-60, "➖");
 const neg_x = (a: Pat) => p_comp_id(-40, [neg_1, a]);
 
@@ -69,6 +111,10 @@ export const init_transforms = [
   commute_plus,
   identity_plus,
   Transform.rev(inverse_plus),
+  associate_times,
+  commute_times,
+  identity_times,
+  distribute_times_plus,
 ];
 
 export const init: t = {

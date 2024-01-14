@@ -8,6 +8,9 @@ import * as Action from "./Action";
 import * as Transform from "./Transform";
 import * as Tools from "./Tools";
 import * as Hover from "./Hover";
+import { freshen } from "./syntax/Node";
+import * as Exp from "./syntax/Exp";
+import { TransformResult } from "./syntax/Pat";
 
 export const sound = (model: Model.t, action: Action.t): void => {
   switch (action.t) {
@@ -38,6 +41,12 @@ export const sound = (model: Model.t, action: Action.t): void => {
       undefined;
   }
 };
+
+const update_stage = (model: Model.t, result: TransformResult): Model.t =>
+  /* Freshening as-is is a hack to deal with e.g. distributivity which copies nodes */
+  result == "NoMatch"
+    ? model
+    : { ...model, stage: Stage.put_exp(model.stage, result) };
 
 export const update = (model: Model.t, action: Action.t): Model.t => {
   switch (action.t) {
@@ -70,12 +79,7 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
       };
     case "transformNode":
       let result = action.f(model.stage.exp);
-      if (result != "NoMatch") {
-        const new_stage = Stage.put_exp(model.stage, result);
-        return { ...model, stage: new_stage };
-      } else {
-        return model;
-      }
+      return update_stage(model, result);
     case "applyTransform":
       if (
         action.idx < 0 ||
@@ -90,12 +94,8 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
         transform,
         model.stage.selection
       )(model.stage.exp);
-      if (result2 != "NoMatch") {
-        transform.sound(); //TODO
-        return { ...model, stage: Stage.put_exp(model.stage, result2) };
-      } else {
-        return model;
-      }
+      if (result2 != "NoMatch") transform.sound(); //TODO
+      return update_stage(model, result2);
     case "applyTransformSelected":
       const model2 = {
         ...model,
@@ -144,6 +144,16 @@ export const go = (model: Model.t, setModel: any, action: Action.t): void => {
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();
   setModel(update(model, action));
+  /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
+  * retain their duplicate ids for animations, but then we need to freshen
+  * them so that they don't get confused with the original subtree. So we
+  * freshen them after a delay. THIS WILL CAUSE PROBLEMS!!!! */
+  setTimeout(() => {
+    setModel({
+      ...model,
+      stage: Stage.put_exp(model.stage, freshen(model.stage.exp)),
+    });
+  }, 250);
   //if (action.t != 'setSelect') return setModel(update(model, action));
   //const new_model = update(model, action);
   //console.log("path old:",model.stage.selection);

@@ -26,8 +26,8 @@ const exp: Exp = comp([
   ]),
   comp([
     atom("➕"),
-    comp([atom("➕"), atom("🎲"), atom("🦠")]),
-    comp([atom("➕"), atom("🧩"), atom("🐝")]),
+    comp([atom("✖️"), atom("🎲"), atom("🦠")]),
+    comp([atom("✖️"), atom("🎲"), atom("🐝")]),
   ]),
 ]);
 

@@ -8,6 +8,7 @@ import * as Path from "../syntax/Path";
 import * as Stage from "../Stage";
 import * as Action from "../Action";
 import { subtree_at } from "../syntax/Node";
+import * as Settings from "../Settings";
 
 const transformer =
   (inject: Action.Inject, transform: Transform, path: Path.t) =>
@@ -36,8 +37,8 @@ const do_transforms = (
         arr.findIndex(([_, exp2]) => Exp.equals(exp, exp2)) === i
     );
 
-const preview = (node: Exp.t, transformer: (_e: Event) => void) => (
-  <div class="node-container" onmousedown={transformer}>
+const preview = (node: Exp.t, settings: Settings.t, transformer: (_e: Event) => void) => (
+  <div class={`node-container ${settings.projection}`} onmousedown={transformer}>
     {ViewOnly({ node: node })}
   </div>
 );
@@ -46,6 +47,7 @@ export const AdjacentPossible: Component<{
   stage: Stage.t;
   tools: Transform[];
   inject: Action.Inject;
+  settings: Settings.t;
 }> = (props) => {
   if (props.stage.selection === "unselected") return <div></div>;
   const selection = subtree_at(props.stage.selection, props.stage.exp);
@@ -57,6 +59,7 @@ export const AdjacentPossible: Component<{
            if (props.stage.selection === "unselected") return <div></div>;
           return preview(
             node,
+            props.settings,
             transformer(props.inject, transform, props.stage.selection)
           )}
         }

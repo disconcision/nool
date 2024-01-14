@@ -22,12 +22,11 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
   props
 ) => (
   <div
-    class="seed"
+    class={`seed ${props.model.settings.projection}`}
     classList={{
       notransition: props.model.settings.motion === "Off",
       noanimation: props.model.settings.motion === "Off",
       notransformation: props.model.settings.motion === "Off",
-      linear: !props.model.settings.projection,
     }}
     onmousedown={(e) => {
       e.preventDefault();
@@ -41,6 +40,7 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
           stage: props.model.stage,
           tools: props.model.tools.transforms,
           inject: props.inject,
+          settings: props.model.settings,
         })
       : null}
   </div>
