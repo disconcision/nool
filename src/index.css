@@ -333,6 +333,8 @@ code {
   text-shadow: 0 0 0 #50b0ff;
 }
 .node:active {
+  /*animation-name: wobble;
+  animation-duration: 1s;*/
   animation-name: wobble2 !important;
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
@@ -462,6 +464,35 @@ code {
   .node.comp:has(> :nth-child(2):last-child)
   *:nth-child(1) {
   order: 1;
+}
+
+.seed.SingleChar #stage .node.comp,
+.seed.SingleChar #noolbox .node.comp {
+  background: none;
+  border-left: 0.3px solid rgb(255 0 220 / 53%);
+  border-right: 0.3px solid rgb(119 198 168);
+  border-top: none;
+  border-bottom: none;
+  border-radius: 0.8em;
+}
+.seed.SingleChar .node.atom,
+.seed.SingleChar .head {
+  font-family: 'Roboto';
+  font-weight: 700;
+  color: #474646;
+  font-family: monospace;
+  padding: 0 0.4em 0 0.4em;
+  border-top: none;
+  border-bottom: none;
+  box-shadow: none;
+}
+.seed.SingleChar .head {
+  font-family: 'Roboto';
+  font-family: monospace;
+  padding: 0 0.35em 0 0.35em;
+}
+.seed.SingleChar .no-match .node.comp {
+  box-shadow: none;
 }
 
 /*.seed.LinearPrefix {

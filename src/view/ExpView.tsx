@@ -8,6 +8,8 @@ import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
 import * as Stage from "../Stage";
 import * as Hover from "../Hover";
+import * as Names from "../Names";
+import * as Settings from "../Settings";
 
 type expviewprops = {
   node: Exp;
@@ -17,6 +19,7 @@ type expviewprops = {
   is_head: boolean;
   inject: Action.Inject;
   mask: Binding[];
+  symbols: Settings.symbols;
 };
 
 const setSelect = (props: expviewprops) => (e: Event) => {
@@ -64,7 +67,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               onpointerdown={setSelect(props)}
               {...atom_flip(props.animate, props.mask, props.node.id)}
             >
-              {props.node.sym}
+              {Names.get(props.symbols, props.node.sym)}
             </div>
           }
         >
@@ -73,7 +76,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
             class="head"
             {...atom_flip(props.animate, props.mask, props.node.id)}
           >
-            {props.node.sym}
+            {Names.get(props.symbols, props.node.sym)}
           </div>
         </Show>
       );
@@ -96,6 +99,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                   is_head={i === 0}
                   inject={props.inject}
                   mask={props.mask}
+                  symbols={props.symbols}
                 />
               )}
             </Index>
@@ -109,6 +113,7 @@ export const ExpView: Component<{
   stage: Stage.t;
   inject: Action.Inject;
   mask: Binding[];
+  symbols: Settings.symbols;
 }> = (props) =>
   ExpViewGo({
     info: props.stage.info,
@@ -118,10 +123,12 @@ export const ExpView: Component<{
     mask: props.mask,
     is_head: false,
     animate: true,
+    symbols: props.symbols,
   });
 
 export const ViewOnly: Component<{
   node: Exp;
+  symbols: Settings.symbols;
 }> = (props) =>
   ExpViewGo({
     info: Statics.mk(props.node, []),
@@ -131,4 +138,5 @@ export const ViewOnly: Component<{
     is_head: false,
     inject: (_) => {},
     mask: [],
+    symbols: props.symbols,
   });

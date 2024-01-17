@@ -7,6 +7,8 @@ import * as Hover from "../Hover";
 import * as Action from "../Action";
 import { Transform, rev, at_path } from "../Transform";
 import * as Tools from "../Tools";
+import * as Names from "../Names";
+import * as Settings from "../Settings";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -18,24 +20,26 @@ export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   );
 };
 
-const PatView: Component<{ p: Pat; is_head: boolean }> = (props) => {
+const PatView: Component<{
+  p: Pat;
+  is_head: boolean;
+  symbols: Settings.symbols;
+}> = (props) => {
   switch (props.p.t) {
     case "Atom": {
       const sym = props.p.sym.name;
-      switch (props.p.sym.t) {
-        case "Var":
-        case "Const":
-          const cls = `pat ${sym} ${
-            props.is_head ? "head pat" : "node atom pat"
-          }`;
-          return <div class={cls}>{sym}</div>;
-      }
+      const cls = `pat ${sym} ${
+        props.is_head ? "head pat" : "node atom pat"
+      }`;
+      return <div class={cls}>{Names.get(props.symbols, sym)}</div>;
     }
     case "Comp":
       return (
         <div class="node comp pat">
           <Index each={props.p.kids}>
-            {(kid, i) => PatView({ p: kid(), is_head: i === 0 })}
+            {(kid, i) =>
+              PatView({ p: kid(), is_head: i === 0, symbols: props.symbols })
+            }
           </Index>
         </div>
       );
@@ -146,7 +150,11 @@ const TransformView: Component<{
         onpointerleave={setHover({ t: "NoHover" })}
         onpointerdown={transformNode}
       >
-        <PatView p={props.t.source} is_head={false} />
+        <PatView
+          p={props.t.source}
+          is_head={false}
+          symbols={props.model.settings.symbols}
+        />
       </div>
       <div class="transform-arrow">
         <Switch fallback="⇋">
@@ -167,7 +175,11 @@ const TransformView: Component<{
         onpointerleave={setHover({ t: "NoHover" })}
         onpointerdown={transformNodeReverse}
       >
-        <PatView p={props.t.result} is_head={false} />
+        <PatView
+          p={props.t.result}
+          is_head={false}
+          symbols={props.model.settings.symbols}
+        />
       </div>
     </div>
   );

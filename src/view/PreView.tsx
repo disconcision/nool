@@ -39,7 +39,7 @@ const do_transforms = (
 
 const preview = (node: Exp.t, settings: Settings.t, transformer: (_e: Event) => void) => (
   <div class={`node-container ${settings.projection}`} onmousedown={transformer}>
-    {ViewOnly({ node: node })}
+    {ViewOnly({ node: node, symbols: settings.symbols })}
   </div>
 );
 

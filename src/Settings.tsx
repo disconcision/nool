@@ -2,24 +2,29 @@ export type motion = "On" | "Off" | "Half";
 
 export type projection = "LinearPrefix" | "LinearInfix" | "TreeLeft" | "TreeTop";
 
+export type symbols = "Emoji" | "SingleChar";
+
 export type t = {
   sound: boolean;
   motion: motion;
   preview: boolean;
   projection: projection;
+  symbols: symbols;
 };
 
 export type Action =
   | "ToggleSound"
   | "ToggleMotion"
   | "TogglePreview"
-  | "ToggleProjection";
+  | "ToggleProjection"
+  | "ToggleSymbols";
 
 export const init: t = {
   sound: true,
   motion: "Half",
   preview: true,
   projection: "TreeLeft",
+  symbols: "Emoji",
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -48,6 +53,13 @@ export const update = (settings: t, action: Action): t => {
         case "TreeLeft":
           return { ...settings, projection: "LinearPrefix" };
         
+      }
+    case "ToggleSymbols":
+      switch (settings.symbols) {
+        case "Emoji":
+          return { ...settings, symbols: "SingleChar" };
+        case "SingleChar":
+          return { ...settings, symbols: "Emoji" };
       }
   }
 };

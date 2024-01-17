@@ -45,6 +45,7 @@ export const StageView: Component<{
           stage: props.model.stage,
           inject: props.inject,
           mask: get_hover_binding(props.model),
+          symbols: props.model.settings.symbols,
         })}
       </div>
     </div>
