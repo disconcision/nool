@@ -1,13 +1,12 @@
 import { Component } from "solid-js";
 import { For, Show, Index } from "solid-js";
 //import Rand from "rand-seed";
-import { Binding } from "../syntax/Pat";
+import * as Pat from "../syntax/Pat";
 import { Exp } from "../syntax/Exp";
 import * as Action from "../Action";
 import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
 import * as Stage from "../Stage";
-import * as Hover from "../Hover";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
 
@@ -18,7 +17,7 @@ type expviewprops = {
   animate: boolean;
   is_head: boolean;
   inject: Action.Inject;
-  mask: Binding[];
+  mask: Pat.Binding[];
   symbols: Settings.symbols;
 };
 
@@ -46,13 +45,13 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
 const ExpViewGo: Component<expviewprops> = (props) => {
   const atom_flip = (
     animate: boolean,
-    mask: Binding[],
+    mask: Pat.Binding[],
     id: number
   ): Record<string, string> =>
     animate ? { "data-flip-key": `flip-${id}` } : {};
 
   //&& mask.some(({ ids, t }) => t === "Val" &&ids[1] === id)
-  const comp_flip = (animate: boolean, mask: Binding[], id: number) =>
+  const comp_flip = (animate: boolean, mask: Pat.Binding[], id: number) =>
     animate ? { "data-flip-key-comp": `flip-${id}` } : {};
 
   switch (props.node.t) {
@@ -112,7 +111,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
 export const ExpView: Component<{
   stage: Stage.t;
   inject: Action.Inject;
-  mask: Binding[];
+  mask: Pat.Binding[];
   symbols: Settings.symbols;
 }> = (props) =>
   ExpViewGo({

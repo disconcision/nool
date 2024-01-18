@@ -1,12 +1,12 @@
 import { Component } from "solid-js";
 import { For, Index, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
-import { Pat, matches_at_path } from "../syntax/Pat";
+import * as Pat from "../syntax/Pat";
 import { Model } from "../Model";
 import * as Hover from "../Hover";
 import * as Action from "../Action";
-import { Transform, rev, at_path } from "../Transform";
-import * as Tools from "../Tools";
+import { Transform, flip, at_path } from "../Transform";
+import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
 
@@ -21,16 +21,14 @@ export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
 };
 
 const PatView: Component<{
-  p: Pat;
+  p: Pat.t;
   is_head: boolean;
   symbols: Settings.symbols;
 }> = (props) => {
   switch (props.p.t) {
     case "Atom": {
       const sym = props.p.sym.name;
-      const cls = `pat ${sym} ${
-        props.is_head ? "head pat" : "node atom pat"
-      }`;
+      const cls = `pat ${sym} ${props.is_head ? "head pat" : "node atom pat"}`;
       return <div class={cls}>{Names.get(props.symbols, sym)}</div>;
     }
     case "Comp":
@@ -49,7 +47,7 @@ const PatView: Component<{
 const source_matches_cls = (props: { model: Model; t: Transform }) => {
   if (props.model.stage.selection == "unselected") return "no-match";
   //console.log('selection src:', props.model.selection);
-  const res = matches_at_path(
+  const res = Pat.matches_at_path(
     props.model.stage.exp,
     props.t.source,
     props.model.stage.selection
@@ -64,7 +62,7 @@ const source_matches_cls = (props: { model: Model; t: Transform }) => {
 const result_matches_cls = (props: { model: Model; t: Transform }) => {
   if (props.model.stage.selection == "unselected") return "no-match";
   //console.log('selection res:', props.model.selection);
-  const res = matches_at_path(
+  const res = Pat.matches_at_path(
     props.model.stage.exp,
     props.t.result,
     props.model.stage.selection
@@ -113,7 +111,7 @@ const TransformView: Component<{
         t: "transformNode",
         idx: props.idx,
         transform: props.t,
-        f: at_path(rev(props.t), props.model.stage.selection),
+        f: at_path(flip(props.t), props.model.stage.selection),
       });
     }
   };
@@ -130,9 +128,9 @@ const TransformView: Component<{
       idx: props.idx,
     });
   };
-  const selected_res = (tools: Tools.t, c: number) =>
+  const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
-  const selected_src = (tools: Tools.t, c: number) =>
+  const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
   return (
     <div class={`transform-view`} onpointerdown={flipTransform}>

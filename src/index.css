@@ -489,24 +489,25 @@ code {
 .seed.SingleChar .head {
   font-family: "Roboto";
   font-weight: 700;
-  
   font-family: monospace;
-  padding: 0 0.4em 0 0.4em;
+  
   border-top: none;
   border-bottom: none;
   box-shadow: none;
 }
 .seed.SingleChar .node.atom {
+  padding: 0 0.4em 0 0.4em;
   color: #474646;
 }
 .seed.SingleChar .head {
+  padding: 0 0.35em 0 0.35em;
   color: #2d8b7e;
 }
-.seed.SingleChar .head {
-  font-family: "Roboto";
-  font-family: monospace;
-  padding: 0 0.35em 0 0.35em;
+.seed.SingleChar .selected > .head {
+  -webkit-text-stroke-width: 0.02em;
+  -webkit-text-stroke-color: black;
 }
+
 .seed.SingleChar .no-match .node.comp {
   box-shadow: none;
 }

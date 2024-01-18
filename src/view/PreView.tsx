@@ -1,13 +1,13 @@
 import { Component } from "solid-js";
 import { For, Show, Switch, Match } from "solid-js";
-import { TransformResult } from "../syntax/Pat";
-import { Transform, at_path, rev } from "../Transform";
+import { Transform, at_path, flip } from "../Transform";
+import { subtree_at } from "../syntax/Node";
 import { ViewOnly } from "./ExpView";
+import * as Pat from "../syntax/Pat";
 import * as Exp from "../syntax/Exp";
 import * as Path from "../syntax/Path";
 import * as Stage from "../Stage";
 import * as Action from "../Action";
-import { subtree_at } from "../syntax/Node";
 import * as Settings from "../Settings";
 
 const transformer =
@@ -22,14 +22,14 @@ const transformer =
   };
 
 const directed = (transforms: Transform[]): Transform[] =>
-  transforms.flatMap((t) => [t, rev(t)]);
+  transforms.flatMap((t) => [t, flip(t)]);
 
 const do_transforms = (
   exp: Exp.t,
   transforms: Transform[]
 ): [Transform, Exp.t][] =>
   directed(transforms)
-    .map((t) => [t, at_path(t, [])(exp)] as [Transform, TransformResult])
+    .map((t) => [t, at_path(t, [])(exp)] as [Transform, Pat.TransformResult])
     .filter((res): res is [Transform, Exp.t] => res[1] !== "NoMatch")
     // filter duplicate expressions
     .filter(

@@ -9,18 +9,18 @@ export type Symbol = { t: "Var"; name: string } | { t: "Const"; name: string };
 export type Pat = Node.t<Symbol>;
 export type t = Pat;
 
-export const p_const_id = (id: number, name: string): Pat =>
+export const const_id = (id: number, name: string): Pat =>
   Node.atom_id({ t: "Const", name }, id);
 
-export const p_var_id = (id: number, name: string): Pat =>
+export const var_id = (id: number, name: string): Pat =>
   Node.atom_id({ t: "Var", name }, id);
 
-export const p_comp_id = (id: number, kids: Pat[]): Pat =>
+export const comp_id = (id: number, kids: Pat[]): Pat =>
   Node.comp_id(kids, id);
 
-export const p_const = (name: string): Pat => p_const_id(ID.mk(), name);
-export const p_var = (name: string): Pat => p_var_id(ID.mk(), name);
-export const p_comp = (kids: Pat[]): Pat => p_comp_id(ID.mk(), kids);
+export const p_const = (name: string): Pat => const_id(ID.mk(), name);
+export const p_var = (name: string): Pat => var_id(ID.mk(), name);
+export const p_comp = (kids: Pat[]): Pat => comp_id(ID.mk(), kids);
 
 type NameBinding = [string, Exp.t];
 

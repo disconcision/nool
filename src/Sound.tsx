@@ -8,7 +8,7 @@ import tiup from "./assets/sfx/tiup-comm-out.wav";
 
 let revsfx = new Tone.Reverb({ decay: 4, wet: 0.3 }).toDestination();
 
-type Sfxbank = "pew" | "pshew" | "klohk" | "chchiu" | "shwoph" | "tiup";
+export type Sfxbank = "pew" | "pshew" | "klohk" | "chchiu" | "shwoph" | "tiup";
 
 const player_pew = new Tone.Player(pew).toDestination().connect(revsfx);
 player_pew.playbackRate = 1.3;

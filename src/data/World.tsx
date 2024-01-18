@@ -1,4 +1,4 @@
-import { Exp, atom, comp } from "./syntax/Exp";
+import { Exp, atom, comp } from "../syntax/Exp";
 
 // 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕 0️⃣
 

@@ -6,7 +6,7 @@ import * as Action from "./Action";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
-import { Toolbar } from "./view/ToolsView";
+//import { Toolbar } from "./view/ToolsView";
 
 export type SetModel = SetStoreFunction<Model.t>
 

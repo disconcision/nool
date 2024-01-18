@@ -6,11 +6,11 @@ import * as Settings from "./Settings";
 import * as Stage from "./Stage";
 import * as Action from "./Action";
 import * as Transform from "./Transform";
-import * as Tools from "./Tools";
+import * as ToolBox from "./ToolBox";
 import * as Hover from "./Hover";
 import { freshen } from "./syntax/Node";
 import * as Exp from "./syntax/Exp";
-import { TransformResult } from "./syntax/Pat";
+import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
 
@@ -46,7 +46,7 @@ export const sound = (model: Model.t, action: Action.t): void => {
   }
 };
 
-const update_stage = (model: Model.t, result: TransformResult): Model.t =>
+const update_stage = (model: Model.t, result: Pat.TransformResult): Model.t =>
   /* Freshening as-is is a hack to deal with e.g. distributivity which copies nodes */
   result == "NoMatch"
     ? model
@@ -74,17 +74,17 @@ export const update = (model: Model.t, action: Action.t): result => {
     case "moveStage":
       return { ...model, stage: Stage.move(model.stage, action.direction) };
     case "moveTool":
-      let tools = Tools.move(model.tools, action.direction);
+      let tools = ToolBox.move(model.tools, action.direction);
       const hover: Hover.t = {
         t: "TransformSource",
-        pat: Tools.get_pat(tools),
+        pat: ToolBox.get_pat(tools),
       };
       return { ...model, tools, hover: hover };
     case "unsetSelections":
       return {
         ...model,
         stage: Stage.unset_selection(model.stage),
-        tools: Tools.unset(model.tools),
+        tools: ToolBox.unset(model.tools),
         hover: Hover.init,
       };
     case "transformNode":
@@ -96,10 +96,10 @@ export const update = (model: Model.t, action: Action.t): result => {
         action.idx >= model.tools.transforms.length ||
         model.stage.selection === "unselected"
       )
-        return model;
+        return "NoChange";
       const transform1 = model.tools.transforms[action.idx];
       const transform =
-        action.direction == "forward" ? transform1 : Transform.rev(transform1);
+        action.direction == "forward" ? transform1 : Transform.flip(transform1);
       const result2 = at_path(
         transform,
         model.stage.selection
@@ -107,27 +107,16 @@ export const update = (model: Model.t, action: Action.t): result => {
       if (result2 != "NoMatch") transform.sound(); //TODO
       return update_stage(model, result2);
     case "applyTransformSelected":
+      const selector = ToolBox.init_selector(model.tools.selector);
       const model2 = {
         ...model,
-        tools: {
-          ...model.tools,
-          selector: Transform.init_selector(model.tools.selector),
-        },
+        tools: ToolBox.update_selector(model.tools, (_) => selector),
       };
-      return update(
-        model2,
-        Transform.get(Transform.init_selector(model.tools.selector))
-      );
+      return update(model2, ToolBox.get(selector));
     case "flipTransform":
       return {
         ...model,
-        tools: {
-          ...model.tools,
-          transforms: Transform.flip_at_index(
-            model.tools.transforms,
-            action.idx
-          ),
-        },
+        tools: ToolBox.flip_transform(model.tools, action.idx),
       };
   }
 };

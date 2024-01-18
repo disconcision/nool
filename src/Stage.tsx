@@ -2,7 +2,7 @@ import { Exp } from "./syntax/Exp";
 import * as Statics from "./Statics";
 import * as Path from "./syntax/Path";
 import * as Projector from "./Projector";
-import * as World from "./World";
+import * as World from "./data/World";
 import { is_path_valid } from "./syntax/Node";
 
 export type selection = "unselected" | Path.t;

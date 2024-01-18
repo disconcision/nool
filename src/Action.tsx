@@ -3,7 +3,7 @@ import * as Path from "./syntax/Path";
 import * as Hover from "./Hover";
 import * as Settings from "./Settings";
 import * as Transform from "./Transform";
-import { TransformResult } from "./syntax/Pat";
+import * as Pat from "./syntax/Pat";
 
 export type Inject = (_: Action) => void;
 
@@ -21,7 +21,7 @@ export type Action =
       t: "transformNode";
       idx: number;
       transform: Transform.t;
-      f: (_: Exp.t) => TransformResult;
+      f: (_: Exp.t) => Pat.TransformResult;
     }
   | { t: "applyTransform"; idx: number; direction: "forward" | "reverse" }
   | { t: "applyTransformSelected" }
