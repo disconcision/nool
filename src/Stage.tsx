@@ -1,7 +1,8 @@
-import { Exp, atom, comp } from "./syntax/Exp";
+import { Exp } from "./syntax/Exp";
 import * as Statics from "./Statics";
 import * as Path from "./syntax/Path";
 import * as Projector from "./Projector";
+import * as World from "./World";
 import { is_path_valid } from "./syntax/Node";
 
 export type selection = "unselected" | Path.t;
@@ -15,24 +16,10 @@ export type Stage = {
 
 export type t = Stage;
 
-// 🦷 🦠 🧩 🌸 ✖️ 🌘 🌕 0️⃣
-
-const exp: Exp = comp([
-  atom("➕"),
-  comp([
-    atom("➕"),
-    comp([atom("➕"), atom("☁️"), comp([atom("➖"), atom("🍄")])]),
-    atom("🍄"),
-  ]),
-  comp([
-    atom("➕"),
-    comp([atom("✖️"), atom("🎲"), atom("🦠")]),
-    comp([atom("✖️"), atom("🎲"), atom("🐝")]),
-  ]),
-]);
+const exp: Exp = World.init;
 
 export const init: Stage = {
-  exp: exp,
+  exp,
   selection: "unselected",
   info: Statics.mk(exp, []),
   projectors: Projector.init,

@@ -11,6 +11,10 @@ import * as Hover from "./Hover";
 import { freshen } from "./syntax/Node";
 import * as Exp from "./syntax/Exp";
 import { TransformResult } from "./syntax/Pat";
+import { SetStoreFunction } from "solid-js/store";
+import * as Path from "./syntax/Path";
+
+export type result = Model.t | "NoChange";
 
 export const sound = (model: Model.t, action: Action.t): void => {
   switch (action.t) {
@@ -48,7 +52,7 @@ const update_stage = (model: Model.t, result: TransformResult): Model.t =>
     ? model
     : { ...model, stage: Stage.put_exp(model.stage, result) };
 
-export const update = (model: Model.t, action: Action.t): Model.t => {
+export const update = (model: Model.t, action: Action.t): result => {
   switch (action.t) {
     case "restart":
       return Model.init;
@@ -58,6 +62,12 @@ export const update = (model: Model.t, action: Action.t): Model.t => {
         settings: Settings.update(model.settings, action.action),
       };
     case "setSelect":
+      if (
+        model.stage.selection === "unselected"
+          ? false
+          : Path.eq(model.stage.selection, action.path)
+      )
+        return "NoChange";
       return { ...model, stage: Stage.put_selection(model.stage, action.path) };
     case "setHover":
       return { ...model, hover: action.target };
@@ -139,11 +149,21 @@ const flipping_comp = new Flipping({
   easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
 });
 
-export const go = (model: Model.t, setModel: any, action: Action.t): void => {
+export const go = (
+  model: Model.t,
+  setModel: SetStoreFunction<Model.t>,
+  action: Action.t
+): void => {
   if (model.settings.sound) sound(model, action);
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") flipping_comp.read();
-  setModel(update(model, action));
+  const result = update(model, action);
+  if (result == "NoChange") {
+    console.log("NoChange");
+    return;
+  } else {
+    setModel(result);
+  }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
    * retain their duplicate ids for animations, but then we need to freshen
    * them so that they don't get confused with the original subtree. So we

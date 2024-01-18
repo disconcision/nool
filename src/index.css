@@ -270,7 +270,7 @@ code {
 }
 .node:hover {
   /*mix-blend-mode: color-dodge;*/
-  transform: scale(1.03);
+  /*transform: scale(1.03);*/
   filter: brightness(1.1);
   border-bottom: 0.3px solid rgb(187, 0, 255);
   border-top: 0.3px solid rgb(255, 100, 212);
@@ -487,17 +487,23 @@ code {
 }
 .seed.SingleChar .node.atom,
 .seed.SingleChar .head {
-  font-family: 'Roboto';
+  font-family: "Roboto";
   font-weight: 700;
-  color: #474646;
+  
   font-family: monospace;
   padding: 0 0.4em 0 0.4em;
   border-top: none;
   border-bottom: none;
   box-shadow: none;
 }
+.seed.SingleChar .node.atom {
+  color: #474646;
+}
 .seed.SingleChar .head {
-  font-family: 'Roboto';
+  color: #2d8b7e;
+}
+.seed.SingleChar .head {
+  font-family: "Roboto";
   font-family: monospace;
   padding: 0 0.35em 0 0.35em;
 }
@@ -857,4 +863,63 @@ code {
   align-items: center;
   height: 100vh;
   gap: 0.7em;
+}
+
+/* dark mode */
+
+body:has(#main.Dark) {
+  background-image: linear-gradient(
+    180deg,
+    #410e5d,
+    10%,
+    #043f5e,
+    31%,
+    #0b5e72,
+    82%,
+    #180416
+  ) !important;
+}
+.Dark #noolbox {
+  mix-blend-mode: hard-light;
+}
+.Dark .seed .node.atom {
+  color: white;
+  mix-blend-mode: hard-light;
+}
+.Dark #stage .node.comp {
+  background: linear-gradient(
+    139deg,
+    #00fffc6b,
+    #00fffc6b,
+    #00ffba1a,
+    #ff00bc0d,
+    #ff00bc0d,
+    #6000ff0d,
+    #0025ff0f,
+    #454184
+  )
+}
+.Dark #stage .node.comp .head {
+
+  background-color: #00cbff;
+  text-shadow: -0.01em -0.02em 0.02em rgb(47 42 113 / 90%);
+}
+.Dark .node.selected,
+.Dark .node.selected:hover {
+    box-shadow: 0px 0px 0.2em #00ffda;
+    outline: 1.4px solid #00ffb6;
+}
+.Dark .node.mask.atom,
+.Dark .node.mask .atom  {
+  color: black
+}
+.Dark .logo {
+  mix-blend-mode: saturation;
+}
+.Dark .previews .node-container {
+  mix-blend-mode: screen;
+}
+/* HACKY */
+.Dark .seed.SingleChar #stage .node.comp .head {
+  color: rgb(255, 189, 8);
 }

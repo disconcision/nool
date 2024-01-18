@@ -14,6 +14,8 @@ import linear_infix from "../assets/icons/noun-tree-1039106.svg";
 import tree_left from "../assets/icons/noun-tree-1052083.svg";
 import sun_off from "../assets/icons/noun-sun-5362089.svg";
 import sun_on from "../assets/icons/noun-sun-6322390.svg";
+import palette_1 from "../assets/icons/noun-paint-6329583.svg";
+import palette_2 from "../assets/icons/noun-palette-1918496.svg";
 
 //TODO: qr code to disable id display
 
@@ -60,8 +62,17 @@ const projection_icon = (projection: Settings.projection): string => {
 const symbols_icon = (symbols: Settings.symbols): string => {
   switch (symbols) {
     case "Emoji":
-      return sun_off;
+      return palette_1;
     case "SingleChar":
+      return palette_2;
+  }
+};
+
+const theme_icon = (theme: Settings.theme): string => {
+  switch (theme) {
+    case "Dark":
+      return sun_off;
+    case "Light":
       return sun_on;
   }
 };
@@ -78,6 +89,8 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return projection_icon(settings.projection);
     case "ToggleSymbols":
       return symbols_icon(settings.symbols);
+    case "ToggleDark":
+      return theme_icon(settings.theme);
   }
 };
 
@@ -103,5 +116,6 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "TogglePreview")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
+    {icon(props.inject, props.model.settings, "ToggleDark")}
   </div>
 );

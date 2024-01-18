@@ -4,12 +4,15 @@ export type projection = "LinearPrefix" | "LinearInfix" | "TreeLeft" | "TreeTop"
 
 export type symbols = "Emoji" | "SingleChar";
 
+export type theme = "Light" | "Dark";
+
 export type t = {
   sound: boolean;
   motion: motion;
   preview: boolean;
   projection: projection;
   symbols: symbols;
+  theme: theme;
 };
 
 export type Action =
@@ -17,7 +20,8 @@ export type Action =
   | "ToggleMotion"
   | "TogglePreview"
   | "ToggleProjection"
-  | "ToggleSymbols";
+  | "ToggleSymbols"
+  | "ToggleDark";
 
 export const init: t = {
   sound: true,
@@ -25,6 +29,7 @@ export const init: t = {
   preview: true,
   projection: "TreeLeft",
   symbols: "Emoji",
+  theme: "Light",
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -60,6 +65,13 @@ export const update = (settings: t, action: Action): t => {
           return { ...settings, symbols: "SingleChar" };
         case "SingleChar":
           return { ...settings, symbols: "Emoji" };
+      }
+    case "ToggleDark":
+      switch (settings.theme) {
+        case "Light":
+          return { ...settings, theme: "Dark" };
+        case "Dark":
+          return { ...settings, theme: "Light" };
       }
   }
 };
