@@ -6,7 +6,7 @@ import * as Action from "./Action";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
-import * as ExpToPat from "./data/ToolsExp"
+import * as ExpToPat from "./syntax/ExpToPat";
 //import { Toolbar } from "./view/ToolsView";
 
 export type SetModel = SetStoreFunction<Model.t>
@@ -28,5 +28,5 @@ const App: Component = () => {
     </div>
   );
 };
-//ExpToPat.test();
+ExpToPat.test();
 export default App;

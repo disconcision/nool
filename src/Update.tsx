@@ -16,7 +16,17 @@ import * as Path from "./syntax/Path";
 
 export type result = Model.t | "NoChange";
 
+export const of_theme = (theme: Settings.theme): [number, number] => {
+  switch (theme) {
+    case "Light":
+      return [8, -20];
+    case "Dark":
+      return [2, -8];
+  }
+};
+
 export const sound = (model: Model.t, action: Action.t): void => {
+  const [pitch, volume] = of_theme(model.settings.theme);
   switch (action.t) {
     case "transformNode":
       let result = action.f(model.stage.exp);
@@ -29,11 +39,11 @@ export const sound = (model: Model.t, action: Action.t): void => {
       }
       break;
     case "setSelect":
-      Sound.select(action.path.length);
+      Sound.select(action.path.length, pitch, volume);
       break;
     case "moveTool":
     case "moveStage":
-      Sound.select(model.stage.selection.length);
+      Sound.select(model.stage.selection.length, pitch, volume);
       break;
     case "setSetting":
       Sound.sfx("pew")();

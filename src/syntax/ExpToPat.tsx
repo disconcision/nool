@@ -1,6 +1,7 @@
 import { Exp } from "../syntax/Exp";
 import * as Pat from "../syntax/Pat";
 import * as Id from "../syntax/ID";
+import * as ToolsExp from "../data/ToolsExp";
 
 /*
 want to transform expressions rooted with =
@@ -56,6 +57,22 @@ const extract_id_symbol_list = (e: Exp): pair_of_id_and_symbol[] => {
       );
   }
 };
+// like above but instead returning MapIdToSymbol
+const extract_id_symbol_map = (e: Exp): MapIdToSymbol => {
+  const res = new Map();
+  switch (e.t) {
+    case "Atom":
+      res.set(e.id, e.sym);
+      return res;
+    case "Comp":
+      for (const kid of e.kids) {
+        for (const [id, symbol] of extract_id_symbol_map(kid)) {
+          res.set(id, symbol);
+        }
+      }
+      return res;
+  }
+};
 
 const is_var_symbol = (s: string): boolean => {
   switch (s) {
@@ -109,12 +126,24 @@ const parition_symbol_list_into_vars_and_consts = (
     symbols.filter((pair) => !is_var_symbol(pair.symbol)),
   ];
 };
+// like above but instead returning MapIdToSymbols
+const parition_symbol_map_into_vars_and_consts = (
+  symbols: MapIdToSymbol
+): [MapIdToSymbol, MapIdToSymbol] => {
+  const vars = new Map();
+  const consts = new Map();
+  for (const [id, symbol] of symbols) {
+    if (is_var_symbol(symbol)) vars.set(id, symbol);
+    else consts.set(id, symbol);
+  }
+  return [vars, consts];
+};
 
 /* given a map from ids to symbols, return a map from ids to ids,where each kind
    of symbol gets mapped to an Id. The same symbol always needs to be mapped to the same id.
    you'll need to keep track of seen symbols, with another map i guess.
    when you see a symbol for the first time, that id will become the id for that symbol. */
-const make_id_to_id_map = (map: Map<Id.t, string>): Map<Id.t, Id.t> => {
+const match_up_vars = (map: Map<Id.t, string>): Map<Id.t, Id.t> => {
   const res = new Map();
   const seen_symbols = new Map();
   for (const [id, symbol] of map) {
@@ -142,10 +171,18 @@ const make_id_to_symbol_map = (
    both lists, all remainders are associated with the
    first pair with that symbol in the source */
 const match_up_consts = (
-  source_consts: pair_of_id_and_symbol[],
-  result_consts: pair_of_id_and_symbol[]
+  source_const: MapIdToSymbol,
+  result_const: MapIdToSymbol
 ): map_of_ids => {
   const res = new Map();
+  let source_consts = [...source_const.entries()].map(([id, symbol]) => ({
+    id,
+    symbol,
+  }));
+  let result_consts = [...result_const.entries()].map(([id, symbol]) => ({
+    id,
+    symbol,
+  }));
   while (source_consts.length > 0) {
     const source_pair = source_consts[0];
     const current_symbol = source_pair.symbol;
@@ -189,21 +226,15 @@ const match_up_consts = (
 };
 
 const convert_inner = (s: Exp, r: Exp): res => {
-  const source_symbols = extract_id_symbol_list(s);
-  const result_symbols = extract_id_symbol_list(r);
+  const source_symbols = extract_id_symbol_map(s);
   const [source_vars, source_consts] =
-    parition_symbol_list_into_vars_and_consts(source_symbols);
+    parition_symbol_map_into_vars_and_consts(source_symbols);
+  const result_symbols = extract_id_symbol_map(r);
   const [result_vars, result_consts] =
-    parition_symbol_list_into_vars_and_consts(result_symbols);
-  //console.log("source consts");
-  // console.log(source_consts);
-  // console.log("result consts");
-  // console.log(result_consts);
-  const combined_vars = [...source_vars, ...result_vars];
-  const var_map = make_id_to_id_map(make_id_to_symbol_map(combined_vars));
+    parition_symbol_map_into_vars_and_consts(result_symbols);
+  const combined_vars = new Map([...source_vars, ...result_vars]);
+  const var_map = match_up_vars(combined_vars);
   const const_map = match_up_consts(source_consts, result_consts);
-  //console.log("const map");
-  //console.log(const_map);
   const combined_map = new Map([...var_map, ...const_map]);
   const source = convert_exp_to_pat_getting_ids_from_map(s, combined_map);
   const result = convert_exp_to_pat_getting_ids_from_map(r, combined_map);
@@ -232,6 +263,6 @@ export const test = () => {
   // console.log(convert(exp_double_neg));
   // console.log(convert(exp_comm_times));
   // console.log(convert(exp_assoc_times));
-  // console.log(convert(exp_id_times));
-  // console.log(convert(exp_dist_times_plus));
+  //console.log(convert(exp_id_times));
+  //console.log(convert(ToolsExp.exp_dist_times_plus));
 };

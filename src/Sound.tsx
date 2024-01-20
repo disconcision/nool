@@ -72,16 +72,17 @@ export const mk = (note: string, duration: string) => () =>
   synth.triggerAttackRelease(note, duration);
 
 const number_to_letter = (n: number): string => {
-  const letters = "ACFGBDF";
+  const letters = "ACFBDG";
   return letters[n % letters.length];
 };
 
-export const select = (depth: number) => {
+export const select = (depth: number, pitch:number, volume:number) => {
   //const chorus = new Tone.Chorus(4, 2.5, 0.5).toDestination().start();
   //synth.connect(chorus);
   //const cheby = new Tone.Chebyshev(2).toDestination();
   //synth.connect(cheby);
-  synth.triggerAttackRelease([number_to_letter(depth) + "1"], "32n");
+  synth.volume.value = volume;
+  synth.triggerAttackRelease([number_to_letter(depth) + pitch], "32n");
 };
 
 export const noop = () => synth.triggerAttackRelease("F1", "32n");
