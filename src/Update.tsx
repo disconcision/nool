@@ -52,6 +52,39 @@ const update_stage = (model: Model.t, result: Pat.TransformResult): Model.t =>
     ? model
     : { ...model, stage: Stage.put_exp(model.stage, result) };
 
+type ModelField =
+  | { t: "stage"; path: Path.t; updater: any }
+  | { t: "tools"; path: Path.t; updater: any }
+  | { t: "hover"; hover: Hover.t }
+  | { t: "settings"; settings: Settings.t };
+
+/*export const imperative_update = (
+  setModel: SetStoreFunction<Model.t>,
+  model: Model.t,
+  field: ModelField
+): void => {
+  switch (field.t) {
+    case "hover":
+      setModel({ ...model, hover: field.hover });
+      break;
+    case "settings":
+      setModel({ ...model, settings: field.settings });
+      break;
+    case "tools":
+      setModel({
+        ...model,
+        tools: ToolBox.update_path(field.updater, model.tools, field.path),
+      });
+      break;
+    case "stage":
+      setModel({
+        ...model,
+        stage: Stage.update_path(field.updater, model.stage, field.path),
+      });
+      break;
+  }
+};*/
+
 export const update = (model: Model.t, action: Action.t): result => {
   switch (action.t) {
     case "restart":

@@ -130,6 +130,16 @@
   }
 }
 
+@keyframes glow_pulse {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0px 0px 0px rgba(177, 51, 255, 0));
+  }
+  50% {
+    filter: brightness(1) drop-shadow(0px 0px 2px rgba(218, 51, 255, 0.4));
+  }
+}
+
 @keyframes pulse {
   0%,
   100% {
@@ -276,25 +286,25 @@ code {
   border-top: 0.3px solid rgb(255, 100, 212);
 }
 .node.depth-0:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 .node.depth-1:hover {
-  transform: scale(1.04);
-}
-.node.depth-2:hover {
-  transform: scale(1.06);
-}
-.node.depth-3:hover {
-  transform: scale(1.04);
-}
-.node.depth-4:hover {
   transform: scale(1.02);
 }
+.node.depth-2:hover {
+  transform: scale(1.02);
+}
+.node.depth-3:hover {
+  transform: scale(1.03);
+}
+.node.depth-4:hover {
+  transform: scale(1.03);
+}
 .node.depth-5:hover {
-  transform: scale(1.01);
+  transform: scale(1.04);
 }
 .node.depth-6:hover {
-  transform: scale(1.01);
+  transform: scale(1.04);
 }
 
 .node.selected,
@@ -904,6 +914,11 @@ body:has(#main.Dark) {
 
   background-color: #00cbff;
   text-shadow: -0.01em -0.02em 0.02em rgb(47 42 113 / 90%);
+}
+.Dark .node:hover {
+  animation: glow_pulse;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
 }
 .Dark .node.selected,
 .Dark .node.selected:hover {
