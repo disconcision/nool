@@ -144,8 +144,8 @@ export const go = (
   action: Action.t
 ): void => {
   if (model.settings.sound) sound(model, action);
-  if (model.settings.motion != "Off") flipping.read();
-  if (model.settings.motion == "On") flipping_comp.read();
+  //if (model.settings.motion != "Off") flipping.read();
+  //if (model.settings.motion == "On") flipping_comp.read();
   const result = update(model, action);
   if (result == "NoChange") {
     console.log("NoChange");
@@ -174,6 +174,6 @@ export const go = (
   /*if (action.t == 'setSelect' &&  !Path.doesp1startwithp2( model.stage.selection,new_model.stage.selection)) {
     console.log("setSelect new model");
    setModel(new_model)};*/
-  if (model.settings.motion == "On") flipping_comp.flip();
-  if (model.settings.motion != "Off") flipping.flip();
+  //if (model.settings.motion == "On") flipping_comp.flip();
+  //if (model.settings.motion != "Off") flipping.flip();
 };
