@@ -193,11 +193,18 @@ const flipping_comp = new Flipping({
   easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
 });
 
+const tool_flip = new Flipping({
+  attribute: "tool-flip",
+  duration: 50,
+  easing: "linear",
+});
+
 export const go = (
   model: Model.t,
   setModel: SetStoreFunction<Model.t>,
   action: Action.t
 ): void => {
+  tool_flip.read();
   if (model.settings.sound) sound(model, action);
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") {
@@ -251,4 +258,5 @@ export const go = (
   }
 
   if (model.settings.motion != "Off") flipping.flip();
+  tool_flip.flip();
 };

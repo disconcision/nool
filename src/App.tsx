@@ -11,14 +11,26 @@ import * as ExpToPat from "./syntax/ExpToPat";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
+// var in_transition = false;
+
 const App: Component = () => {
   const [model, setModel] = createStore({ ...Model.init });
   const inject = (a: Action.t) => {
     console.log(a);
+    // if (in_transition && a.t === "setHover") {
+    //   console.log("blocked:" + a.t);
+    //   return;
+    // }
     go(model, setModel, a);
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
+  // document.addEventListener("transitionstart", (e) => {
+  //   in_transition = true;
+  // });
+  // document.addEventListener("transitionend", (e) => {
+  //   in_transition = false;
+  // });
   return (
     <div id="main" class={model.settings.theme}>
       <div class="logo" />

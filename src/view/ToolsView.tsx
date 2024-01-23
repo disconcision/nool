@@ -147,8 +147,8 @@ const TransformView: Component<{
         })}
         onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNode}
-        /*data-flip-key={`flip-${
-          "t" + props.idx.toString() + (props.t.reversed ? "aa" : "bb")
+        /*tool-flip={`flip-${
+          props.idx.toString() + (props.t.reversed ? "aa" : "bb")
         }`}*/
       >
         <PatView
@@ -175,8 +175,8 @@ const TransformView: Component<{
         })}
         onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNodeReverse}
-        /*data-flip-key={`flip-${
-          "t" + props.idx.toString() + (props.t.reversed ? "bb" : "aa")
+        /*tool-flip={`flip-${
+          props.idx.toString() + (props.t.reversed ? "bb" : "aa")
         }`}*/
       >
         <PatView
