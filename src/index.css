@@ -936,7 +936,7 @@ body:has(#main.Dark) {
 .Dark .Emoji #stage .node.mask.✿ {
   outline: 0.05em solid #ffff00;
   background-color: rgba(203, 203, 0, 0.15) !important;
-  filter: sepia(100%) saturate(1000%) hue-rotate(-10deg) saturate(1000%);
+  filter: sepia(100%) hue-rotate(0deg) saturate(1000%);
 }
 .Dark .Emoji #stage .node.mask.♫ {
   outline: 0.05em solid #00ffff;

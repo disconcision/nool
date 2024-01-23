@@ -9,6 +9,7 @@ import { Transform, flip, at_path } from "../Transform";
 import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
+import * as Sound from "../Sound";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -29,16 +30,16 @@ const PatView: Component<{
     case "Atom": {
       const sym = props.p.sym.name;
       const cls = `pat ${sym} ${props.is_head ? "head pat" : "node atom pat"}`;
-      return <div class={cls}>{Names.get(props.symbols, sym)}</div>;
+      return (<div class={cls}>{Names.get(props.symbols, sym)}</div>);
     }
     case "Comp":
       return (
         <div class="node comp pat">
-          <Index each={props.p.kids}>
+          <For each={props.p.kids}>
             {(kid, i) =>
-              PatView({ p: kid(), is_head: i === 0, symbols: props.symbols })
+              PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
             }
-          </Index>
+          </For>
         </div>
       );
   }
@@ -87,6 +88,7 @@ const TransformView: Component<{
 }> = (props) => {
   const transformNode = (e: Event) => {
     e.preventDefault();
+    e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
       props.inject({
         t: "transformNodeAndFlipTransform",
@@ -99,6 +101,7 @@ const TransformView: Component<{
   };
   const transformNodeReverse = (e: Event) => {
     e.preventDefault();
+    e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
       props.inject({
         t: "transformNodeAndFlipTransform",
@@ -127,6 +130,7 @@ const TransformView: Component<{
   const do_nothing = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
+    props.inject({ t: "Noop" });
   };
   const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";

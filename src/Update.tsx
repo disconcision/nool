@@ -48,6 +48,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
     case "setSetting":
       Sound.sfx("pew")();
       break;
+    case "Noop":
+      Sound.noop();
+      break;
     case "setHover":
     case "flipTransform":
     case "applyTransform":
@@ -173,6 +176,8 @@ export const update = (model: Model.t, action: Action.t): result => {
         ...model,
         tools: ToolBox.flip_transform(model.tools, action.idx),
       };
+    case "Noop":
+      return "NoChange";
   }
 };
 
@@ -209,9 +214,7 @@ export const go = (
   if (model.settings.motion != "Off") flipping.read();
   if (model.settings.motion == "On") {
     flipping_comp.read();
-  } else if (
-    action.t === "transformNodeAndFlipTransform" 
-  ) {
+  } else if (action.t === "transformNodeAndFlipTransform") {
     console.log("reading comp");
     flipping_comp.read();
   }

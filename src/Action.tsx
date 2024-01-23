@@ -32,6 +32,7 @@ export type Action =
     }
   | { t: "applyTransform"; idx: number; direction: "forward" | "reverse" }
   | { t: "applyTransformSelected" }
-  | { t: "flipTransform"; idx: number };
+  | { t: "flipTransform"; idx: number }
+  | { t: "Noop" };
 
 export type t = Action;

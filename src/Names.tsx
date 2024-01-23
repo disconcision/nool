@@ -33,7 +33,7 @@ const to_singlechar = (emoji: string): string => {
   }
 };
 
-export const get = (symbols: Settings.symbols, symbol: string) => {
+export const get = (symbols: Settings.symbols, symbol: string):string => {
   switch (symbols) {
     case "Emoji":
       return symbol;
