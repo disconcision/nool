@@ -28,9 +28,15 @@ const PatView: Component<{
 }> = (props) => {
   switch (props.p.t) {
     case "Atom": {
-      const sym = props.p.sym.name;
-      const cls = `pat ${sym} ${props.is_head ? "head pat" : "node atom pat"}`;
-      return (<div class={cls}>{Names.get(props.symbols, sym)}</div>);
+      return (
+        <div
+          class={`pat ${props.p.sym.name} ${
+            props.is_head ? "head pat" : "node atom pat"
+          }`}
+        >
+          {Names.get(props.symbols, props.p.sym.name)}
+        </div>
+      );
     }
     case "Comp":
       return (

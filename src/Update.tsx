@@ -13,6 +13,7 @@ import * as Exp from "./syntax/Exp";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
+import * as Animate from "./Animate";
 
 export type result = Model.t | "NoChange";
 
@@ -181,42 +182,17 @@ export const update = (model: Model.t, action: Action.t): result => {
   }
 };
 
-const flipping = new Flipping({
-  attribute: "data-flip-key",
-  duration: 250,
-  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
-  //parent: document.getElementById("stage")!,
-  //stagger: 1,
-  //selector:  (_el:Element) => {return [_el]},
-  parent: this,
-  //activeSelector: (_el:any) => {return (true)},
-});
-
-const flipping_comp = new Flipping({
-  attribute: "data-flip-key-comp",
-  duration: 250,
-  easing: "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
-});
-
-const tool_flip = new Flipping({
-  attribute: "tool-flip",
-  duration: 50,
-  easing: "linear",
-});
-
 export const go = (
   model: Model.t,
   setModel: SetStoreFunction<Model.t>,
   action: Action.t
 ): void => {
-  tool_flip.read();
   if (model.settings.sound) sound(model, action);
-  if (model.settings.motion != "Off") flipping.read();
-  if (model.settings.motion == "On") {
-    flipping_comp.read();
-  } else if (action.t === "transformNodeAndFlipTransform") {
-    console.log("reading comp");
-    flipping_comp.read();
+  /* Catching because problem on build server */
+  try {
+    Animate.read(model, action);
+  } catch (e) {
+    console.error(e);
   }
   const result = update(model, action);
   if (result == "NoChange") {
@@ -239,27 +215,10 @@ export const go = (
         stage: Stage.put_exp(model.stage, freshened),
       });
   }, 250);
-  if (action.t === "transformNodeAndFlipTransform")
-    console.log("shouldanimate: " + action.transform.should_animate);
-  //(action.t === "transformNode" && action.transform.should_animate)
-  if (model.settings.motion == "On") {
-    console.log("flipping on");
-    flipping_comp.flip();
-    flipping.flip();
-  } else if (
-    action.t === "transformNodeAndFlipTransform" &&
-    action.transform.should_animate
-  ) {
-    console.log("flipping comp");
-    flipping_comp.flip();
-    /* HACK: for ??? flipping twice is load bearing for this for some reason.
-       But we don't want to flip twice in other cases e.g. reprojection,
-       or it fucks it up. */
-    flipping.flip();
-  } else if (action.t === "transformNodeAndFlipTransform") {
-    flipping.flip();
+  /* Catching because problem on build server */
+  try {
+    Animate.flip(model, action);
+  } catch (e) {
+    console.error(e);
   }
-
-  if (model.settings.motion != "Off") flipping.flip();
-  tool_flip.flip();
 };
