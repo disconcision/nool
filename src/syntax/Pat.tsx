@@ -21,6 +21,8 @@ export const p_const = (name: string): Pat => const_id(ID.mk(), name);
 export const p_var = (name: string): Pat => var_id(ID.mk(), name);
 export const p_comp = (kids: Pat[]): Pat => comp_id(ID.mk(), kids);
 
+export const eq = (a: Pat, b: Pat): boolean => Node.equals(a, b);
+
 type NameBinding = [string, Exp.t];
 
 type IdBinding = [number, number];

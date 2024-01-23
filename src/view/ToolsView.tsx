@@ -87,13 +87,10 @@ const TransformView: Component<{
 }> = (props) => {
   const transformNode = (e: Event) => {
     e.preventDefault();
-    //e.stopPropagation();
-    /* HACK(ish): by not stopping propagation,
-       transform also flips the rule, which is
-       kind of cool */
     if (props.model.stage.selection != "unselected") {
       props.inject({
-        t: "transformNode",
+        t: "transformNodeAndFlipTransform",
+        target: "Source",
         idx: props.idx,
         transform: props.t,
         f: at_path(props.t, props.model.stage.selection),
@@ -102,24 +99,23 @@ const TransformView: Component<{
   };
   const transformNodeReverse = (e: Event) => {
     e.preventDefault();
-    //e.stopPropagation();
-    /* HACK(ish): by not stopping propagation,
-       transform also flips the rule, which is
-       kind of cool */
     if (props.model.stage.selection != "unselected") {
       props.inject({
-        t: "transformNode",
+        t: "transformNodeAndFlipTransform",
+        target: "Result",
         idx: props.idx,
         transform: props.t,
         f: at_path(flip(props.t), props.model.stage.selection),
       });
     }
   };
-  const setHover = (target: Hover.t) => (_: Event) =>
-    props.inject({
-      t: "setHover",
-      target,
-    });
+  const setHover = (fn: any, target: Hover.t) => (e: Event) => {
+    if (fn(props) === "match")
+      props.inject({
+        t: "setHover",
+        target,
+      });
+  };
   const flipTransform = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,12 +124,16 @@ const TransformView: Component<{
       idx: props.idx,
     });
   };
+  const do_nothing = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
   const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
   const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
   return (
-    <div class={`transform-view`} onpointerdown={flipTransform}>
+    <div class={`transform-view`} onpointerdown={do_nothing}>
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
@@ -141,12 +141,15 @@ const TransformView: Component<{
         } ${selected_src(props.model.tools, props.idx)} ${source_matches_cls(
           props
         )}`}
-        onmouseenter={setHover({
+        onmouseenter={setHover(source_matches_cls, {
           t: "TransformSource",
           pat: props.t.source,
         })}
-        onpointerleave={setHover({ t: "NoHover" })}
+        onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNode}
+        /*data-flip-key={`flip-${
+          "t" + props.idx.toString() + (props.t.reversed ? "aa" : "bb")
+        }`}*/
       >
         <PatView
           p={props.t.source}
@@ -166,12 +169,15 @@ const TransformView: Component<{
         } ${selected_res(props.model.tools, props.idx)} ${result_matches_cls(
           props
         )}`}
-        onmouseenter={setHover({
+        onmouseenter={setHover(result_matches_cls, {
           t: "TransformResult",
           pat: props.t.result,
         })}
-        onpointerleave={setHover({ t: "NoHover" })}
+        onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNodeReverse}
+        /*data-flip-key={`flip-${
+          "t" + props.idx.toString() + (props.t.reversed ? "bb" : "aa")
+        }`}*/
       >
         <PatView
           p={props.t.result}

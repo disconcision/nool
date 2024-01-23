@@ -227,7 +227,7 @@ code {
 }
 
 .node-container {
-  width: fit-content;
+  /*width: fit-content;*/
   user-select: none;
   cursor: pointer;
 }
@@ -500,7 +500,7 @@ code {
   font-family: "Roboto";
   font-weight: 700;
   font-family: monospace;
-  
+
   border-top: none;
   border-bottom: none;
   box-shadow: none;
@@ -540,7 +540,7 @@ code {
   border-bottom: 0.04em solid #7ae0e6;
   border-top: 0.04em solid #d4a4d8;
   width: fit-content;
-  padding: 0.3em;
+  padding: 0.3em 0.4em 0.3em 0;
 }
 /*#noolbox .result .node.comp,
 #noolbox .source .node.comp {
@@ -573,7 +573,14 @@ code {
   border-radius: 2.1em;
 }
 
-.transform-view .label {
+.transform-view .node-container {
+  display: flex;
+  user-select: none;
+  cursor: grab;
+  justify-content: center;
+  align-items: center;
+}
+v .transform-view .label {
   position: absolute;
   top: -0.1em; /*0.5em;*/
   font-size: 0.6em;
@@ -739,57 +746,43 @@ code {
   0%,
   100% {
     transform: scale(1);
-    /* filter: sepia(1) saturate(4) hue-rotate(0deg); */
   }
   50% {
     transform: scale(1.03);
-    /* filter: sepia(1) saturate(4) hue-rotate(0deg) brightness(1.1)
-      drop-shadow(0px 0px 20px rgba(255, 252, 51, 0.6)); */
   }
 }
 @keyframes mask-pulse-♫ {
   0%,
   100% {
     transform: scale(1);
-    /* filter: sepia(1) saturate(4) hue-rotate(160deg); */
   }
   50% {
     transform: scale(1.03);
-    /* filter: brightness(1.1)*/
   }
 }
 @keyframes mask-pulse-♥ {
   0%,
   100% {
     transform: scale(1);
-    /* filter: sepia(1) saturate(2) hue-rotate(210deg); */
   }
   50% {
     transform: scale(1.03);
-    /* filter: sepia(1) saturate(2) hue-rotate(210deg) brightness(1.1)
-      drop-shadow(0px 0px 20px rgba(251, 33, 179, 0.6)); */
   }
 }
 
 #stage .node.mask.✿ {
   animation-name: mask-pulse-✿;
   background-color: yellow !important;
-  filter: sepia(1) saturate(4) hue-rotate(0deg);
-  /*filter: sepia(100%) saturate(400%) brightness(90%) hue-rotate(0deg);*/
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(-10deg);
 }
 #stage .node.mask.♫ {
   animation-name: mask-pulse-♫;
   background-color: cyan !important;
-  filter: sepia(1) saturate(4) hue-rotate(120deg);
-  /*filter: sepia(100%) saturate(400%) hue-rotate(160deg);*/
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(140deg);
 }
 #stage .node.mask.♥ {
   animation-name: mask-pulse-♥;
   background-color: #f772f7 !important;
-  filter: sepia(1) saturate(4) hue-rotate(240deg);
-  /*filter: sepia(100%) saturate(400%) hue-rotate(210deg);*/
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(280deg);
 }
 
@@ -893,9 +886,12 @@ body:has(#main.Dark) {
 .Dark #noolbox {
   mix-blend-mode: hard-light;
 }
-.Dark .seed .node.atom {
+.Dark .seed #stage .node.atom {
   color: white;
-  mix-blend-mode: hard-light;
+  /*mix-blend-mode: hard-light;*/
+}
+.Dark .seed #noolbox .node.atom {
+  color: #7b88c8;
 }
 .Dark #stage .node.comp {
   background: linear-gradient(
@@ -908,10 +904,9 @@ body:has(#main.Dark) {
     #6000ff0d,
     #0025ff0f,
     #454184
-  )
+  );
 }
 .Dark #stage .node.comp .head {
-
   background-color: #00cbff;
   text-shadow: -0.01em -0.02em 0.02em rgb(47 42 113 / 90%);
 }
@@ -922,12 +917,13 @@ body:has(#main.Dark) {
 }
 .Dark .node.selected,
 .Dark .node.selected:hover {
-    box-shadow: 0px 0px 0.2em #00ffda;
-    outline: 1.4px solid #00ffb6;
+  box-shadow: none;
+  /*
+  outline: 1.4px solid #00ffb6;*/
 }
 .Dark .node.mask.atom,
-.Dark .node.mask .atom  {
-  color: black
+.Dark .node.mask .atom {
+  color: black;
 }
 .Dark .logo {
   mix-blend-mode: saturation;
@@ -935,7 +931,23 @@ body:has(#main.Dark) {
 .Dark .previews .node-container {
   mix-blend-mode: screen;
 }
-/* HACKY */
+
+/* HACKY INTERACTIONS */
+.Dark .Emoji #stage .node.mask.✿ {
+  outline: 0.05em solid #ffff00;
+  background-color: rgba(203, 203, 0, 0.15) !important;
+  filter: sepia(100%) saturate(1000%) hue-rotate(-10deg) saturate(1000%);
+}
+.Dark .Emoji #stage .node.mask.♫ {
+  outline: 0.05em solid #00ffff;
+  background-color: rgba(0, 203, 203, 0.15) !important;
+  filter: sepia(100%) hue-rotate(140deg) saturate(1000%);
+}
+.Dark .Emoji #stage .node.mask.♥ {
+  outline: 0.05em solid #ff00ff;
+  background-color: rgba(203, 0, 203, 0.15) !important;
+  filter: sepia(100%) hue-rotate(280deg) saturate(1000%);
+}
 .Dark .seed.SingleChar #stage .node.comp .head {
-  color: rgb(255, 189, 8);
+  color: rgb(191 127 255)
 }

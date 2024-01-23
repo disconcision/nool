@@ -10,6 +10,19 @@ export type t =
 
 export const init: t = { t: "NoHover" };
 
+export const eq = (a: t, b: t): boolean => {
+  switch (a.t) {
+    case "NoHover":
+      return b.t == "NoHover";
+    case "StageNode":
+      return b.t == "StageNode" && (a.id === b.id);
+    case "TransformSource":
+      return b.t == "TransformSource" && Pat.eq(a.pat, b.pat);
+    case "TransformResult":
+      return b.t == "TransformResult" && Pat.eq(a.pat, b.pat);
+  }
+}
+
 export const get_binding = (model: Model.t): Pat.Binding[] => {
   switch (model.hover.t) {
     case "NoHover":

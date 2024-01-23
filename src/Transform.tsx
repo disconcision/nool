@@ -9,6 +9,7 @@ export type Transform = {
   sound: () => void;
   sound_rev: () => void;
   reversed: boolean;
+  should_animate: boolean;
 };
 
 export type t = Transform;
@@ -19,11 +20,6 @@ export const flip = (t: Transform): Transform => ({
   result: t.source,
   reversed: !t.reversed,
 });
-
-const at_id =
-  ({ source, result }: Transform, id: number) =>
-  (exp: Exp): Pat.TransformResult =>
-    Pat.transform_at_id(exp, source, result, id);
 
 export const at_path =
   ({ source, result }: Transform, path: Path.t) =>

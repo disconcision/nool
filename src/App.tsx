@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import { createStore,SetStoreFunction } from "solid-js/store";
+import { createStore, SetStoreFunction } from "solid-js/store";
 import { go } from "./Update";
 import * as Model from "./Model";
 import * as Action from "./Action";
@@ -9,7 +9,7 @@ import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 //import { Toolbar } from "./view/ToolsView";
 
-export type SetModel = SetStoreFunction<Model.t>
+export type SetModel = SetStoreFunction<Model.t>;
 
 const App: Component = () => {
   const [model, setModel] = createStore({ ...Model.init });

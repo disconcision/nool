@@ -28,7 +28,7 @@ export const of_theme = (theme: Settings.theme): [number, number] => {
 export const sound = (model: Model.t, action: Action.t): void => {
   const [pitch, volume] = of_theme(model.settings.theme);
   switch (action.t) {
-    case "transformNode":
+    case "transformNodeAndFlipTransform":
       let result = action.f(model.stage.exp);
       if (result != "NoMatch") {
         return action.transform.reversed
@@ -56,10 +56,10 @@ export const sound = (model: Model.t, action: Action.t): void => {
   }
 };
 
-const update_stage = (model: Model.t, result: Pat.TransformResult): Model.t =>
+const update_stage = (model: Model.t, result: Pat.TransformResult): result =>
   /* Freshening as-is is a hack to deal with e.g. distributivity which copies nodes */
   result == "NoMatch"
-    ? model
+    ? "NoChange"
     : { ...model, stage: Stage.put_exp(model.stage, result) };
 
 type ModelField =
@@ -113,6 +113,7 @@ export const update = (model: Model.t, action: Action.t): result => {
         return "NoChange";
       return { ...model, stage: Stage.put_selection(model.stage, action.path) };
     case "setHover":
+      if (Hover.eq(model.hover, action.target)) return "NoChange";
       return { ...model, hover: action.target };
     case "moveStage":
       return { ...model, stage: Stage.move(model.stage, action.direction) };
@@ -133,6 +134,17 @@ export const update = (model: Model.t, action: Action.t): result => {
     case "transformNode":
       let result = action.f(model.stage.exp);
       return update_stage(model, result);
+    case "transformNodeAndFlipTransform":
+      let result3 = action.f(model.stage.exp);
+      let model3: Model.t = {
+        ...model,
+        tools: ToolBox.flip_transform(model.tools, action.idx),
+        hover:
+          action.target === "Source"
+            ? { t: "TransformSource", pat: action.transform.result }
+            : { t: "TransformResult", pat: action.transform.source },
+      };
+      return update_stage(model3, result3);
     case "applyTransform":
       if (
         action.idx < 0 ||
@@ -188,12 +200,21 @@ export const go = (
 ): void => {
   if (model.settings.sound) sound(model, action);
   if (model.settings.motion != "Off") flipping.read();
-  if (model.settings.motion == "On") flipping_comp.read();
+  if (model.settings.motion == "On") {
+    flipping_comp.read();
+  } else if (
+    action.t === "transformNodeAndFlipTransform" 
+  ) {
+    console.log("reading comp");
+    flipping_comp.read();
+  }
   const result = update(model, action);
   if (result == "NoChange") {
-    console.log("NoChange");
+    //Sound.noop();
+    console.log("Action NoChange:" + action.t);
     return;
   } else {
+    console.log("Action Success: " + action.t);
     setModel(result);
   }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
@@ -208,15 +229,26 @@ export const go = (
         stage: Stage.put_exp(model.stage, freshened),
       });
   }, 250);
-  //if (action.t != 'setSelect') return setModel(update(model, action));
-  //const new_model = update(model, action);
-  //console.log("path old:",model.stage.selection);
-  //console.log("path new:",new_model.stage.selection);
-  //console.log("path eq:",Path.eq(new_model.stage.selection, model.stage.selection));
-  //console.log("path_eq_2:",JSON.stringify(new_model.stage.selection) == JSON.stringify(model.stage.selection));
-  /*if (action.t == 'setSelect' &&  !Path.doesp1startwithp2( model.stage.selection,new_model.stage.selection)) {
-    console.log("setSelect new model");
-   setModel(new_model)};*/
-  if (model.settings.motion == "On") flipping_comp.flip();
+  if (action.t === "transformNodeAndFlipTransform")
+    console.log("shouldanimate: " + action.transform.should_animate);
+  //(action.t === "transformNode" && action.transform.should_animate)
+  if (model.settings.motion == "On") {
+    console.log("flipping on");
+    flipping_comp.flip();
+    flipping.flip();
+  } else if (
+    action.t === "transformNodeAndFlipTransform" &&
+    action.transform.should_animate
+  ) {
+    console.log("flipping comp");
+    flipping_comp.flip();
+    /* HACK: for ??? flipping twice is load bearing for this for some reason.
+       But we don't want to flip twice in other cases e.g. reprojection,
+       or it fucks it up. */
+    flipping.flip();
+  } else if (action.t === "transformNodeAndFlipTransform") {
+    flipping.flip();
+  }
+
   if (model.settings.motion != "Off") flipping.flip();
 };

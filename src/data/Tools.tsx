@@ -2,7 +2,7 @@ import * as Pat from "../syntax/Pat";
 import * as Sound from "../Sound";
 import * as Transform from "../Transform";
 
-type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
+type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank ;should_animate: boolean};
 
 
 
@@ -33,58 +33,68 @@ const commute_plus: Base = {
   source: plus_x(var_a, var_b),
   result: plus_x(var_b, var_a),
   sound: "tiup",
+  should_animate: true,
 };
 
 const associate_plus: Base = {
   source: plus_y(var_a, plus_x(var_b, var_c)),
   result: plus_y(plus_x(var_a, var_b), var_c),
   sound: "shwoph",
+  should_animate: false,
 };
 
 const identity_plus: Base = {
   source: var_a,
   result: plus_x(zero, var_a),
   sound: "chchiu",
+  should_animate: false,
 };
 
 const inverse_plus: Base = {
   source: zero,
   result: plus_x(var_a, neg_x(var_a)),
   sound: "klohk",
+  should_animate: false,
 };
 
 const double_neg: Base = {
   source: var_a,
   result: neg_x(neg_y(var_a)),
   sound: "klohk",
+  should_animate: false,
 };
 
 const commute_times: Base = {
   source: times_x(var_a, var_b),
   result: times_x(var_b, var_a),
   sound: "tiup",
+  should_animate: true,
 };
 
 const associate_times: Base = {
   source: times_y(var_a, times_x(var_b, var_c)),
   result: times_y(times_x(var_a, var_b), var_c),
   sound: "shwoph",
+  should_animate: false,
 };
 
 const identity_times: Base = {
   source: var_a,
   result: times_x(one, var_a),
   sound: "chchiu",
+  should_animate: false,
 };
 
 const distribute_times_plus: Base = {
   source: plus_x(times_y(var_a, var_b), times_y(var_a, var_c)),
   result: times_y(var_a, plus_x(var_b, var_c)),
   sound: "shwoph",
+  should_animate: false,
 };
 
-const mk = ({ source, result, sound }: Base): Transform.t => ({
+const mk = ({ source, result, sound , should_animate}: Base): Transform.t => ({
   name: "",
+  should_animate,
   source,
   result,
   sound: Sound.sfx(sound),
