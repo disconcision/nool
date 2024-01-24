@@ -9,6 +9,8 @@ import * as Path from "../syntax/Path";
 import * as Stage from "../Stage";
 import * as Action from "../Action";
 import * as Settings from "../Settings";
+import { map_ids } from "../syntax/Node";
+import * as Id from "../syntax/ID";
 
 const transformer =
   (inject: Action.Inject, transform: Transform, path: Path.t) =>
@@ -35,10 +37,17 @@ const do_transforms = (
     .filter(
       ([_, exp], i, arr) =>
         arr.findIndex(([_, exp2]) => Exp.equals(exp, exp2)) === i
-    );
-
-const preview = (node: Exp.t, settings: Settings.t, transformer: (_e: Event) => void) => (
-  <div class={`node-container ${settings.projection}`} onmousedown={transformer}>
+    )
+    .map(([t, e]): [Transform, Exp.t] => [t, map_ids(() => Id.mk(), e)]); //unduplicate ids
+const preview = (
+  node: Exp.t,
+  settings: Settings.t,
+  transformer: (_e: Event) => void
+) => (
+  <div
+    class={`node-container ${settings.projection}`}
+    onmousedown={transformer}
+  >
     {ViewOnly({ node: node, symbols: settings.symbols })}
   </div>
 );
@@ -56,13 +65,13 @@ export const AdjacentPossible: Component<{
     <div class="previews" style={"display: flex;"}>
       <For each={do_transforms(selection, props.tools)}>
         {([transform, node]) => {
-           if (props.stage.selection === "unselected") return <div></div>;
+          if (props.stage.selection === "unselected") return <div></div>;
           return preview(
             node,
             props.settings,
             transformer(props.inject, transform, props.stage.selection)
-          )}
-        }
+          );
+        }}
       </For>
     </div>
   );
