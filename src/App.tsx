@@ -23,7 +23,7 @@ const App: Component = () => {
     //   console.log("blocked:" + a.t);
     //   return;
     // }
-    if (a.t === "setHover") {
+    if (a.t === "setHover" || ~document.startViewTransition) {
       console.log("sethover dont transition:" + a.t);
       go(model, setModel, a)
       return;
