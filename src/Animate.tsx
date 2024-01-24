@@ -59,3 +59,16 @@ export const flip = (model: Model.t, action: Action.t): void => {
   if (model.settings.motion != "Off") flipping.flip();
   //tool_flip.flip();
 };
+
+export let vt_setup = () => {
+  //TODO: unhardcode id max
+  var style = document.createElement("style");
+  for (let id = 0; id < 100; id++) {
+    style.innerHTML += `#node-${id} { view-transition-name: flipp-${id}; }`
+  }
+  document.getElementsByTagName("head")[0].appendChild(style);
+  let res = document.getElementById("someElementId");
+  if (res != null) {
+    res.className = "cssClass";
+  }
+};

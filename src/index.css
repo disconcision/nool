@@ -951,3 +951,23 @@ body:has(#main.Dark) {
 .Dark .seed.SingleChar #stage .node.comp .head {
   color: rgb(191 127 255)
 }
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  /*transition-easing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);*/
+  transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  transition-duration: 2s;
+ 
+  /*height: auto;
+  right: 0;
+  left: auto;
+  transform-origin: right center;*/
+}
+
+::view-transition-old(.node.atom) {
+  transition-duration: 2s;
+}
+
+::view-transition-new(.node.atom) {
+  transition-duration: 2s;
+}

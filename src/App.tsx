@@ -1,12 +1,13 @@
 import { Component } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { go } from "./Update";
+import { go, blah } from "./Update";
 import * as Model from "./Model";
 import * as Action from "./Action";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
+import * as Animate from "./Animate";
 //import { Toolbar } from "./view/ToolsView";
 
 export type SetModel = SetStoreFunction<Model.t>;
@@ -15,13 +16,19 @@ export type SetModel = SetStoreFunction<Model.t>;
 
 const App: Component = () => {
   const [model, setModel] = createStore({ ...Model.init });
+  Animate.vt_setup();
   const inject = (a: Action.t) => {
     console.log(a);
     // if (in_transition && a.t === "setHover") {
     //   console.log("blocked:" + a.t);
     //   return;
     // }
-    go(model, setModel, a);
+    if (a.t === "setHover") {
+      console.log("sethover dont transition:" + a.t);
+      go(model, setModel, a)
+      return;
+    }
+    document.startViewTransition(async ()=>go(model, setModel, a));
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);

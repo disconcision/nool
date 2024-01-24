@@ -190,7 +190,7 @@ export const go = (
   if (model.settings.sound) sound(model, action);
   /* Catching because problem on build server */
   try {
-    Animate.read(model, action);
+    //Animate.read(model, action);
   } catch (e) {
     console.error(e);
   }
@@ -217,7 +217,7 @@ export const go = (
   }, 250);
   /* Catching because problem on build server */
   try {
-    Animate.flip(model, action);
+    //Animate.flip(model, action);
   } catch (e) {
     console.error(e);
   }
