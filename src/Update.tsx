@@ -13,7 +13,6 @@ import * as Exp from "./syntax/Exp";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
-import * as Animate from "./Animate";
 
 export type result = Model.t | "NoChange";
 
@@ -186,14 +185,7 @@ export const go = (
   model: Model.t,
   setModel: SetStoreFunction<Model.t>,
   action: Action.t
-): void => {
-  if (model.settings.sound) sound(model, action);
-  /* Catching because problem on build server */
-  try {
-    //Animate.read(model, action);
-  } catch (e) {
-    console.error(e);
-  }
+): void => {  
   const result = update(model, action);
   if (result == "NoChange") {
     //Sound.noop();
@@ -207,18 +199,12 @@ export const go = (
    * retain their duplicate ids for animations, but then we need to freshen
    * them so that they don't get confused with the original subtree. So we
    * freshen them after a delay. THIS WILL CAUSE PROBLEMS!!!! */
-  setTimeout(() => {
+  /*setTimeout(() => {
     const freshened = freshen(model.stage.exp);
     if (!Exp.equals_id(model.stage.exp, freshened))
       setModel({
         ...model,
         stage: Stage.put_exp(model.stage, freshened),
       });
-  }, 250);
-  /* Catching because problem on build server */
-  try {
-    //Animate.flip(model, action);
-  } catch (e) {
-    console.error(e);
-  }
+  }, 250);*/
 };

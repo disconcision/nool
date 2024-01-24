@@ -23,12 +23,30 @@ const App: Component = () => {
     //   console.log("blocked:" + a.t);
     //   return;
     // }
-    if (a.t === "setHover") {
-      console.log("sethover dont transition:" + a.t);
-      go(model, setModel, a)
-      return;
+    
+    if (!document.startViewTransition || model.settings.motion === "On") {
+      /* Catching because problem on build server */
+      try {
+        Animate.read(model, a);
+      } catch (e) {
+        console.error(e);
+      }
+      go(model, setModel, a);
+      try {
+        Animate.flip(model, a);
+      } catch (e) {
+        console.error(e);
+      }
+    } else if (model.settings.motion === "Half"){
+      if (a.t === "setHover") {
+        console.log("sethover dont transition:" + a.t);
+        go(model, setModel, a);
+        return;
+      }
+      document.startViewTransition(async () => go(model, setModel, a));
+    } else {
+      go(model, setModel, a);
     }
-    document.startViewTransition(async ()=>go(model, setModel, a));
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
