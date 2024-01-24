@@ -10,6 +10,7 @@ import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
 import * as Sound from "../Sound";
+import { map_ids } from "../syntax/Node";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -30,6 +31,7 @@ const PatView: Component<{
     case "Atom": {
       return (
         <div
+        id={`pat-${props.p.id}`}
           class={`pat ${props.p.sym.name} ${
             props.is_head ? "head pat" : "node atom pat"
           }`}
@@ -40,7 +42,7 @@ const PatView: Component<{
     }
     case "Comp":
       return (
-        <div class="node comp pat">
+        <div id={`pat-${props.p.id}`} class="node comp pat">
           <For each={props.p.kids}>
             {(kid, i) =>
               PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
@@ -157,12 +159,9 @@ const TransformView: Component<{
         })}
         onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNode}
-        /*tool-flip={`flip-${
-          props.idx.toString() + (props.t.reversed ? "aa" : "bb")
-        }`}*/
       >
         <PatView
-          p={props.t.source}
+          p={map_ids(id=>id+100000+100*props.idx, props.t.source)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
@@ -185,12 +184,9 @@ const TransformView: Component<{
         })}
         onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNodeReverse}
-        /*tool-flip={`flip-${
-          props.idx.toString() + (props.t.reversed ? "bb" : "aa")
-        }`}*/
       >
         <PatView
-          p={props.t.result}
+          p={map_ids(id=>id+200000 + 100*props.idx, props.t.result)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />

@@ -265,7 +265,7 @@ code {
 }
 
 .node {
-  transition: all 0.3s ease-in-out;
+  /*transition: all 0.3s ease-in-out;*/
   width: fit-content;
   display: flex;
   border-radius: 3em 1.2em 0.6em 32%;
@@ -345,7 +345,7 @@ code {
 .node:active {
   /*animation-name: wobble;
   animation-duration: 1s;*/
-  animation-name: wobble2 !important;
+  animation-name: wobble2;
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
@@ -712,9 +712,7 @@ v .transform-view .label {
 }
 
 .pat.node.atom {
-  width: 1em;
-  padding: 0 0.8em;
-  /*font-family: "Segoe UI Emoji";*/
+  font-family: "Segoe UI Emoji";
 }
 .pat.node.atom.♫ {
   background-color: #7df9ff;
@@ -772,17 +770,17 @@ v .transform-view .label {
 
 #stage .node.mask.✿ {
   animation-name: mask-pulse-✿;
-  background-color: yellow !important;
+  background-color: yellow ;
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(-10deg);
 }
 #stage .node.mask.♫ {
   animation-name: mask-pulse-♫;
-  background-color: cyan !important;
+  background-color: cyan ;
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(140deg);
 }
 #stage .node.mask.♥ {
   animation-name: mask-pulse-♥;
-  background-color: #f772f7 !important;
+  background-color: #f772f7 ;
   filter: sepia(100%) saturate(240%) brightness(98%) hue-rotate(280deg);
 }
 
@@ -949,25 +947,63 @@ body:has(#main.Dark) {
   filter: sepia(100%) hue-rotate(280deg) saturate(1000%);
 }
 .Dark .seed.SingleChar #stage .node.comp .head {
-  color: rgb(191 127 255)
+  color: rgb(191 127 255);
 }
 
-::view-transition-old(*),
+::view-transition-old(*) {
+  /*animation-duration: 200ms !important;
+    transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;
+  height: auto;
+  right: 0;
+  left: auto;
+  transform-origin: right center;*/
+}
 ::view-transition-new(*) {
-  /*transition-easing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);*/
-  transition-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
-  transition-duration: 2s;
- 
-  /*height: auto;
+  transition: none;
+  transition: transform 800ms linear;
+  /*animation-duration: 200ms !important;
+    transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;
+  height: auto;
   right: 0;
   left: auto;
   transform-origin: right center;*/
 }
 
-::view-transition-old(.node.atom) {
-  transition-duration: 2s;
+::view-transition-new(*),
+::view-transition-old(*),
+::view-transition-group-pair(*),
+::view-transition-image-pair(*),
+::view-transition-group(*) {
+  transition: transform 800ms linear;
 }
 
-::view-transition-new(.node.atom) {
-  transition-duration: 2s;
+::view-transition-old(selected),
+::view-transition-new(selected) {
+  /*transition: none;
+  transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;*/
+  /*animation-duration: 200ms !important;
+    transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;
+  height: auto;
+  right: 0;
+  left: auto;
+  transform-origin: right center;*/
+}
+.selected {
+  /*view-transition-name: selected !important;*/
+}
+
+/* Animation keyframes */
+@keyframes popIn {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

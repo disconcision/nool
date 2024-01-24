@@ -43,17 +43,6 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
 };
 
 const ExpViewGo: Component<expviewprops> = (props) => {
-  const atom_flip = (
-    animate: boolean,
-    mask: Pat.Binding[],
-    id: number
-  ): Record<string, string> =>
-    animate ? { "data-flip-key": `flip-${id}` } : {};
-
-  //&& mask.some(({ ids, t }) => t === "Val" &&ids[1] === id)
-  const comp_flip = (animate: boolean, mask: Pat.Binding[], id: number) =>
-    animate ? { "data-flip-key-comp": `flip-${id}` } : {};
-
   switch (props.node.t) {
     case "Atom":
       return (
@@ -64,7 +53,6 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               id={`node-${props.node.id}`}
               class={`atom ${props.node.sym} ` + common_clss(props)}
               onpointerdown={setSelect(props)}
-              {...atom_flip(props.animate, props.mask, props.node.id)}
             >
               {Names.get(props.symbols, props.node.sym)}
             </div>
@@ -73,7 +61,6 @@ const ExpViewGo: Component<expviewprops> = (props) => {
           <div
             id={`node-${props.node.id}`}
             class="head"
-            {...atom_flip(props.animate, props.mask, props.node.id)}
           >
             {Names.get(props.symbols, props.node.sym)}
           </div>
@@ -85,7 +72,6 @@ const ExpViewGo: Component<expviewprops> = (props) => {
           id={`node-${props.node.id}`}
           class={`comp ` + common_clss(props)}
           onpointerdown={setSelect(props)}
-          {...comp_flip(props.animate, props.mask, props.node.id)}
         >
           {
             <Index each={props.node.kids}>

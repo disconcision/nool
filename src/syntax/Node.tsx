@@ -38,13 +38,13 @@ export function map_ids<T>(f: (id: ID.t) => ID.t, e: t<T>): t<T> {
 }
 
 /* Zero out all ids */
-export function erase<T>(x: t<T>) {
-  map_ids((_) => 0, x);
+export function erase<T>(x: t<T>): t<T> {
+  return map_ids((_) => 0, x);
 }
 
 /* New ids for all nodes */
-export function freshen_ids<T>(x: t<T>) {
-  map_ids((_) => ID.mk(), x);
+export function freshen_all_ids<T>(x: t<T>): t<T> {
+  return map_ids((_) => ID.mk(), x);
 }
 
 /* Length of longest path from root to a leaf */

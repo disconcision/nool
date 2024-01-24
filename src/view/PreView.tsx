@@ -38,7 +38,9 @@ const do_transforms = (
       ([_, exp], i, arr) =>
         arr.findIndex(([_, exp2]) => Exp.equals(exp, exp2)) === i
     )
-    .map(([t, e]): [Transform, Exp.t] => [t, map_ids(() => Id.mk(), e)]); //unduplicate ids
+    // unduplicate ids to avoid messing with transition animations
+    .map(([t, e]): [Transform, Exp.t] => [t, map_ids(() => Id.mk(), e)]);
+
 const preview = (
   node: Exp.t,
   settings: Settings.t,

@@ -16,7 +16,7 @@ export type SetModel = SetStoreFunction<Model.t>;
 
 const App: Component = () => {
   const [model, setModel] = createStore({ ...Model.init });
-  Animate.vt_setup();
+  Animate.init();
   const inject = (a: Action.t) => {
     console.log(a);
     // if (in_transition && a.t === "setHover") {
