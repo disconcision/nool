@@ -462,7 +462,7 @@ code {
 .node-container.LinearInfix .node.selected > .node {
   outline: 2px dotted white;
   border-color: #0000 !important;
-  transform: scale(1.03);
+  /*transform: scale(1.03);*/
   box-shadow: 7px 7px 15px #008750aa !important;
 }
 
@@ -488,13 +488,18 @@ code {
 
 .seed.SingleChar #stage .node.comp,
 .seed.SingleChar #noolbox .node.comp {
-  background: none;
   border-left: 0.3px solid rgb(255 0 220 / 53%);
   border-right: 0.3px solid rgb(119 198 168);
   border-top: none;
   border-bottom: none;
   border-radius: 0.8em;
 }
+/* HACKY */
+.seed.SingleChar #stage .node.comp:not(.mask),
+.seed.SingleChar #noolbox .node.comp:not(.mask) {
+  background: none;
+}
+
 .seed.SingleChar .node.atom,
 .seed.SingleChar .head {
   font-family: "Roboto";
@@ -891,7 +896,8 @@ body:has(#main.Dark) {
 .Dark .seed #noolbox .node.atom {
   color: #7b88c8;
 }
-.Dark #stage .node.comp {
+/* HACKY: mask */
+.Dark #stage .node.comp:not(.mask) {
   background: linear-gradient(
     139deg,
     #00fffc6b,
@@ -919,10 +925,6 @@ body:has(#main.Dark) {
   /*
   outline: 1.4px solid #00ffb6;*/
 }
-.Dark .node.mask.atom,
-.Dark .node.mask .atom {
-  color: black;
-}
 .Dark .logo {
   mix-blend-mode: saturation;
 }
@@ -949,7 +951,10 @@ body:has(#main.Dark) {
 .Dark .seed.SingleChar #stage .node.comp .head {
   color: rgb(191 127 255);
 }
-
+.Dark .seed.SingleChar .node.mask.atom,
+.Dark .seed.SingleChar .node.mask .atom {
+  color: black !important;
+}
 
 ::view-transition-old(selected),
 ::view-transition-new(selected) {
@@ -973,6 +978,7 @@ body:has(#main.Dark) {
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
+
 ::view-transition-new(*),
 ::view-transition-old(*) {
   /*animation-name: none;*/
