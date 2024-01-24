@@ -43,6 +43,15 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
 };
 
 const ExpViewGo: Component<expviewprops> = (props) => {
+  const eff = (props: expviewprops): boolean => {
+    /* search mask for a binding whose first id is this node's id.
+    then check if it's a val binding. if so return true. else false. */
+    const binding = props.mask.find(
+      ({ ids: [_, id_stage], t }) => id_stage == props.node.id && t == "Val"
+    );
+    // if binding is undefind rerturn false. else return true.
+    return binding?.t == "Val" ? false : true;
+  };
   switch (props.node.t) {
     case "Atom":
       return (
@@ -52,16 +61,14 @@ const ExpViewGo: Component<expviewprops> = (props) => {
             <div
               id={`node-${props.node.id}`}
               class={`atom ${props.node.sym} ` + common_clss(props)}
+              classList={{ animate: props.animate }}
               onpointerdown={setSelect(props)}
             >
               {Names.get(props.symbols, props.node.sym)}
             </div>
           }
         >
-          <div
-            id={`node-${props.node.id}`}
-            class="head"
-          >
+          <div id={`node-${props.node.id}`} class="head" classList={{ animate: props.animate }}>
             {Names.get(props.symbols, props.node.sym)}
           </div>
         </Show>
@@ -71,6 +78,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
         <div
           id={`node-${props.node.id}`}
           class={`comp ` + common_clss(props)}
+          classList={{ animate: props.animate }}
           onpointerdown={setSelect(props)}
         >
           {
@@ -80,7 +88,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                   info={props.info}
                   selection={props.selection}
                   node={kid()}
-                  animate={props.animate}
+                  animate={props.animate && eff(props)}
                   is_head={i === 0}
                   inject={props.inject}
                   mask={props.mask}

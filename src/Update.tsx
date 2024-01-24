@@ -64,7 +64,7 @@ const update_stage = (model: Model.t, result: Pat.TransformResult): result =>
   /* Freshening as-is is a hack to deal with e.g. distributivity which copies nodes */
   result == "NoMatch"
     ? "NoChange"
-    : { ...model, stage: Stage.put_exp(model.stage, result) };
+    : { ...model, stage: Stage.put_exp(model.stage, freshen(result)) };
 
 type ModelField =
   | { t: "stage"; path: Path.t; updater: any }
