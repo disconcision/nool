@@ -10,9 +10,11 @@ export const init = ():void => {
   var style = document.createElement("style");
   for (let id = 0; id < 100; id++) {
     style.innerHTML += `#node-${id}.animate { view-transition-name: flip-node-${id}; }\n`;
+    style.innerHTML += `#main.setSelect #sym-${id}, #main.moveStage #sym-${id} { view-transition-name: flip-sym-${id}; }\n`;
     //style.innerHTML += `#pat-${id} { view-transition-name: flip-pat-${id}; }`;
     //style.innerHTML += blah(`flip-node-${id}`);
     //style.innerHTML += blah(`flip-pat-${id}`);
   }
+  //style.innerHTML += `#node.selected { view-transition-name: flip-node-selected; }\n`;
   document.getElementsByTagName("head")[0].appendChild(style);
 };

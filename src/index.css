@@ -237,7 +237,7 @@ code {
   /*box-shadow: none*/
   color: white;
   width: fit-content;
-  border-radius: 0.5em 1.3em 0.9em 0.9em;
+  border-radius: 1em;/*0.5em  1.3em 0.9em 0.9em;*/
   padding: 0 0.25em;
   justify-content: center;
 }
@@ -956,8 +956,8 @@ body:has(#main.Dark) {
   color: black !important;
 }
 
-::view-transition-old(selected),
-::view-transition-new(selected) {
+::view-transition-old(flip-node-selected),
+::view-transition-new(flip-node-selected) {
   /*transition: none;
   transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;*/
   /*animation-duration: 200ms !important;
@@ -966,11 +966,27 @@ body:has(#main.Dark) {
   right: 0;
   left: auto;
   transform-origin: right center;*/
+
 }
 .selected {
   /* needs some tlc. dont want internals to show during transition
   */
-  /*view-transition-name: selected !important;*/
+  view-transition-name: flip-node-selected !important;
+
+}
+
+
+::view-transition-group(flip-node-selected) {
+  view-transition-name: selected ;
+  animation-timing-function: easeInBack;/*easeInBack; easeOutBounce;*/
+  animation-duration: 0.2s;
+
+}
+::view-transition-old(flip-node-selected){
+  
+}
+::view-transition-new(flip-node-selected){
+ 
 }
 
 ::view-transition-group(*) {
@@ -1001,4 +1017,12 @@ body:has(#main.Dark) {
 
 ::view-transition {
   /*pointer-events: none;*/
+}
+
+ .selected-transition * {
+  visibility: hidden;
+} 
+.selected-transition {
+  background-color: red !important;
+  outline: 0.2em solid red;
 }

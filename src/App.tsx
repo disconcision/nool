@@ -8,6 +8,7 @@ import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Animate from "./Animate";
+import { id_at } from "./syntax/Node";
 //import { Toolbar } from "./view/ToolsView";
 
 export type SetModel = SetStoreFunction<Model.t>;
@@ -25,10 +26,38 @@ const App: Component = () => {
     // }
     if (a.t === "setHover" || !document.startViewTransition) {
       console.log("sethover dont transition:" + a.t);
-      go(model, setModel, a)
+      go(model, setModel, a);
       return;
     }
-    document.startViewTransition(()=>go(model, setModel, a));
+    const guy2 = document.getElementById("main");
+    guy2 ? guy2.classList.add(a.t) : console.log("no guy r add");
+    // if (a.t === "setSelect") {
+    //   if (model.stage.selection != "unselected") {
+    //     const id = id_at(model.stage.selection, model.stage.exp);
+    //     if (id) {
+    //       const guy2 = document.getElementById("sym-" + id.toString());
+    //       if (guy2) {
+    //         guy2.classList.add("sgarg");
+    //       } else {
+    //         console.log("no guy2");
+    //       }
+    //     }
+    //   }
+    //   const id = id_at(a.path, model.stage.exp);
+    //   if (id) {
+    //     const guy2 = document.getElementById("sym-" + id.toString());
+    //     if (guy2) {
+    //       guy2.classList.add("sgarg");
+    //     } else {
+    //       console.log("no guy2");
+    //     }
+    //   }
+    // }
+    let v = document.startViewTransition(() => go(model, setModel, a));
+
+    v.finished.then(() =>
+      guy2 ? guy2.classList.remove(a.t) : console.log("no guy 2 rm")
+    );
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);

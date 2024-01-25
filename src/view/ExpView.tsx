@@ -64,11 +64,15 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               classList={{ animate: props.animate }}
               onpointerdown={setSelect(props)}
             >
-              {Names.get(props.symbols, props.node.sym)}
+              <div id={`sym-${props.node.id}`}>{Names.get(props.symbols, props.node.sym)}</div>
             </div>
           }
         >
-          <div id={`node-${props.node.id}`} class="head" classList={{ animate: props.animate }}>
+          <div
+            id={`node-${props.node.id}`}
+            class="head"
+            classList={{ animate: props.animate }}
+          >
             {Names.get(props.symbols, props.node.sym)}
           </div>
         </Show>
