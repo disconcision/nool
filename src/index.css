@@ -438,13 +438,13 @@ code {
   box-shadow: none;
 }
 
-.node-container.LinearPrefix .node.atom:not(.selected),
+
+
 .node-container.LinearInfix .node.atom:not(.selected) {
   box-shadow: #0000;
 }
 
-.node-container.LinearPrefix .node.selected:has(> *),
-.node-container.LinearPrefix .node.selected:has(> *):hover,
+
 .node-container.LinearInfix .node.selected:has(> *),
 .node-container.LinearInfix .node.selected:has(> *):hover {
   border: 0;
@@ -452,13 +452,13 @@ code {
   box-shadow: 0px 0px 0.6em #ffffff;
   /* mix-blend-mode: color-dodge; */
   /* outline: 1px solid #258b86; */
-  background: none !important;
+  background: none;
   outline: 0 !important;
   box-shadow: none !important;
   border-color: #0000 !important;
 }
 
-.node-container.LinearPrefix .node.selected > .node,
+
 .node-container.LinearInfix .node.selected > .node {
   outline: 2px dotted white;
   border-color: #0000 !important;
