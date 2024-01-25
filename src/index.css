@@ -921,9 +921,12 @@ body:has(#main.Dark) {
 }
 .Dark .node.selected,
 .Dark .node.selected:hover {
-  box-shadow: none;
-  /*
+   /*box-shadow: none;
   outline: 1.4px solid #00ffb6;*/
+}
+.Dark .node.selected:has(.mask) {
+  box-shadow: none;
+  outline: none;
 }
 .Dark .logo {
   mix-blend-mode: saturation;
