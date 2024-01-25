@@ -974,12 +974,31 @@ body:has(#main.Dark) {
 }
 
 ::view-transition-group(*) {
+  /*pointer-events: none;*/
   animation-duration: 0.25s;
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
 
-::view-transition-new(*),
-::view-transition-old(*) {
+::view-transition-new(*){
+  height: 100%;
+  width: 100%;
+  /*animation-name: none !important;*/
+  /*animation-name: none !important;
+  animation-fill-mode: forwards;
+  opacity: 0;*/
   /*animation-name: none;*/
+}
+::view-transition-old(*) {
+  height: 100%;
+  width: 100%;
+  /*animation-name: none !important;*/
+  /*animation-name: none !important;*/
+
+  /*pointer-events: none;*/
+  /*animation-name: none;*/
+}
+
+::view-transition {
+  /*pointer-events: none;*/
 }

@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { go, blah } from "./Update";
+import { go } from "./Update";
 import * as Model from "./Model";
 import * as Action from "./Action";
 import * as Keyboard from "./Keyboard";
@@ -23,12 +23,12 @@ const App: Component = () => {
     //   console.log("blocked:" + a.t);
     //   return;
     // }
-    if (a.t === "setHover" || ~document.startViewTransition) {
+    if (a.t === "setHover" || !document.startViewTransition) {
       console.log("sethover dont transition:" + a.t);
       go(model, setModel, a)
       return;
     }
-    document.startViewTransition(async ()=>go(model, setModel, a));
+    document.startViewTransition(()=>go(model, setModel, a));
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
