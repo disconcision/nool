@@ -26,7 +26,7 @@ export type Action =
 export const init: t = {
   sound: true,
   motion: "Half",
-  preview: true,
+  preview: false,
   projection: "TreeLeft",
   symbols: "Emoji",
   theme: "Light",

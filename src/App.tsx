@@ -68,9 +68,11 @@ const App: Component = () => {
   //   in_transition = false;
   // });
   return (
-    <div id="main" class={model.settings.theme}>
-      <div class="logo" />
-      {/*Toolbar({ model, inject })*/}
+    <div id="main" class={model.settings.theme}
+    classList={{ selected: model.stage.selection === "unselected"}}
+    >
+      {/* <div class="logo" /> */}
+      {/* Toolbar({ model, inject }) */}
       {Seed({ model, inject })}
       {SettingsView({ model, inject })}
     </div>

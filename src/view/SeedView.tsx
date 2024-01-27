@@ -22,7 +22,8 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
   props
 ) => (
   <div
-    class={`seed ${props.model.settings.projection} ${props.model.settings.symbols}`}
+  id="seed"
+    class={`${props.model.settings.projection} ${props.model.settings.symbols}`}
     classList={{
       notransition: props.model.settings.motion === "Off",
       noanimation: props.model.settings.motion === "Off",
@@ -34,6 +35,7 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
     }}
   >
     {ToolsView({ model: props.model, inject: props.inject })}
+    <div class="icon">♾️</div>
     {StageView({ model: props.model, inject: props.inject })}
     {props.model.settings.preview
       ? AdjacentPossible({

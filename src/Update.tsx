@@ -42,6 +42,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
     case "setSelect":
       Sound.select(action.path.length, pitch, volume);
       break;
+  case "unsetSelections":
+    Sound.unselect("D2", 0.6);
+    break;
     case "moveTool":
     case "moveStage":
       Sound.select(model.stage.selection.length, pitch, volume);
