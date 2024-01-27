@@ -207,7 +207,7 @@ code {
 #main {
   position: relative;
   transition: border-radius 0.5s ease-in-out;
-  padding: 1em;
+  /* padding: 1em; */
   /* main scale factor: */
   font-size: 3em;
   border-radius: 0em;
@@ -928,7 +928,7 @@ v .transform-view .label {
 }
 
 #seed {
-  height: calc(100vh - 2em); /* minus padding on main */
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1059,6 +1059,12 @@ body:has(#main.Dark) {
   transform-origin: right center;*/
 }
 .selected {
+  /* needs some tlc. dont want internals to show during transition
+  */
+  view-transition-name: flip-node-selected;
+}
+#main.setSelect .selected,
+#main.unsetSelections .selected {
   /* needs some tlc. dont want internals to show during transition
   */
   view-transition-name: flip-node-selected !important;
