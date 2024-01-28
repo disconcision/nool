@@ -31,7 +31,7 @@ const PatView: Component<{
     case "Atom": {
       return (
         <div
-        id={`pat-${props.p.id}`}
+          id={`pat-${props.p.id}`}
           class={`pat ${props.p.sym.name} ${
             props.is_head ? "head pat" : "node atom pat"
           }`}
@@ -83,11 +83,6 @@ const result_matches_cls = (props: { model: Model; t: Transform }) => {
     : "match";
 };
 
-/* arrows:
-   → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
-   ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
-   ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
-  ⇨ ➥ ➫ ➬ */
 const TransformView: Component<{
   idx: number;
   t: Transform;
@@ -156,20 +151,41 @@ const TransformView: Component<{
         onmouseenter={setHover(source_matches_cls, {
           t: "TransformSource",
           pat: props.t.source,
+          idx: props.idx,
         })}
         onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNode}
       >
         <PatView
-          p={map_ids(id=>id+100000+100*props.idx, props.t.source)}
+          p={map_ids((id) => id + 100000 + 100 * props.idx, props.t.source)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
       </div>
       <div class="transform-arrow">
-        <Switch fallback="⇋">
-          <Match when={props.model.hover.t === "TransformSource"}>→</Match>
-          <Match when={props.model.hover.t === "TransformResult"}>←</Match>
+        <Switch fallback="🟰">
+          {/*  arrows:
+                ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬ 
+                → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
+                ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
+                ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
+                */}
+          <Match
+            when={
+              props.model.hover.t === "TransformSource" &&
+              props.model.hover.idx === props.idx
+            }
+          >
+            →
+          </Match>
+          <Match
+            when={
+              props.model.hover.t === "TransformResult" &&
+              props.model.hover.idx === props.idx
+            }
+          >
+            ←
+          </Match>
         </Switch>
       </div>
       <div
@@ -181,12 +197,13 @@ const TransformView: Component<{
         onmouseenter={setHover(result_matches_cls, {
           t: "TransformResult",
           pat: props.t.result,
+          idx: props.idx,
         })}
         onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNodeReverse}
       >
         <PatView
-          p={map_ids(id=>id+200000 + 100*props.idx, props.t.result)}
+          p={map_ids((id) => id + 200000 + 100 * props.idx, props.t.result)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
