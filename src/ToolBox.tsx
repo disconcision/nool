@@ -6,11 +6,15 @@ import * as Action from "./Action";
 export type t = {
   selector: Path.t;
   transforms: Transform.t[];
+  offset: number;
+  size: number;
 };
 
 export const init: t = {
   selector: [],
   transforms: Tools.init,
+  offset: 0,
+  size: 5,
 };
 
 export const update_selector = (tools: t, f: (_: Path.t) => Path.t): t => ({
@@ -19,7 +23,7 @@ export const update_selector = (tools: t, f: (_: Path.t) => Path.t): t => ({
 });
 
 export const init_selector = (selector: number[]): number[] =>
-  selector.length < 2 ? [0, 0] : selector;
+  selector.length < 2 ? [0, 1] : selector;
 
 const move_up =
   (len: number) =>

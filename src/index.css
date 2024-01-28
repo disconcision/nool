@@ -8,31 +8,35 @@
   transform: none !important;
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
+  }
+
+}
+
 @keyframes jello {
   0% {
     transform: scale3d(1, 1, 1);
   }
-
   30% {
     transform: scale3d(1.25, 0.75, 1);
   }
-
   40% {
     transform: scale3d(0.75, 1.25, 1);
   }
-
   50% {
     transform: scale3d(1.15, 0.85, 1);
   }
-
   65% {
     transform: scale3d(0.95, 1.05, 1);
   }
-
   75% {
     transform: scale3d(1.05, 0.95, 1);
   }
-
   100% {
     transform: scale3d(1, 1, 1);
   }
@@ -581,7 +585,6 @@ code {
   display: grid;
   grid-template-columns: 1fr 0.7em 1fr;
   user-select: none;
-  cursor: pointer;
   /* background-color: #aee7e866; */
   border-radius: 0 0.9em 0.9em 0em;
   /* border-top: 0.04em solid #5bf296; */
@@ -589,6 +592,9 @@ code {
   /* border-top: 0.02em solid #f8a7ff66; */
   width: fit-content;
   padding: 0.3em 0.4em 0.3em 0;
+}
+.TreeLeft #noolbox {
+  height: 9.2em;
 }
 /*#noolbox .result .node.comp,
 #noolbox .source .node.comp {
@@ -616,7 +622,6 @@ code {
   text-transform: uppercase;
   font-weight: 900;
   user-select: none;
-  cursor: pointer;
   color: #95dde0;
   border-radius: 2.1em;
 }
@@ -750,7 +755,6 @@ v .transform-view .label {
 .match:hover + .transform-arrow,
 .transform-arrow:has(+ .match:hover) {
   color: white;
-
 }
 .source.match:hover + div + .result .atom {
   color: black;
@@ -894,10 +898,9 @@ v .transform-view .label {
 }
 
 #settings-panel .icon {
-  opacity: 80%;
+  opacity: 90%;
   width: 0.5em;
   padding: 0.15em;
-  mix-blend-mode: normal;
   filter: invert(1);
   position: fixed;
   scale: 0.8;
@@ -957,17 +960,21 @@ v .transform-view .label {
 }*/
 
 #seed .icon {
-  padding: 0.5em 0.5em 0.5em 0.15em;
+  padding: 0.5em 0.5em 0.5em 0.5em;
   filter: sepia(1) hue-rotate(210deg) saturate(4) brightness(1);
   opacity: 0.4;
-  cursor: progress;
+  cursor: default;
+  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+}
+#seed .icon:hover {
+  
 }
 #seed .icon:active {
+  /* animation: spin 0.4s infinite linear; */
   filter: brightness(10);
   opacity: 1;
-  animation-name: wobble-seed;
-  animation-duration: 0.25s;
-  animation-iteration-count: infinite;
+  transform: rotate(359deg);
+  
 }
 
 /* dark mode */

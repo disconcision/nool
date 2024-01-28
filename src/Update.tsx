@@ -14,6 +14,7 @@ import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
 import * as Animate from "./Animate";
+import * as Util from "./Util";
 
 export type result = Model.t | "NoChange";
 
@@ -42,9 +43,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
     case "setSelect":
       Sound.select(action.path.length, pitch, volume);
       break;
-  case "unsetSelections":
-    Sound.unselect("D2", 0.6);
-    break;
+    case "unsetSelections":
+      Sound.unselect("D2", 0.6);
+      break;
     case "moveTool":
     case "moveStage":
       Sound.select(model.stage.selection.length, pitch, volume);
@@ -129,6 +130,7 @@ export const update = (model: Model.t, action: Action.t): result => {
       const hover: Hover.t = {
         t: "TransformSource",
         pat: ToolBox.get_pat(tools),
+        idx: 0,
       };
       return { ...model, tools, hover: hover };
     case "unsetSelections":
@@ -148,8 +150,16 @@ export const update = (model: Model.t, action: Action.t): result => {
         tools: ToolBox.flip_transform(model.tools, action.idx),
         hover:
           action.target === "Source"
-            ? { t: "TransformSource", pat: action.transform.result }
-            : { t: "TransformResult", pat: action.transform.source },
+            ? {
+                t: "TransformSource",
+                pat: action.transform.result,
+                idx: action.idx,
+              }
+            : {
+                t: "TransformResult",
+                pat: action.transform.source,
+                idx: action.idx,
+              },
       };
       return update_stage(model3, result3);
     case "applyTransform":
@@ -182,6 +192,34 @@ export const update = (model: Model.t, action: Action.t): result => {
       };
     case "Noop":
       return "NoChange";
+    case "wheelTools":
+      console.log("wheelTools:" + action.offset + ":" + model.tools.offset);
+      return {
+        ...model,
+        tools: {
+          ...model.tools,
+          offset: Util.mod(
+            model.tools.offset + action.offset,
+            model.tools.transforms.length
+          ),
+        },
+      };
+    case "wheelNumTools":
+      const clamp = (x:number, a:number, b:number) => Math.max( a, Math.min(x, b) );
+      console.log("wheelNumTools:" + action.offset + ":" + model.tools.size);
+      return {
+        ...model,
+        tools: {
+          ...model.tools,
+          size: clamp(
+            model.tools.size + action.offset,
+            1,
+            model.tools.transforms.length,
+            
+  
+          ),
+        },
+      };
   }
 };
 
@@ -210,14 +248,14 @@ export const go = (
    * retain their duplicate ids for animations, but then we need to freshen
    * them so that they don't get confused with the original subtree. So we
    * freshen them after a delay. THIS WILL CAUSE PROBLEMS!!!! */
-  setTimeout(() => {
+  /*setTimeout(() => {
     const freshened = freshen(model.stage.exp);
     if (!Exp.equals_id(model.stage.exp, freshened))
       setModel({
         ...model,
         stage: Stage.put_exp(model.stage, freshened),
       });
-  }, 250);
+  }, 250);*/
   /* Catching because problem on build server */
   try {
     //Animate.flip(model, action);

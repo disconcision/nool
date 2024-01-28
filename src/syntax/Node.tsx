@@ -172,6 +172,5 @@ export function freshen_traverse<T>(
  * When an id is seen twice, replace it with a new id.
  */
 export function freshen<T>(node: t<T>): t<T> {
-  console.log("freshening");
   return freshen_traverse(node, new Set(), (_) => ID.mk());
 }

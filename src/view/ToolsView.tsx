@@ -11,6 +11,7 @@ import * as Names from "../Names";
 import * as Settings from "../Settings";
 import * as Sound from "../Sound";
 import { map_ids } from "../syntax/Node";
+import * as Util from "../Util";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -140,7 +141,11 @@ const TransformView: Component<{
   const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
   return (
-    <div class={`transform-view`} onpointerdown={do_nothing}>
+    <div
+      id={`transform-${props.idx}`}
+      class={`transform-view`}
+      onpointerdown={do_nothing}
+    >
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
@@ -212,16 +217,66 @@ const TransformView: Component<{
   );
 };
 
+
+const select_transforms = (tools: ToolBox.t): [number, Transform][] => {
+  /* want to take tools.size tools starting at tools.offset (index into tools)
+    and treat the list as a ring buffer */
+  const len = tools.transforms.length;
+  const offset = tools.offset % len;
+  const size = tools.size;
+  const idxs = [...Array(size).keys()].map((i) => (i + offset) % len);
+  return idxs.map((i) => [i, tools.transforms[i]]);
+};
+
+function throttle(
+  func: (...args: any[]) => void,
+  limit: number
+): (...args: any[]) => void {
+  let inThrottle: boolean;
+  return function (this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
 export const ToolsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
   return (
-    <div id="noolbox">
-      <For each={props.model.tools.transforms}>
-        {(t: Transform, idx) =>
+    <div
+      id="noolbox"
+      onWheel={(e) => {
+        //console.log("wheel deltay:", e.deltaY);
+        if (Math.abs(e.deltaY) < 1.5) return;
+        if (e.shiftKey) {
+          throttle(() => {
+            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
+            //console.log("SHIFT GYOOOO", offset);
+            props.inject({
+              t: "wheelNumTools",
+              offset,
+            });
+          }, 1000)();
+        } else {
+          throttle(() => {
+            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
+            //console.log("GYOOOO", offset);
+            props.inject({
+              t: "wheelTools",
+              offset: offset,
+            });
+          }, 1000)();
+        }
+      }}
+    >
+      <For each={select_transforms(props.model.tools)}>
+        {([idx, t]) =>
           TransformView({
-            idx: idx(),
+            idx,
             t,
             model: props.model,
             inject: props.inject,
