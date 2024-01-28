@@ -15,7 +15,6 @@
   100% {
     transform: rotate(359deg);
   }
-
 }
 
 @keyframes jello {
@@ -966,16 +965,55 @@ v .transform-view .label {
   cursor: default;
   transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
-#seed .icon:hover {
-  
+
+/* Wrapper to hold space */
+#seed .icon2 {
+  width: calc(1.9766em * 0.5);
+  height: calc(1em * 0.5);
+  position: relative;
+  margin: 0.5em;
+  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
+    margin 0.1s linear;
 }
-#seed .icon:active {
+
+/* Actual image container */
+#seed .icon2 .inner {
+  filter: invert(1) brightness(0.5) sepia(1) hue-rotate(200deg) saturate(2);
+  opacity: 0.8;
+  width: 100%;
+  height: 100%;
+  background-image: url("/src/assets/nool-seed-infinity-only.svg");
+  /* background-size: cover; */
+  background-size: 100% 100%;
+  transition: all 0.3s ease;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Image change on hover */
+#seed .icon2:active .inner {
+  background-image: url("/src/assets/nool-seed.svg");
+  width: calc(4.1232em * 0.5);
+}
+#seed .icon2:active {
   /* animation: spin 0.4s infinite linear; */
-  filter: brightness(10);
+  margin: 1em;
   opacity: 1;
-  transform: rotate(359deg);
-  
+  transform: rotate(-359deg);
 }
+#seed .icon2:active .inner {
+  /* animation: spin 0.4s infinite linear; */
+  /* filter: invert(1) drop-shadow(0px 0px 8px rgb(0, 93, 52)); */
+}
+/*#seed .icon2:hover .inner {
+mix-blend-mode: plus-lighter;
+transition: all;
+transition-duration: 2s;
+animation: flare;
+animation-duration: 2s;
+animation-timing-function: linear;
+}*/
 
 /* dark mode */
 
