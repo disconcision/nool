@@ -1,25 +1,37 @@
-## Nool
+## ∩∞ᒐ?
 
-is `Nool`.
+is a syntactic fidget spinner
 
-## Is Nool?
+## is n∞l?
 
-is: https://andrewblinn.com/nool/
+n∞l is: https://andrewblinn.com/nool/
 
-## Nool Noob?
+(needs view transitions api (currently only in chrome) for animations to play)
+
+## n∞l n∞b?
 1. `do clicks`.
 
-## Noolnatomy
-`| nool      |  settings |`<br>
-`| tools | stage | peeks |`
+## n∞lnatomy
+`_______________________`<br>
+`| s                 s |`<br>
+`|  _____       _____  |`<br>
+`| |     |     |     | |`<br>
+`| noolbox  ∞  |stage| |`<br>
+`| |_____|     |_____| |`<br>
+`|                     |`<br>
+`|_s_________________s_|`<br>
 
-## Experimental Features
+where s = settings
+
+## Keyboard
 
 ### `↑` `↓` `→` `←` (stage hand)
 ### `w` `a` `s` `d` (tool hand)
 ### `SPACE` (sing) `ESCAPE` (die)
 
-## Make Nool
+(keyboard controls aren't a priority. hand movements directions aren't yet localized per projection, so it might be hard to move in non-default layouts)
+
+## make n∞l
 
 ### `nool` ⊃ `typescript`, `solid.js`
 
