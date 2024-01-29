@@ -85,4 +85,13 @@ export const select = (depth: number, pitch:number, volume:number) => {
   synth.triggerAttackRelease([number_to_letter(depth) + pitch], "32n");
 };
 
+export const unselect = (note: string, volume:number) => {
+  //const chorus = new Tone.Chorus(4, 2.5, 0.5).toDestination().start();
+  //synth.connect(chorus);
+  //const cheby = new Tone.Chebyshev(2).toDestination();
+  //synth.connect(cheby);
+  synth.volume.value = volume;
+  synth.triggerAttackRelease([note], "8n");
+};
+
 export const noop = () => synth.triggerAttackRelease("F1", "32n");

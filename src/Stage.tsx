@@ -96,7 +96,8 @@ export const move_ = (
   stage: Stage,
   direction: "up" | "down" | "left" | "right"
 ): Path.t => {
-  const selection = stage.selection === "unselected" ? [] : stage.selection;
+  if (stage.selection === "unselected") return [];
+  const selection = stage.selection;
   switch (direction) {
     case "up":
       return move_up(stage.exp, selection);

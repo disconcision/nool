@@ -10,6 +10,8 @@ import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
 import * as Sound from "../Sound";
+import { map_ids } from "../syntax/Node";
+import * as Util from "../Util";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -30,6 +32,7 @@ const PatView: Component<{
     case "Atom": {
       return (
         <div
+          id={`pat-${props.p.id}`}
           class={`pat ${props.p.sym.name} ${
             props.is_head ? "head pat" : "node atom pat"
           }`}
@@ -40,7 +43,7 @@ const PatView: Component<{
     }
     case "Comp":
       return (
-        <div class="node comp pat">
+        <div id={`pat-${props.p.id}`} class="node comp pat">
           <For each={props.p.kids}>
             {(kid, i) =>
               PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
@@ -81,11 +84,6 @@ const result_matches_cls = (props: { model: Model; t: Transform }) => {
     : "match";
 };
 
-/* arrows:
-   → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
-   ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
-   ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
-  ⇨ ➥ ➫ ➬ */
 const TransformView: Component<{
   idx: number;
   t: Transform;
@@ -143,7 +141,11 @@ const TransformView: Component<{
   const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
   return (
-    <div class={`transform-view`} onpointerdown={do_nothing}>
+    <div
+      id={`transform-${props.idx}`}
+      class={`transform-view`}
+      onpointerdown={do_nothing}
+    >
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
@@ -154,23 +156,41 @@ const TransformView: Component<{
         onmouseenter={setHover(source_matches_cls, {
           t: "TransformSource",
           pat: props.t.source,
+          idx: props.idx,
         })}
         onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNode}
-        /*tool-flip={`flip-${
-          props.idx.toString() + (props.t.reversed ? "aa" : "bb")
-        }`}*/
       >
         <PatView
-          p={props.t.source}
+          p={map_ids((id) => id + 100000 + 100 * props.idx, props.t.source)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
       </div>
       <div class="transform-arrow">
-        <Switch fallback="⇋">
-          <Match when={props.model.hover.t === "TransformSource"}>→</Match>
-          <Match when={props.model.hover.t === "TransformResult"}>←</Match>
+        <Switch fallback="🟰">
+          {/*  arrows:
+                ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬ 
+                → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
+                ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
+                ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
+                */}
+          <Match
+            when={
+              props.model.hover.t === "TransformSource" &&
+              props.model.hover.idx === props.idx
+            }
+          >
+            →
+          </Match>
+          <Match
+            when={
+              props.model.hover.t === "TransformResult" &&
+              props.model.hover.idx === props.idx
+            }
+          >
+            ←
+          </Match>
         </Switch>
       </div>
       <div
@@ -182,15 +202,13 @@ const TransformView: Component<{
         onmouseenter={setHover(result_matches_cls, {
           t: "TransformResult",
           pat: props.t.result,
+          idx: props.idx,
         })}
         onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
         onpointerdown={transformNodeReverse}
-        /*tool-flip={`flip-${
-          props.idx.toString() + (props.t.reversed ? "bb" : "aa")
-        }`}*/
       >
         <PatView
-          p={props.t.result}
+          p={map_ids((id) => id + 200000 + 100 * props.idx, props.t.result)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
@@ -199,16 +217,66 @@ const TransformView: Component<{
   );
 };
 
+
+const select_transforms = (tools: ToolBox.t): [number, Transform][] => {
+  /* want to take tools.size tools starting at tools.offset (index into tools)
+    and treat the list as a ring buffer */
+  const len = tools.transforms.length;
+  const offset = tools.offset % len;
+  const size = tools.size;
+  const idxs = [...Array(size).keys()].map((i) => (i + offset) % len);
+  return idxs.map((i) => [i, tools.transforms[i]]);
+};
+
+function throttle(
+  func: (...args: any[]) => void,
+  limit: number
+): (...args: any[]) => void {
+  let inThrottle: boolean;
+  return function (this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
 export const ToolsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
   return (
-    <div id="noolbox">
-      <For each={props.model.tools.transforms}>
-        {(t: Transform, idx) =>
+    <div
+      id="noolbox"
+      onWheel={(e) => {
+        //console.log("wheel deltay:", e.deltaY);
+        if (Math.abs(e.deltaY) < 1.5) return;
+        if (e.shiftKey) {
+          throttle(() => {
+            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
+            //console.log("SHIFT GYOOOO", offset);
+            props.inject({
+              t: "wheelNumTools",
+              offset,
+            });
+          }, 1000)();
+        } else {
+          throttle(() => {
+            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
+            //console.log("GYOOOO", offset);
+            props.inject({
+              t: "wheelTools",
+              offset: offset,
+            });
+          }, 1000)();
+        }
+      }}
+    >
+      <For each={select_transforms(props.model.tools)}>
+        {([idx, t]) =>
           TransformView({
-            idx: idx(),
+            idx,
             t,
             model: props.model,
             inject: props.inject,

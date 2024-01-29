@@ -24,14 +24,27 @@ export function comp<T>(kids: t<T>[]): t<T> {
   return comp_id(kids, ID.mk());
 }
 
-/* Zero out all ids */
-export function erase<T>(e: t<T>): t<T> {
+/* Map over ids */
+export function map_ids<T>(f: (id: ID.t) => ID.t, e: t<T>): t<T> {
   switch (e.t) {
     case "Atom":
-      return atom_id(e.sym, 0);
+      return atom_id(e.sym, f(e.id));
     case "Comp":
-      return comp_id(e.kids.map(erase), 0);
+      return comp_id(
+        e.kids.map((x) => map_ids(f, x)),
+        f(e.id)
+      );
   }
+}
+
+/* Zero out all ids */
+export function erase<T>(x: t<T>): t<T> {
+  return map_ids((_) => 0, x);
+}
+
+/* New ids for all nodes */
+export function freshen_all_ids<T>(x: t<T>): t<T> {
+  return map_ids((_) => ID.mk(), x);
 }
 
 /* Length of longest path from root to a leaf */
@@ -159,6 +172,5 @@ export function freshen_traverse<T>(
  * When an id is seen twice, replace it with a new id.
  */
 export function freshen<T>(node: t<T>): t<T> {
-  console.log("freshening");
   return freshen_traverse(node, new Set(), (_) => ID.mk());
 }

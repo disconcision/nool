@@ -5,8 +5,8 @@ import * as Model from "./Model";
 export type t =
   | { t: "NoHover" }
   | { t: "StageNode"; id: ID.t }
-  | { t: "TransformSource"; pat: Pat.t }
-  | { t: "TransformResult"; pat: Pat.t };
+  | { t: "TransformSource"; pat: Pat.t; idx: number }
+  | { t: "TransformResult"; pat: Pat.t; idx: number };
 
 export const init: t = { t: "NoHover" };
 

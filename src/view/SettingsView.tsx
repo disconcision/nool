@@ -11,11 +11,15 @@ import preview_on from "../assets/icons/eye-open.svg";
 import preview_off from "../assets/icons/eye-closed.svg";
 import linear_prefix from "../assets/icons/noun-tree-1052096.svg";
 import linear_infix from "../assets/icons/noun-tree-1039106.svg";
-import tree_left from "../assets/icons/noun-tree-1052083.svg";
-import sun_off from "../assets/icons/noun-sun-5362089.svg";
-import sun_on from "../assets/icons/noun-sun-6322390.svg";
-import palette_1 from "../assets/icons/noun-paint-6329583.svg";
-import palette_2 from "../assets/icons/noun-palette-1918496.svg";
+import tree_top from "../assets/icons/noun-tree-1052083.svg";
+import tree_left from "../assets/icons/noun-1560867.svg"
+import sun_on from "../assets/icons/noun-sun-5362089.svg";
+import sun_off from "../assets/icons/noun-sun-6322390.svg";
+import palette_2 from "../assets/icons/noun-paint-6329583.svg";
+import palette_1 from "../assets/icons/noun-palette-1918496.svg";
+import alphabet from "../assets/icons/noun-alphabet-3591519.svg"
+import ded from "../assets/icons/noun-dead-5130035.svg"
+import prims from "../assets/icons/noun-geometry-4695832.svg"
 
 //TODO: qr code to disable id display
 
@@ -55,16 +59,16 @@ const projection_icon = (projection: Settings.projection): string => {
     case "TreeLeft":
       return tree_left;
     case "TreeTop":
-      return linear_prefix;
+      return tree_top;
   }
 };
 
 const symbols_icon = (symbols: Settings.symbols): string => {
   switch (symbols) {
     case "Emoji":
-      return palette_1;
+      return prims;
     case "SingleChar":
-      return palette_2;
+      return alphabet;
   }
 };
 
@@ -114,8 +118,9 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleSound")}
     {icon(props.inject, props.model.settings, "ToggleMotion")}
     {icon(props.inject, props.model.settings, "TogglePreview")}
+    {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
-    {icon(props.inject, props.model.settings, "ToggleDark")}
+    
   </div>
 );
