@@ -8,6 +8,7 @@ type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
 
 const zero = Pat.p_const("🌑");
 const one = Pat.p_const("🌘");
+const hole = Pat.p_const("❓");
 
 const var_a = Pat.p_var("♫");
 const var_b = Pat.p_var("♥");
@@ -28,6 +29,7 @@ const plus_x = bin_x("➕");
 const plus_y = bin_y("➕");
 const times_x = bin_x("✖️");
 const times_y = bin_y("✖️");
+const equals_x = bin_x("🟰");
 
 const commute_plus: Base = {
   source: plus_x(var_a, var_b),
@@ -83,6 +85,58 @@ const distribute_times_plus: Base = {
   sound: "shwoph",
 };
 
+const mk_mk = (result: Pat.t): Base => ({
+  source: hole,
+  result:result,
+  sound: "klohk",//TODO
+});
+const mk_wrap = (result: Pat.t): Base => ({
+  source: var_a,
+  result:result,
+  sound: "klohk",//TODO
+});
+const mk_one = mk_mk(one);
+const mk_zero = mk_mk(zero);
+const mk_var_a = mk_mk(var_a);
+const mk_var_b = mk_mk(var_b);
+const mk_var_c = mk_mk(var_c);
+const mk_plus = mk_mk(plus_x(hole, hole));
+const mk_times = mk_mk(times_x(hole, hole));
+const mk_equals = mk_mk(equals_x(hole, hole));
+const mk_neg = mk_mk(neg_x(hole));
+const mk_neg_wrap = mk_wrap(neg_x(var_a));
+const mk_times_l_wrap = mk_wrap(times_x(var_a, hole));
+const mk_times_r_wrap = mk_wrap(times_x(hole, var_a));
+const mk_plus_l_wrap = mk_wrap(plus_x(var_a, hole));
+const mk_plus_r_wrap = mk_wrap(plus_x(hole, var_a));
+const mk_equals_l_wrap = mk_wrap(equals_x(var_a, hole));
+const mk_equals_r_wrap = mk_wrap(equals_x(hole, var_a));
+const zap: Base = {
+  source: var_a,
+  result: hole,
+  sound: "klohk",
+};
+
+const makers = [
+  mk_one,
+  mk_zero,
+  mk_var_a,
+  mk_var_b,
+  mk_var_c,
+  mk_neg,
+  mk_plus,
+  mk_times,
+  mk_equals,
+  mk_neg_wrap,
+  mk_times_l_wrap,
+  mk_times_r_wrap,
+  mk_plus_l_wrap,
+  mk_plus_r_wrap,
+  mk_equals_l_wrap,
+  mk_equals_r_wrap,
+  //zap,
+];
+
 const mk = ({ source, result, sound }: Base): Transform.t => ({
   name: "",
   source,
@@ -103,3 +157,5 @@ export const init = [
   distribute_times_plus,
   double_neg,
 ].map(mk);
+
+export const _init =makers.map(mk);

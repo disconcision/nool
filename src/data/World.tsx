@@ -1,7 +1,7 @@
 import { Exp, atom, comp } from "../syntax/Exp";
 
 // ☁️ 🧩 🦷 🦠  🌸 🍄 🎲 🐝
-// ➕ ➖ ✖️ ➗ 🌕 🌘 0️⃣ 1️⃣
+// ➕ ➖ ✖️ ➗ 🟰 🌕 🌘 0️⃣ 1️⃣
 
 export const init: Exp = comp([
   atom("➕"),
@@ -16,6 +16,8 @@ export const init: Exp = comp([
     comp([atom("✖️"), atom("🎲"), atom("🐝")]),
   ]),
 ]);
+
+export const _init:Exp = atom("❓");
 
 export const moons: Exp = comp([
   atom("➕"),

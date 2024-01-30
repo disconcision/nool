@@ -31,7 +31,7 @@ export type Binding =
   | { t: "Val"; ids: IdBinding; val: NameBinding }
   | { t: "Ids"; ids: IdBinding };
 
-type MatchResult = Binding[] | "NoMatch";
+export type MatchResult = Binding[] | "NoMatch";
 
 export type TransformResult = Exp.t | "NoMatch";
 

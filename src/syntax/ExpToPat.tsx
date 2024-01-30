@@ -248,7 +248,7 @@ export const convert = (e: Exp): res => {
     e.t == "Comp" &&
     e.kids.length == 3 &&
     e.kids[0].t == "Atom" &&
-    e.kids[0].sym == "="
+    e.kids[0].sym == "🟰"
   )
     return convert_inner(e.kids[1], e.kids[2]);
   return "NotTool";

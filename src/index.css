@@ -566,7 +566,7 @@ code {
   -webkit-text-stroke-color: black;
 }
 
-#seed.SingleChar .no-match .node.comp {
+#seed.SingleChar .NoMatch .node.comp {
   box-shadow: none;
 }
 
@@ -855,17 +855,17 @@ v .transform-view .label {
   flex-direction: row;
 }
 
-.no-match .node.pat.atom,
-.no-match .head {
+.NoMatch .node.pat.atom,
+.NoMatch .head {
   color: #682828;
   opacity: 20%;
 }
-.no-match .node.pat.atom,
-.no-match .head .no-match .node.comp {
+.NoMatch .node.pat.atom,
+.NoMatch .head .NoMatch .node.comp {
   box-shadow: 0.1em 0.1em 1.4em #55ac8740;
 }
 
-.no-match {
+.NoMatch {
   opacity: 0.9;
   /* filter: opacity(0.6) sepia(1) saturate(0) brightness(0.6) contrast(5); */
 }

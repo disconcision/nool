@@ -12,6 +12,7 @@ import * as Settings from "../Settings";
 import * as Sound from "../Sound";
 import { map_ids } from "../syntax/Node";
 import * as Util from "../Util";
+import * as Stage from "../Stage";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -54,35 +55,27 @@ const PatView: Component<{
   }
 };
 
-const source_matches_cls = (props: { model: Model; t: Transform }) => {
-  if (props.model.stage.selection == "unselected") return "no-match";
-  //console.log('selection src:', props.model.selection);
-  const res = Pat.matches_at_path(
-    props.model.stage.exp,
-    props.t.source,
-    props.model.stage.selection
-  );
-  //console.log('res:', res);
-  return res ==
-    "NoMatch" /*|| res.length == 0* || props.model.selection.length > 0 */
-    ? "no-match"
-    : "match";
-};
+const matches_at = (stage: Stage.t, pat: Pat.t): Pat.MatchResult =>
+  stage.selection == "unselected"
+    ? "NoMatch"
+    : Pat.matches_at_path(stage.exp, pat, stage.selection);
 
-const result_matches_cls = (props: { model: Model; t: Transform }) => {
-  if (props.model.stage.selection == "unselected") return "no-match";
-  //console.log('selection res:', props.model.selection);
-  const res = Pat.matches_at_path(
-    props.model.stage.exp,
-    props.t.result,
-    props.model.stage.selection
+const filter_transforms = (stage: Stage.t, ts: Transform[]): Transform[] =>
+  ts.filter(
+    (t) =>
+      matches_at(stage, t.source) !== "NoMatch" &&
+      matches_at(stage, t.result) !== "NoMatch"
   );
-  //console.log('res:', res);
-  return res ==
-    "NoMatch" /*|| res.length == 0*|| props.model.selection.length > 0*/
-    ? "no-match"
+
+const source_matches_cls = (props: { model: Model; t: Transform }) =>
+  matches_at(props.model.stage, props.t.source) === "NoMatch"
+    ? "NoMatch"
     : "match";
-};
+
+const result_matches_cls = (props: { model: Model; t: Transform }) =>
+  matches_at(props.model.stage, props.t.result) === "NoMatch"
+    ? "NoMatch"
+    : "match";
 
 const TransformView: Component<{
   idx: number;
@@ -217,15 +210,17 @@ const TransformView: Component<{
   );
 };
 
-
-const select_transforms = (tools: ToolBox.t): [number, Transform][] => {
+const select_transforms = (stage:Stage.t,tools: ToolBox.t): [number, Transform][] => {
+  //const filtered_transforms = filter_transforms(stage, tools.transforms);
+  const filtered_transforms = tools.transforms;
   /* want to take tools.size tools starting at tools.offset (index into tools)
     and treat the list as a ring buffer */
-  const len = tools.transforms.length;
+  
+  const len = filtered_transforms.length;
   const offset = tools.offset % len;
   const size = tools.size;
   const idxs = [...Array(size).keys()].map((i) => (i + offset) % len);
-  return idxs.map((i) => [i, tools.transforms[i]]);
+  return idxs.map((i) => [i, filtered_transforms[i]]);
 };
 
 function throttle(
@@ -273,7 +268,7 @@ export const ToolsView: Component<{
         }
       }}
     >
-      <For each={select_transforms(props.model.tools)}>
+      <For each={select_transforms(props.model.stage, props.model.tools)}>
         {([idx, t]) =>
           TransformView({
             idx,
