@@ -9,7 +9,6 @@ export type Transform = {
   sound: () => void;
   sound_rev: () => void;
   reversed: boolean;
-  should_animate: boolean;
 };
 
 export type t = Transform;
