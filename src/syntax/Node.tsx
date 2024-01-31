@@ -37,6 +37,12 @@ export function map_ids<T>(f: (id: ID.t) => ID.t, e: t<T>): t<T> {
   }
 }
 
+export function head<T>(e: t<T>): T | undefined {
+  return e.t == "Comp" && e.kids.length > 0 && e.kids[0].t == "Atom"
+  ? e.kids[0].sym
+  : undefined;
+} 
+
 /* Zero out all ids */
 export function erase<T>(x: t<T>): t<T> {
   return map_ids((_) => 0, x);

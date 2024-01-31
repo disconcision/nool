@@ -4,8 +4,6 @@ import * as Transform from "../Transform";
 
 type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
 
-
-
 const zero = Pat.p_const("🌑");
 const one = Pat.p_const("🌘");
 const hole = Pat.p_const("❓");
@@ -30,6 +28,20 @@ const plus_y = bin_y("➕");
 const times_x = bin_x("✖️");
 const times_y = bin_y("✖️");
 const equals_x = bin_x("🟰");
+
+const B = Pat.p_const("ɖ");
+const B_ = bin_x("ɖ");
+
+const b_def: Base = {
+  source: B_(var_a, var_b),
+  result: plus_x(times_x(B_(one, zero), var_a), var_b),
+  sound: "tiup",
+};
+const b_def2: Base = {
+  source: plus_x(one, one),
+  result: B_(one, zero),
+  sound: "tiup",
+};
 
 const commute_plus: Base = {
   source: plus_x(var_a, var_b),
@@ -87,13 +99,13 @@ const distribute_times_plus: Base = {
 
 const mk_mk = (result: Pat.t): Base => ({
   source: hole,
-  result:result,
-  sound: "klohk",//TODO
+  result: result,
+  sound: "klohk", //TODO
 });
 const mk_wrap = (result: Pat.t): Base => ({
   source: var_a,
-  result:result,
-  sound: "klohk",//TODO
+  result: result,
+  sound: "klohk", //TODO
 });
 const mk_one = mk_mk(one);
 const mk_zero = mk_mk(zero);
@@ -156,6 +168,8 @@ export const init = [
   identity_times,
   distribute_times_plus,
   double_neg,
+  b_def,
+  b_def2,
 ].map(mk);
 
-export const _init =makers.map(mk);
+export const _init = makers.map(mk);

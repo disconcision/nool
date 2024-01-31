@@ -447,7 +447,7 @@ code {
 }
 .node-container.TreeLeft .node.comp .head {
   grid-column: 1;
-  grid-row: 1/3;
+  grid-row: 1/4;
 }
 
 #seed:has(.LinearPrefix),
@@ -1197,4 +1197,51 @@ body:has(#main.Dark) {
     0.8em 0.8em 1.6em #90c2b344, -0.05em -0.05em 0.1em #e0ffe544,
     -0.1em -0.1em 0.2em #ebfff744, -0.2em -0.2em 0.4em #d2fff044,
     -0.4em -0.4em 0.8em #cff2e644, -0.8em -0.8em 1.6em #d2fff044;
+}
+
+#stage .node.䷶ {
+  border-radius: 2.7em 0.3em 0.3em 2.7em;
+  display: grid;
+  grid-auto-flow: unset;
+  grid-template-columns: fit-content(1em) 1fr;
+  grid-template-rows: repeat(1fr);
+  background: none;
+  box-shadow: -1em 0em 1.5em #34b59516;
+  border: none;
+  border-left: 0.3px solid #19dac5;
+}
+#noolbox .node.digits .node,
+#stage .node.digits .node {
+  /* background: none; */
+  box-shadow: none;
+  padding: 0;
+  border: none;
+  /* width: 1.1em; */
+  /* border-radius: 0.1em; */
+  /* height: 1.7em; */
+}
+
+#noolbox .node.digits,
+#stage .node.digits {
+  border-radius: 0.8em;
+  padding: 0;
+  margin: 0;
+  /* height: 1em; */
+}
+
+#noolbox .node.comp.digits .head,
+#stage .node.comp.digits .head {
+  color: black;
+  text-shadow: none;
+  padding: 0;
+}
+
+#stage .node.comp.digits.selected .head {
+  /* filter: brightness(0.8) !important; */
+}
+
+#noolbox .node:not(.digits):has(.digits) > .digits,
+#stage .node:not(.digits):has(.digits) > .digits {
+  padding-left: 0.15em;
+  padding-right: 0.15em;
 }

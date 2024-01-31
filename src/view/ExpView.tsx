@@ -1,8 +1,8 @@
-import { Component } from "solid-js";
+import { Component, Switch, Match } from "solid-js";
 import { For, Show, Index } from "solid-js";
 //import Rand from "rand-seed";
 import * as Pat from "../syntax/Pat";
-import { Exp } from "../syntax/Exp";
+import * as Exp from "../syntax/Exp";
 import * as Action from "../Action";
 import * as Path from "../syntax/Path";
 import * as Statics from "../Statics";
@@ -11,7 +11,7 @@ import * as Names from "../Names";
 import * as Settings from "../Settings";
 
 type expviewprops = {
-  node: Exp;
+  node: Exp.t;
   info: Statics.InfoMap;
   selection: Stage.selection;
   animate: boolean;
@@ -64,7 +64,9 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               classList={{ animate: props.animate }}
               onpointerdown={setSelect(props)}
             >
-              <div id={`sym-${props.node.id}`}>{Names.get(props.symbols, props.node.sym)}</div>
+              <div id={`sym-${props.node.id}`}>
+                {Names.get(props.symbols, props.node.sym)}
+              </div>
             </div>
           }
         >
@@ -79,29 +81,42 @@ const ExpViewGo: Component<expviewprops> = (props) => {
       );
     case "Comp":
       return (
-        <div
-          id={`node-${props.node.id}`}
-          class={`comp ` + common_clss(props)}
-          classList={{ animate: props.animate }}
-          onpointerdown={setSelect(props)}
-        >
-          {
-            <Index each={props.node.kids}>
-              {(kid, i) => (
-                <ExpViewGo
-                  info={props.info}
-                  selection={props.selection}
-                  node={kid()}
-                  animate={props.animate && eff(props)}
-                  is_head={i === 0}
-                  inject={props.inject}
-                  mask={props.mask}
-                  symbols={props.symbols}
-                />
-              )}
-            </Index>
-          }
-        </div>
+        <Switch fallback={<div>error</div>}>
+          <Match when={true}>
+            <div
+              id={`node-${props.node.id}`}
+              class={`comp ${Exp.head(props.node)} ${common_clss(props)}`}
+              classList={{
+                animate: props.animate,
+                digits: Exp.head_is("ɖ", props.node),
+              }}
+              onpointerdown={setSelect(props)}
+            >
+              {
+                <Index
+                  each={
+                    Exp.head_is("ɖ", props.node)
+                      ? props.node.kids.slice(1)
+                      : props.node.kids
+                  }
+                >
+                  {(kid, i) => (
+                    <ExpViewGo
+                      info={props.info}
+                      selection={props.selection}
+                      node={kid()}
+                      animate={props.animate && eff(props)}
+                      is_head={i === 0}
+                      inject={props.inject}
+                      mask={props.mask}
+                      symbols={props.symbols}
+                    />
+                  )}
+                </Index>
+              }
+            </div>
+          </Match>
+        </Switch>
       );
   }
 };
@@ -124,7 +139,7 @@ export const ExpView: Component<{
   });
 
 export const ViewOnly: Component<{
-  node: Exp;
+  node: Exp.t;
   symbols: Settings.symbols;
 }> = (props) =>
   ExpViewGo({

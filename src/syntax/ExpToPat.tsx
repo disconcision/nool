@@ -1,4 +1,4 @@
-import { Exp } from "../syntax/Exp";
+import * as Exp from "../syntax/Exp";
 import * as Pat from "../syntax/Pat";
 import * as Id from "../syntax/ID";
 import * as ToolsExp from "../data/ToolsExp";
@@ -44,7 +44,7 @@ type MapIdToSymbol = Map<Id.t, string>;
 
 type res = "NotTool" | { source: Pat.t; result: Pat.t };
 
-const extract_id_symbol_list = (e: Exp): pair_of_id_and_symbol[] => {
+const extract_id_symbol_list = (e: Exp.t): pair_of_id_and_symbol[] => {
   switch (e.t) {
     case "Atom":
       return [{ id: e.id, symbol: e.sym }];
@@ -58,7 +58,7 @@ const extract_id_symbol_list = (e: Exp): pair_of_id_and_symbol[] => {
   }
 };
 // like above but instead returning MapIdToSymbol
-const extract_id_symbol_map = (e: Exp): MapIdToSymbol => {
+const extract_id_symbol_map = (e: Exp.t): MapIdToSymbol => {
   const res = new Map();
   switch (e.t) {
     case "Atom":
@@ -91,18 +91,12 @@ const get_or_fresh_id = (map: map_of_ids, id: number): number => {
   return Id.mk();
 };
 
-const head_id = (e: Exp): number | undefined => {
-  if (e.t == "Comp" && e.kids.length > 0 && e.kids[0].t == "Atom")
-    return e.kids[0].id;
-  return undefined;
-};
-
 //try to get id from head using above; if it's there, comp id becomes that id + 1000
-const get_of_fresh_comp_id = (map: map_of_ids, e: Exp): number =>
-  get_or_fresh_id(map, head_id(e) ?? Id.mk()) + 1000;
+const get_of_fresh_comp_id = (map: map_of_ids, e: Exp.t): number =>
+  get_or_fresh_id(map, Exp.head_id(e) ?? Id.mk()) + 1000;
 
 const convert_exp_to_pat_getting_ids_from_map = (
-  e: Exp,
+  e: Exp.t,
   map: map_of_ids
 ): Pat.t => {
   switch (e.t) {
@@ -225,7 +219,7 @@ const match_up_consts = (
   return res;
 };
 
-const convert_inner = (s: Exp, r: Exp): res => {
+const convert_inner = (s: Exp.t, r: Exp.t): res => {
   const source_symbols = extract_id_symbol_map(s);
   const [source_vars, source_consts] =
     parition_symbol_map_into_vars_and_consts(source_symbols);
@@ -243,7 +237,7 @@ const convert_inner = (s: Exp, r: Exp): res => {
 
 /* If the expression is rooted in binop =, treat
   lhs and rhs as source and result of a transformation */
-export const convert = (e: Exp): res => {
+export const convert = (e: Exp.t): res => {
   if (
     e.t == "Comp" &&
     e.kids.length == 3 &&

@@ -1,9 +1,12 @@
-import { Exp, atom, comp } from "../syntax/Exp";
+import { Exp, atom, comp, flat } from "../syntax/Exp";
+import { empty } from "../syntax/Path";
 
 // ☁️ 🧩 🦷 🦠  🌸 🍄 🎲 🐝
-// ➕ ➖ ✖️ ➗ 🟰 🌕 🌘 0️⃣ 1️⃣
+// ➕ ➖ ✖️ ➗ 🟰 🌕 🌘 🌑 0️⃣ 1️⃣ ❓
 
-export const init: Exp = comp([
+const B = flat("ɖ");
+
+export const alg: Exp = comp([
   atom("➕"),
   comp([
     atom("➕"),
@@ -17,41 +20,20 @@ export const init: Exp = comp([
   ]),
 ]);
 
-export const _init:Exp = atom("❓");
+const lab: Exp = comp([atom("➕"), atom("❓"), atom("❓")]);
 
-export const moons: Exp = comp([
-  atom("➕"),
-  comp([
-    atom("➕"),
-    comp([atom("➕"), atom("🌘🌕"), comp([atom("➖"), atom("🌘🌕🌕🌕🌘")])]),
-    atom("🌘🌕 "),
-  ]),
-  comp([
-    atom("➕"),
-    comp([atom("✖️"), atom("🌕"), atom("🌘")]),
-    comp([atom("✖️"), atom("🌘🌕🌘🌕 "), atom("🌘🌘")]),
-  ]),
-]);
-
-const pv = (hd: string, tl: Exp) => comp([atom("."), atom(hd), tl]);
-
-export const moons2: Exp = comp([
+const moons: Exp = comp([
   atom("➕"),
   comp([
     atom("➕"),
     comp([
       atom("➕"),
-      pv("🌘", atom("🌕")),
-      comp([atom("➖"), pv("🌘", pv("🌕", pv("🌕", pv("🌕", atom("🌘")))))]),
+      B(["🌘", "🌑"]),
+      comp([atom("➖"), B(["🌘", "🌑", "🌑", "🌑", "🌘"]), atom("🌘")]),
     ]),
-    pv("🌘", atom("🌕")),
+    B(["🌘", "🌑"]),
   ]),
-  comp([
-    atom("➕"),
-    comp([
-      atom("✖️"),
-      pv("🌘", pv("🌕", pv("🌘", atom("🌕")))),
-      pv("🌘", atom("🌘")),
-    ]),
-  ]),
+  comp([atom("✖️"), B(["🌘", "🌑", "🌘", "🌑"]), B(["🌘", "🌘"])]),
 ]);
+
+export const init: Exp = comp([atom("䷶"), alg, moons, lab]);

@@ -13,6 +13,7 @@ import * as Sound from "../Sound";
 import { map_ids } from "../syntax/Node";
 import * as Util from "../Util";
 import * as Stage from "../Stage";
+import { head } from "../syntax/Node";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -24,6 +25,8 @@ export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   );
 };
 
+const head_is = (sym: string, node: Pat.t): boolean => head(node)?.name === sym;
+
 const PatView: Component<{
   p: Pat.t;
   is_head: boolean;
@@ -34,9 +37,13 @@ const PatView: Component<{
       return (
         <div
           id={`pat-${props.p.id}`}
+          classList={{
+            digits: head_is("ɖ", props.p),
+          }}
           class={`pat ${props.p.sym.name} ${
             props.is_head ? "head pat" : "node atom pat"
           }`}
+          
         >
           {Names.get(props.symbols, props.p.sym.name)}
         </div>
@@ -44,8 +51,14 @@ const PatView: Component<{
     }
     case "Comp":
       return (
-        <div id={`pat-${props.p.id}`} class="node comp pat">
-          <For each={props.p.kids}>
+        <div id={`pat-${props.p.id}`} 
+        classList={{
+          digits: head_is("ɖ", props.p),
+        }}
+        class="node comp pat">
+          <For
+            each={head_is("ɖ", props.p) ? props.p.kids.slice(1) : props.p.kids}
+          >
             {(kid, i) =>
               PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
             }
@@ -210,12 +223,15 @@ const TransformView: Component<{
   );
 };
 
-const select_transforms = (stage:Stage.t,tools: ToolBox.t): [number, Transform][] => {
+const select_transforms = (
+  stage: Stage.t,
+  tools: ToolBox.t
+): [number, Transform][] => {
   //const filtered_transforms = filter_transforms(stage, tools.transforms);
   const filtered_transforms = tools.transforms;
   /* want to take tools.size tools starting at tools.offset (index into tools)
     and treat the list as a ring buffer */
-  
+
   const len = filtered_transforms.length;
   const offset = tools.offset % len;
   const size = tools.size;
