@@ -1,3 +1,8 @@
+
+:root {
+  --anim-factor: 1.5;
+}
+
 .notransition * {
   transition: none !important;
 }
@@ -1146,7 +1151,7 @@ body:has(#main.Dark) {
 ::view-transition-group(flip-node-selected) {
   view-transition-name: selected;
   animation-timing-function: easeInBack; /*easeInBack; easeOutBounce;*/
-  animation-duration: 0.2s;
+  animation-duration: calc(var(--anim-factor) * 0.2s);
 }
 ::view-transition-old(flip-node-selected) {
 }
@@ -1155,7 +1160,7 @@ body:has(#main.Dark) {
 
 ::view-transition-group(*) {
   /*pointer-events: none;*/
-  animation-duration: 0.25s;
+  animation-duration: calc(var(--anim-factor) * 0.25s);
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }

@@ -15,7 +15,7 @@ import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
 import * as Animate from "./Animate";
 import * as Util from "./Util";
-
+import { reconcile } from "solid-js/store";
 
 export type result = Model.t | "NoChange";
 
@@ -206,7 +206,8 @@ export const update = (model: Model.t, action: Action.t): result => {
         },
       };
     case "wheelNumTools":
-      const clamp = (x:number, a:number, b:number) => Math.max( a, Math.min(x, b) );
+      const clamp = (x: number, a: number, b: number) =>
+        Math.max(a, Math.min(x, b));
       console.log("wheelNumTools:" + action.offset + ":" + model.tools.size);
       return {
         ...model,
@@ -215,9 +216,7 @@ export const update = (model: Model.t, action: Action.t): result => {
           size: clamp(
             model.tools.size + action.offset,
             1,
-            model.tools.transforms.length,
-            
-  
+            model.tools.transforms.length
           ),
         },
       };
@@ -244,6 +243,7 @@ export const go = (
   } else {
     console.log("Action Success: " + action.t);
     setModel(result);
+    //setModel(reconcile(result, { merge: true, key: "kids" }));
   }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
    * retain their duplicate ids for animations, but then we need to freshen

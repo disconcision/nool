@@ -105,7 +105,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                       info={props.info}
                       selection={props.selection}
                       node={kid()}
-                      animate={props.animate && eff(props)}
+                      animate={props.animate /*&& eff(props)*/}
                       is_head={i === 0}
                       inject={props.inject}
                       mask={props.mask}
