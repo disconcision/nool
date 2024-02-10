@@ -1215,6 +1215,10 @@ body:has(#main.Dark) {
   border: none;
   border-left: 0.3px solid #19dac5;
 }
+#stage .node.䷶.selected {
+  outline: none;
+  border-left: 0.07em solid white;
+}
 #noolbox .node.digits .node,
 #stage .node.digits .node {
   /* background: none; */

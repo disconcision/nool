@@ -30,16 +30,38 @@ const times_y = bin_y("✖️");
 const equals_x = bin_x("🟰");
 
 const B = Pat.p_const("ɖ");
-const B_ = bin_x("ɖ");
+const Bx = bin_x("ɖ");
+const By = bin_y("ɖ");
+const two = Bx(zero, one);
 
-const b_def: Base = {
-  source: B_(var_a, var_b),
-  result: plus_x(times_x(B_(one, zero), var_a), var_b),
+const b_def_0: Base = {
+  source: plus_x(one, one),
+  result: two,
   sound: "tiup",
 };
-const b_def2: Base = {
-  source: plus_x(one, one),
-  result: B_(one, zero),
+const b_def_1: Base = {
+  source: Bx(var_a, var_b),
+  result: plus_x(var_a, times_x(var_b, two)),
+  sound: "tiup",
+};
+const b_thm_0: Base = {
+  source: Bx(one, var_a),
+  result: plus_x(Bx(zero, var_a), one),
+  sound: "tiup",
+};
+const b_thm_1: Base = {
+  source: Bx(var_a, zero),
+  result: times_x(var_a, two),
+  sound: "tiup",
+};
+const b_thm_2: Base = {
+  source: plus_x(Bx(zero, var_a), By(var_c, var_b)),
+  result: Bx(var_c, plus_x(var_a, var_b)),
+  sound: "tiup",
+};
+const b_thm_3: Base = {
+  source: plus_x(Bx(one, var_a), By(one, var_b)),
+  result: Bx(zero, plus_x(plus_x(var_a, var_b), one)),
   sound: "tiup",
 };
 
@@ -159,6 +181,12 @@ const mk = ({ source, result, sound }: Base): Transform.t => ({
 });
 
 export const init = [
+  b_def_0,
+  b_def_1,
+  b_thm_0,
+  b_thm_1,
+  b_thm_2,
+  b_thm_3,
   associate_plus,
   commute_plus,
   identity_plus,
@@ -168,8 +196,6 @@ export const init = [
   identity_times,
   distribute_times_plus,
   double_neg,
-  b_def,
-  b_def2,
 ].map(mk);
 
 export const _init = makers.map(mk);
