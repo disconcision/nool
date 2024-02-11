@@ -6,6 +6,7 @@ type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
 
 const zero = Pat.p_const("🌑");
 const one = Pat.p_const("🌘");
+const one2 = Pat.p_const("🌘");
 const hole = Pat.p_const("❓");
 
 const var_a = Pat.p_var("♫");
@@ -60,8 +61,8 @@ const b_thm_2: Base = {
   sound: "tiup",
 };
 const b_thm_3: Base = {
-  source: plus_x(Bx(one, var_a), By(one, var_b)),
-  result: Bx(zero, plus_x(plus_x(var_a, var_b), one)),
+  source: plus_x(Bx(one, var_a), By(one2, var_b)),
+  result: Bx(zero, plus_x(var_a, plus_x(var_b, one2))),
   sound: "tiup",
 };
 

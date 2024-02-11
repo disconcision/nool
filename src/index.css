@@ -1232,10 +1232,9 @@ body:has(#main.Dark) {
 
 #noolbox .node.digits,
 #stage .node.digits {
-  border-radius: 0.8em;
+  border-radius: 3rem 1.2rem 1.2rem 3rem;
   padding: 0;
   margin: 0;
-  /* height: 1em; */
 }
 
 #noolbox .node.comp.digits .head,
@@ -1246,7 +1245,7 @@ body:has(#main.Dark) {
 }
 
 #stage .node.comp.digits.selected .head {
-  /* filter: brightness(0.8) !important; */
+  filter: brightness(1) !important;
 }
 
 #noolbox .node:not(.digits):has(.digits) > .digits,

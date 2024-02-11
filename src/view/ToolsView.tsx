@@ -271,7 +271,7 @@ export const ToolsView: Component<{
               t: "wheelNumTools",
               offset,
             });
-          }, 1000)();
+          }, 250)();
         } else {
           throttle(() => {
             const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
@@ -280,7 +280,7 @@ export const ToolsView: Component<{
               t: "wheelTools",
               offset: offset,
             });
-          }, 1000)();
+          }, 250)();
         }
       }}
     >
