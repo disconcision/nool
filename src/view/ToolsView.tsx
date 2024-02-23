@@ -60,7 +60,7 @@ const PatView: Component<{
             each={head_is("ɖ", props.p) ? props.p.kids.slice(1) : props.p.kids}
           >
             {(kid, i) =>
-              PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
+              PatView({ p: kid, is_head: i() === 0 && !head_is("ɖ", props.p), symbols: props.symbols })
             }
           </For>
         </div>

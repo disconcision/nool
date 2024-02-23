@@ -1219,8 +1219,10 @@ body:has(#main.Dark) {
   outline: none;
   border-left: 0.07em solid white;
 }
-#noolbox .node.digits .node,
-#stage .node.digits .node {
+#noolbox .node.digits .node.digits ,
+#stage .node.digits .node.digits,
+#noolbox .node.digits .atom ,
+#stage .node.digits .atom  {
   /* background: none; */
   box-shadow: none;
   padding: 0;
@@ -1235,6 +1237,9 @@ body:has(#main.Dark) {
   border-radius: 1.1em;
   padding: 0;
   margin: 0;
+  background-color: #0000;
+  box-shadow: none;
+  border-color: #0000;
 }
 
 #noolbox .node.comp.digits .head,
