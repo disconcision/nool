@@ -8,7 +8,7 @@ const blah = (s: string) => `
 export const init = ():void => {
   //TODO: unhardcode id max
   var style = document.createElement("style");
-  for (let id = 0; id < 100; id++) {
+  for (let id = 0; id < 200; id++) {
     style.innerHTML += `#node-${id}.animate { view-transition-name: flip-node-${id}; }\n`;
     style.innerHTML += `#main.unsetSelections #sym-${id}, #main.setSelect #sym-${id}, #main.moveStage #sym-${id} { view-transition-name: flip-sym-${id}; }\n`;
     

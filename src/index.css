@@ -1232,7 +1232,7 @@ body:has(#main.Dark) {
 
 #noolbox .node.digits,
 #stage .node.digits {
-  border-radius: 3rem 1.2rem 1.2rem 3rem;
+  border-radius: 1.1em;
   padding: 0;
   margin: 0;
 }

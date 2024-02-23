@@ -30,7 +30,6 @@ const times_x = bin_x("✖️");
 const times_y = bin_y("✖️");
 const equals_x = bin_x("🟰");
 
-const B = Pat.p_const("ɖ");
 const Bx = bin_x("ɖ");
 const By = bin_y("ɖ");
 const two = Bx(zero, one);
