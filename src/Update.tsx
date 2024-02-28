@@ -16,6 +16,7 @@ import * as Path from "./syntax/Path";
 import * as Animate from "./Animate";
 import * as Util from "./Util";
 import { reconcile } from "solid-js/store";
+import * as Projectors from "./Projector";
 
 export type result = Model.t | "NoChange";
 
@@ -56,6 +57,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
       break;
     case "Noop":
       Sound.noop();
+      break;
+    case "Project":
+      Sound.sfx("pew")();
       break;
     case "setHover":
     case "flipTransform":
@@ -220,7 +224,31 @@ export const update = (model: Model.t, action: Action.t): result => {
           ),
         },
       };
+    case "Project":
+      return {
+        ...model,
+        stage: {
+          ...model.stage,
+          projectors: Projectors.update(
+            action.id,
+            action.action,
+            model.stage.projectors
+          ),
+        },
+      };
   }
+};
+
+export const viewTransition = (
+  action: Action.t,
+  f: () => void
+) => {
+  const guy2 = document.getElementById("main");
+  guy2 ? guy2.classList.add(action.t) : console.log("no guy 1");
+  let v = document.startViewTransition(f);
+  v.finished.then(() =>
+    guy2 ? guy2.classList.remove(action.t) : console.log("no guy 2")
+  );
 };
 
 export const go = (
@@ -236,13 +264,17 @@ export const go = (
     console.error(e);
   }
   const result = update(model, action);
-  if (result == "NoChange") {
-    //Sound.noop();
+  if (result == "NoChange") { 
     console.log("Action NoChange:" + action.t);
     return;
   } else {
     console.log("Action Success: " + action.t);
-    setModel(result);
+    if (action.t === "setHover" || !document.startViewTransition) {
+      console.log("sethover dont transition:" + action.t);
+      setModel(result);
+      return;
+    }
+    viewTransition(action, () => setModel(result));
     //setModel(reconcile(result, { merge: true, key: "kids" }));
   }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to

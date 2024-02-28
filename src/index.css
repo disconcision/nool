@@ -1,5 +1,5 @@
 :root {
-  --anim-factor: 1.5;
+  --anim-factor: 1.25;
 }
 
 .notransition * {
@@ -378,10 +378,19 @@ code {
 .node:active {
   /*animation-name: wobble;
   animation-duration: 1s;*/
+  animation-delay: 0.25s;
   animation-name: wobble2;
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
+.node.comp.folded {
+  border-radius: 10em;
+}
+.node.comp.folded > .head:after {
+  font-size: 0.4em;
+  content: "\00a0⋯";
+}
+
 #stage .node.comp {
   /*background-color: #005bff26;*/
   background: linear-gradient(
@@ -397,6 +406,8 @@ code {
   border-top: 0.3px solid rgb(226 255 244);
 }
 .node.comp .head {
+  display: flex;
+  align-items: center;
   background-color: #284a37;
   /* mix-blend-mode: color-burn; */
   color: transparent;

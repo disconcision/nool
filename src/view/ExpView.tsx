@@ -9,6 +9,7 @@ import * as Statics from "../Statics";
 import * as Stage from "../Stage";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
+import * as Projector from "../Projector";
 
 type expviewprops = {
   node: Exp.t;
@@ -19,9 +20,10 @@ type expviewprops = {
   inject: Action.Inject;
   mask: Pat.Binding[];
   symbols: Settings.symbols;
+  projectors: Projector.PMap;
 };
 
-const setSelect = (props: expviewprops) => (e: Event) => {
+const setSelect = (props: expviewprops) => (e: MouseEvent) => {
   e.preventDefault();
   //above modulates whether shake occurs for some reason?
   e.stopPropagation();
@@ -55,8 +57,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
   switch (props.node.t) {
     case "Atom":
       return (
-        <Show
-          when={props.is_head}
+        <Switch
           fallback={
             <div
               id={`node-${props.node.id}`}
@@ -70,14 +71,16 @@ const ExpViewGo: Component<expviewprops> = (props) => {
             </div>
           }
         >
-          <div
-            id={`node-${props.node.id}`}
-            class="head"
-            classList={{ animate: props.animate }}
-          >
-            {Names.get(props.symbols, props.node.sym)}
-          </div>
-        </Show>
+          <Match when={props.is_head}>
+            <div
+              id={`node-${props.node.id}`}
+              class="head"
+              classList={{ animate: props.animate }}
+            >
+              {Names.get(props.symbols, props.node.sym)}
+            </div>
+          </Match>
+        </Switch>
       );
     case "Comp":
       return (
@@ -89,13 +92,33 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               classList={{
                 animate: props.animate,
                 digits: Exp.head_is("ɖ", props.node),
+                folded: Projector.is_folded(props.node.id, props.projectors),
               }}
-              onpointerdown={setSelect(props)}
+              onclick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("clicks: " + e.detail);
+                switch (e.detail) {
+                  case 1:
+                    setSelect(props)(e);
+                    break;
+                  case 2:
+                  case 3:
+                    props.inject({
+                      t: "Project",
+                      id: props.node.id,
+                      action: "toggleFoldCurrent",
+                    });
+                    break;
+                }
+              }}
             >
               {
                 <Index
                   each={
-                    Exp.head_is("ɖ", props.node)
+                    Projector.is_folded(props.node.id, props.projectors)
+                      ? props.node.kids.slice(0, 1)
+                      : Exp.head_is("ɖ", props.node)
                       ? props.node.kids.slice(1)
                       : props.node.kids
                   }
@@ -110,6 +133,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                       inject={props.inject}
                       mask={props.mask}
                       symbols={props.symbols}
+                      projectors={props.projectors}
                     />
                   )}
                 </Index>
@@ -136,6 +160,7 @@ export const ExpView: Component<{
     is_head: false,
     animate: true,
     symbols: props.symbols,
+    projectors: props.stage.projectors,
   });
 
 export const ViewOnly: Component<{
@@ -151,4 +176,5 @@ export const ViewOnly: Component<{
     inject: (_) => {},
     mask: [],
     symbols: props.symbols,
+    projectors: Projector.init,
   });

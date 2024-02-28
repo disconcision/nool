@@ -30,8 +30,9 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
       noanimation: props.model.settings.motion === "Off",
       notransformation: props.model.settings.motion === "Off",
     }}
-    onmousedown={(e) => {
+    onclick={(e) => {
       e.preventDefault();
+      e.stopPropagation();
       props.inject({ t: "unsetSelections" });
     }}
   >
