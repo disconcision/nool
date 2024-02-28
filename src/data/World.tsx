@@ -32,4 +32,10 @@ const moons: Exp = comp([
   ]),
 ]);
 
-export const init: Exp = comp([atom("䷶"), alg, moons, lab]);
+// ▨ ䷀ ䷂ ᖛᙊ ࢥ Ꭳ ◵
+export const init: Exp = comp([
+  atom("䷶"),
+  comp([atom("ᖛ"), alg]),
+  comp([atom("ᙊ"), moons]),
+  comp([atom("ᝏ"), lab]),
+]);
