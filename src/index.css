@@ -401,6 +401,15 @@ code {
   /* filter: sepia(1) saturate(0) contrast(0.8); */
   /* background-color: #9d9d9d4f; */
 }
+/* .node.selected .node.enfolded {
+  background-color: #d2f5e4 !important;
+  box-shadow: 0em 0em 1em white;
+  filter:none !important;
+}
+.node.selected:has(.node.enfolded) {
+  background-color: #ffffff75 !important;
+  filter:none !important;
+} */
 
 #stage .node.comp {
   /*background-color: #005bff26;*/
