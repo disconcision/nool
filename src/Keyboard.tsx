@@ -30,6 +30,8 @@ const action_of = (key: string): Action.t | "NoBinding" => {
       return { t: "moveTool", direction: "right" };
     case " ":
       return { t: "applyTransformSelected" };
+    case "f":
+      return { t: "Project", action: "toggleEnfoldCurrent", id: undefined };
     default:
       return "NoBinding";
   }

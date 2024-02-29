@@ -1,5 +1,4 @@
 import { at_path } from "./Transform";
-import Flipping from "flipping/lib/adapters/web";
 import * as Model from "./Model";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
@@ -13,7 +12,6 @@ import * as Exp from "./syntax/Exp";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
-import * as Animate from "./Animate";
 import * as Util from "./Util";
 import { reconcile } from "solid-js/store";
 import * as Projectors from "./Projector";
@@ -225,12 +223,20 @@ export const update = (model: Model.t, action: Action.t): result => {
         },
       };
     case "Project":
+      const indicated_id = Stage.indicated_id(model.stage);
+      console.log("Project: Indicated ID: " + indicated_id);
+      const id =
+        action.id != undefined
+          ? action.id
+          : indicated_id != undefined
+          ? indicated_id
+          : -666;
       return {
         ...model,
         stage: {
           ...model.stage,
           projectors: Projectors.update(
-            action.id,
+            id,
             action.action,
             model.stage.projectors
           ),
@@ -239,10 +245,7 @@ export const update = (model: Model.t, action: Action.t): result => {
   }
 };
 
-export const viewTransition = (
-  action: Action.t,
-  f: () => void
-) => {
+export const viewTransition = (action: Action.t, f: () => void) => {
   const guy2 = document.getElementById("main");
   guy2 ? guy2.classList.add(action.t) : console.log("no guy 1");
   let v = document.startViewTransition(f);
@@ -250,32 +253,33 @@ export const viewTransition = (
     guy2 ? guy2.classList.remove(action.t) : console.log("no guy 2")
   );
 };
+// document.addEventListener("transitionstart", (e) => {
+//   in_transition = true;
+// });
+// document.addEventListener("transitionend", (e) => {
+//   in_transition = false;
+// });
 
 export const go = (
   model: Model.t,
   setModel: SetStoreFunction<Model.t>,
   action: Action.t
 ): void => {
-  if (model.settings.sound) sound(model, action);
-  /* Catching because problem on build server */
-  try {
-    //Animate.read(model, action);
-  } catch (e) {
-    console.error(e);
-  }
   const result = update(model, action);
-  if (result == "NoChange") { 
+  if (result == "NoChange") {
     console.log("Action NoChange:" + action.t);
     return;
   } else {
     console.log("Action Success: " + action.t);
-    if (action.t === "setHover" || !document.startViewTransition) {
-      console.log("sethover dont transition:" + action.t);
-      setModel(result);
-      return;
-    }
-    viewTransition(action, () => setModel(result));
+    const doIt = () => setModel(result);
     //setModel(reconcile(result, { merge: true, key: "kids" }));
+    if (action.t === "setHover" || !document.startViewTransition) {
+      console.log("setHover: Don't transition:" + action.t);
+      doIt();
+      return;
+    } else {
+      viewTransition(action, doIt);
+    }
   }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
    * retain their duplicate ids for animations, but then we need to freshen
@@ -289,10 +293,4 @@ export const go = (
         stage: Stage.put_exp(model.stage, freshened),
       });
   }, 250);*/
-  /* Catching because problem on build server */
-  try {
-    //Animate.flip(model, action);
-  } catch (e) {
-    console.error(e);
-  }
 };

@@ -62,7 +62,13 @@ const ExpViewGo: Component<expviewprops> = (props) => {
             <div
               id={`node-${props.node.id}`}
               class={`atom ${props.node.sym} ` + common_clss(props)}
-              classList={{ animate: props.animate }}
+              classList={{
+                animate: props.animate,
+                enfolded: Projector.is_enfolded(
+                  props.node.id,
+                  props.projectors
+                ),
+              }}
               onpointerdown={setSelect(props)}
             >
               <div id={`sym-${props.node.id}`}>
@@ -93,6 +99,10 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                 animate: props.animate,
                 digits: Exp.head_is("ɖ", props.node),
                 folded: Projector.is_folded(props.node.id, props.projectors),
+                enfolded: Projector.is_enfolded(
+                  props.node.id,
+                  props.projectors
+                ),
               }}
               onclick={(e) => {
                 e.preventDefault();
@@ -116,9 +126,9 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               {
                 <Index
                   each={
-                    Projector.is_folded(props.node.id, props.projectors)
+                    /*Projector.is_folded(props.node.id, props.projectors)
                       ? props.node.kids.slice(0, 1)
-                      : Exp.head_is("ɖ", props.node)
+                      :*/ Exp.head_is("ɖ", props.node)
                       ? props.node.kids.slice(1)
                       : props.node.kids
                   }
@@ -154,7 +164,7 @@ export const ExpView: Component<{
   ExpViewGo({
     info: props.stage.info,
     selection: props.stage.selection,
-    node: props.stage.exp,
+    node: Projector.project_folds(props.stage.projectors, props.stage.exp),
     inject: props.inject,
     mask: props.mask,
     is_head: false,

@@ -4,6 +4,8 @@ import * as Path from "./syntax/Path";
 import * as Projector from "./Projector";
 import * as World from "./data/World";
 import { is_path_valid } from "./syntax/Node";
+import * as ID from "./syntax/ID";
+import { id_at } from "./syntax/Node";
 
 export type selection = "unselected" | Path.t;
 
@@ -114,3 +116,8 @@ export const move = (
   stage: Stage,
   direction: "up" | "down" | "left" | "right"
 ) => put_selection(stage, move_(stage, direction));
+
+export const indicated_id = (stage: Stage): ID.t | undefined =>
+  stage.selection === "unselected"
+    ? undefined
+    : id_at(stage.selection, stage.exp);

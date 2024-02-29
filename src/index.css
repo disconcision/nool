@@ -185,6 +185,7 @@
 }
 
 body {
+  user-select: none;
   height: 100vh;
   overflow: hidden;
   margin: 0;
@@ -383,12 +384,22 @@ code {
   animation-duration: 0.15s;
   animation-iteration-count: infinite;
 }
-.node.comp.folded {
-  border-radius: 10em;
+.node.comp.folded:has(> .head:only-child) {
+  border-radius: 2em;
+}
+.node.comp.folded > .head{
+  font-size: 0.8em;
 }
 .node.comp.folded > .head:after {
   font-size: 0.4em;
   content: "\00a0⋯";
+}
+.node.comp.enfolded,
+.node.atom.enfolded {
+  outline: solid 0.3px #009571;
+  box-shadow: 0 0 0.8em #00543c;
+  /* filter: sepia(1) saturate(0) contrast(0.8); */
+  /* background-color: #9d9d9d4f; */
 }
 
 #stage .node.comp {
@@ -457,10 +468,11 @@ code {
   /*align-items: center;*/
   display: grid;
   grid-auto-flow: column;
+  grid-column: 2;
 }
 .node-container.TreeLeft .node.comp .head {
   grid-column: 1;
-  grid-row: 1/4;
+  grid-row: 1/100;
 }
 
 #seed:has(.LinearPrefix),

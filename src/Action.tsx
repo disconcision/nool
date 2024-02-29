@@ -38,6 +38,6 @@ export type Action =
   | { t: "applyTransformSelected" }
   | { t: "flipTransform"; idx: number }
   | { t: "Noop" }
-  | { t: "Project"; id: ID.t; action: Projector.Action };
+  | { t: "Project"; id: ID.t | undefined; action: Projector.Action };
 
 export type t = Action;
