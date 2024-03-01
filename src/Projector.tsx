@@ -1,11 +1,10 @@
 import * as ID from "./syntax/ID";
 import * as Exp from "./syntax/Exp";
 
-type PaintColor = "Cyan" | "Magenta" | "Yellow";
+//type PaintColor = "Cyan" | "Magenta" | "Yellow";
+//type Painter = PaintColor | "Unpainted";
 
-type Painter = PaintColor | "Unpainted";
-
-type Folded = "Folded" | "Quasifolded" | "Enfolded" | "NotFolded";
+type Folded = "Folded" | "Enfolded" | "NotFolded";
 
 type Projector = {
   //painter: Painter;
@@ -20,8 +19,10 @@ export type PMap = Map<ID.t, t>;
 
 export const init: PMap = (() => {
   const map = new Map<ID.t, t>();
-  map.set(66, { folded: "Folded" });
+  map.set(69, { folded: "Folded" });
   map.set(68, { folded: "Folded" });
+  map.set(66, { folded: "Folded" });
+  map.set(20, { folded: "Enfolded" });
   return map;
 })();
 
@@ -79,14 +80,20 @@ const get_enfolded = (projectors: PMap, node: Exp.t): Exp.t[] => {
         if (p.folded == "Folded") {
           return [];
         } else {
-          return node.kids.map((kid) => get_enfolded(projectors, kid)).flat();
+          return node.kids
+            .map((kid) =>
+              get_enfolded(projectors, project_folds(projectors, kid))
+            )
+            .flat();
         }
     }
   }
 };
 
-let oneatom: Exp.t[] = [{ t: "Atom", id: ID.mk(), sym: "" }];
-let oneatom_ = (sym: string): Exp.t[] => [{ t: "Atom", id: ID.mk(), sym }];
+export const has_enfolded = (projectors: PMap, node: Exp.t): boolean =>
+  get_enfolded(projectors, node).length > 0;
+
+let fold_head = (sym: string): Exp.t[] => [{ t: "Atom", id: ID.mk(), sym }];
 
 /* TODO: maybe dont allow enfolds inside enfolds */
 export const project_folds = (projectors: PMap, node: Exp.t): Exp.t => {
@@ -96,17 +103,14 @@ export const project_folds = (projectors: PMap, node: Exp.t): Exp.t => {
     case "Comp":
       switch (get(projectors, node.id).folded) {
         case "Folded":
-          const oneatom2 = oneatom_(Exp.head(node));
+          const enfolded = node.kids
+            .map((kid) => get_enfolded(projectors, kid))
+            .flat();
+          const atom = fold_head(enfolded.length == 0 ? Exp.head(node) : "");
           return {
             ...node,
-            kids: oneatom2.concat(node.kids.map((kid) => get_enfolded(projectors, kid)).flat()),
-            //kids: node.kids.length == 0 ? [] : { ...node }.kids.toSpliced(1),
+            kids: atom.concat(enfolded),
           };
-        // case "Quasifolded":
-        //   return {
-        //     ...node,
-        //     kids: oneatom.concat(get_enfolded(projectors, node)),
-        //   };
         default:
           return {
             ...node,

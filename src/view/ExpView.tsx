@@ -33,6 +33,87 @@ const setSelect = (props: expviewprops) => (e: MouseEvent) => {
   });
 };
 
+const eff = (props: expviewprops): boolean => {
+  /* search mask for a binding whose first id is this node's id.
+  then check if it's a val binding. if so return true. else false. */
+  const binding = props.mask.find(
+    ({ ids: [_, id_stage], t }) => id_stage == props.node.id && t == "Val"
+  );
+  // if binding is undefind rerturn false. else return true.
+  return binding?.t == "Val" ? false : true;
+};
+
+const enfold = (props: expviewprops)=> (  e: MouseEvent) => {
+  if (e.shiftKey) {
+    return;
+  } else {
+    e.preventDefault();
+    e.stopPropagation();
+    props.inject({
+      t: "Project",
+      id: props.node.id,
+      action: "toggleEnfoldCurrent",
+    });
+  }
+};
+
+const enfoldAction = (props: expviewprops)=> ( e: MouseEvent) => {
+  if (e.shiftKey) {
+    return;
+  } else if (Projector.has_enfolded(props.projectors, props.node)) 
+  props.inject({
+    t: "Project",
+    id: props.node.id,
+    action: "toggleFoldCurrent",
+  })
+  else {
+    switch(Projector.get(props.projectors, props.node.id).folded) {
+      case "Enfolded":
+        props.inject({
+          t: "Project",
+          id: props.node.id,
+          action: "toggleFoldCurrent",
+        });
+        break;
+      case "Folded":
+        props.inject({
+          t: "Project",
+          id: props.node.id,
+          action: "toggleFoldCurrent",
+        });
+        break;
+      default:
+        props.inject({
+          t: "Project",
+          id: props.node.id,
+          action: "toggleEnfoldCurrent",
+        });
+        break;
+    }
+  }
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+const selectOrFold = (props: expviewprops)=> ( e: MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  console.log("clicks: " + e.detail);
+  switch (e.detail) {
+    case 1:
+      setSelect(props)(e);
+      break;
+    case 2:
+    case 3:
+      props.inject({
+        t: "Project",
+        id: props.node.id,
+        action: "toggleFoldCurrent",
+      });
+      break;
+  }
+};
+
 const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
   const { path, depth } = Statics.get(info, node.id);
   const is_selected =
@@ -45,15 +126,6 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
 };
 
 const ExpViewGo: Component<expviewprops> = (props) => {
-  const eff = (props: expviewprops): boolean => {
-    /* search mask for a binding whose first id is this node's id.
-    then check if it's a val binding. if so return true. else false. */
-    const binding = props.mask.find(
-      ({ ids: [_, id_stage], t }) => id_stage == props.node.id && t == "Val"
-    );
-    // if binding is undefind rerturn false. else return true.
-    return binding?.t == "Val" ? false : true;
-  };
   switch (props.node.t) {
     case "Atom":
       return (
@@ -69,7 +141,9 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                   props.projectors
                 ),
               }}
-              onpointerdown={setSelect(props)}
+              onclick={selectOrFold(props)}
+              //onpointerdown={setSelect(props)}
+              oncontextmenu={enfoldAction(props)}
             >
               <div id={`sym-${props.node.id}`}>
                 {Names.get(props.symbols, props.node.sym)}
@@ -104,24 +178,8 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                   props.projectors
                 ),
               }}
-              onclick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("clicks: " + e.detail);
-                switch (e.detail) {
-                  case 1:
-                    setSelect(props)(e);
-                    break;
-                  case 2:
-                  case 3:
-                    props.inject({
-                      t: "Project",
-                      id: props.node.id,
-                      action: "toggleFoldCurrent",
-                    });
-                    break;
-                }
-              }}
+              oncontextmenu={enfoldAction(props)}
+              onclick={selectOrFold(props)}
             >
               {
                 <Index
