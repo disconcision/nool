@@ -43,7 +43,7 @@ const eff = (props: expviewprops): boolean => {
   return binding?.t == "Val" ? false : true;
 };
 
-const enfold = (props: expviewprops)=> (  e: MouseEvent) => {
+const enfold = (props: expviewprops) => (e: MouseEvent) => {
   if (e.shiftKey) {
     return;
   } else {
@@ -57,31 +57,41 @@ const enfold = (props: expviewprops)=> (  e: MouseEvent) => {
   }
 };
 
-const enfoldAction = (props: expviewprops)=> ( e: MouseEvent) => {
+const enfoldAction = (props: expviewprops) => (e: MouseEvent) => {
+  const p = Projector.get(props.projectors, props.node.id);
   if (e.shiftKey) {
     return;
-  } else if (Projector.has_enfolded(props.projectors, props.node)) 
-  props.inject({
-    t: "Project",
-    id: props.node.id,
-    action: "toggleFoldCurrent",
-  })
+  } else if (p.folded == "Folded") {
+    props.inject({
+      t: "Project",
+      id: props.node.id,
+      action: "toggleFoldCurrent",
+    });
+  } else if (
+    Projector.has_enfolded(props.projectors, props.node) &&
+    p.folded != "Enfolded"
+  )
+    props.inject({
+      t: "Project",
+      id: props.node.id,
+      action: "toggleFoldCurrent",
+    });
   else {
-    switch(Projector.get(props.projectors, props.node.id).folded) {
+    switch (p.folded) {
       case "Enfolded":
         props.inject({
           t: "Project",
           id: props.node.id,
-          action: "toggleFoldCurrent",
+          action: "toggleEnfoldCurrent",
         });
         break;
-      case "Folded":
-        props.inject({
-          t: "Project",
-          id: props.node.id,
-          action: "toggleFoldCurrent",
-        });
-        break;
+      // case "Folded":
+      //   props.inject({
+      //     t: "Project",
+      //     id: props.node.id,
+      //     action: "toggleFoldCurrent",
+      //   });
+      //   break;
       default:
         props.inject({
           t: "Project",
@@ -95,7 +105,7 @@ const enfoldAction = (props: expviewprops)=> ( e: MouseEvent) => {
   e.stopPropagation();
 };
 
-const selectOrFold = (props: expviewprops)=> ( e: MouseEvent) => {
+const selectOrFold = (props: expviewprops) => (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
   console.log("clicks: " + e.detail);
@@ -171,7 +181,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               class={`comp ${Exp.head(props.node)} ${common_clss(props)}`}
               classList={{
                 animate: props.animate,
-                digits: Exp.head_is("ɖ", props.node),
+                digits: Exp.is_digits(props.node),
                 folded: Projector.is_folded(props.node.id, props.projectors),
                 enfolded: Projector.is_enfolded(
                   props.node.id,
@@ -186,7 +196,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                   each={
                     /*Projector.is_folded(props.node.id, props.projectors)
                       ? props.node.kids.slice(0, 1)
-                      :*/ Exp.head_is("ɖ", props.node)
+                      :*/ Exp.is_digits(props.node)
                       ? props.node.kids.slice(1)
                       : props.node.kids
                   }

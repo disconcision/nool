@@ -93,7 +93,22 @@ const get_enfolded = (projectors: PMap, node: Exp.t): Exp.t[] => {
 export const has_enfolded = (projectors: PMap, node: Exp.t): boolean =>
   get_enfolded(projectors, node).length > 0;
 
-let fold_head = (sym: string): Exp.t[] => [{ t: "Atom", id: ID.mk(), sym }];
+let get_id = (node: Exp.t) => {
+  const res = Exp.head_id(node);
+  return res == undefined ? -1 : res;
+};
+
+let summary_head = (node: Exp.t): Exp.t => ({
+  t: "Atom",
+  id: get_id(node),
+  sym: Exp.head(node),
+});
+
+let blank_head = (node: Exp.t): Exp.t => ({
+  t: "Atom",
+  id: get_id(node),
+  sym: "",
+});
 
 /* TODO: maybe dont allow enfolds inside enfolds */
 export const project_folds = (projectors: PMap, node: Exp.t): Exp.t => {
@@ -106,10 +121,11 @@ export const project_folds = (projectors: PMap, node: Exp.t): Exp.t => {
           const enfolded = node.kids
             .map((kid) => get_enfolded(projectors, kid))
             .flat();
-          const atom = fold_head(enfolded.length == 0 ? Exp.head(node) : "");
+          const head =
+            enfolded.length == 0 ? [summary_head(node)] : [blank_head(node)];
           return {
             ...node,
-            kids: atom.concat(enfolded),
+            kids: head.concat(enfolded),
           };
         default:
           return {

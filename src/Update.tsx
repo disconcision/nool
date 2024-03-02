@@ -15,6 +15,7 @@ import * as Path from "./syntax/Path";
 import * as Util from "./Util";
 import { reconcile } from "solid-js/store";
 import * as Projectors from "./Projector";
+import * as Tone from "tone";
 
 export type result = Model.t | "NoChange";
 
@@ -27,7 +28,8 @@ export const of_theme = (theme: Settings.theme): [number, number] => {
   }
 };
 
-export const sound = (model: Model.t, action: Action.t): void => {
+export  const sound = async (model: Model.t, action: Action.t): Promise<void> => {
+  await Tone.start();
   const [pitch, volume] = of_theme(model.settings.theme);
   switch (action.t) {
     case "transformNodeAndFlipTransform":
@@ -246,12 +248,17 @@ export const update = (model: Model.t, action: Action.t): result => {
 };
 
 export const viewTransition = (action: Action.t, f: () => void) => {
+  const r = document.querySelector<HTMLElement>(":root");
+  if (action.t == "Project") {
+    if (r != null) r.style.setProperty("--anim-factor", "2");
+  }
   const guy2 = document.getElementById("main");
   guy2 ? guy2.classList.add(action.t) : console.log("no guy 1");
   let v = document.startViewTransition(f);
-  v.finished.then(() =>
-    guy2 ? guy2.classList.remove(action.t) : console.log("no guy 2")
-  );
+  v.finished.then(() => {
+    guy2 ? guy2.classList.remove(action.t) : console.log("no guy 2");
+    if (r != null) r.style.setProperty("--anim-factor", "1");
+  });
 };
 // document.addEventListener("transitionstart", (e) => {
 //   in_transition = true;

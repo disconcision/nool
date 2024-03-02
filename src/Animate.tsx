@@ -11,7 +11,6 @@ export const init = ():void => {
   for (let id = 0; id < 200; id++) {
     style.innerHTML += `#node-${id}.animate { view-transition-name: flip-node-${id}; }\n`;
     style.innerHTML += `#main.unsetSelections #sym-${id}, #main.setSelect #sym-${id}, #main.moveStage #sym-${id} { view-transition-name: flip-sym-${id}; }\n`;
-    
     //style.innerHTML += `#main.setSelect #pat-${id} { view-transition-name: flip-pat-${id}; }`;
     //style.innerHTML += blah(`flip-node-${id}`);
     //style.innerHTML += blah(`flip-pat-${id}`);

@@ -1,10 +1,10 @@
 import { Exp, atom, comp, flat } from "../syntax/Exp";
-import { empty } from "../syntax/Path";
+import * as Symbols from "../data/Symbols";
 
 // ☁️ 🧩 🦷 🦠  🌸 🍄 🎲 🐝
 // ➕ ➖ ✖️ ➗ 🟰 🌕 🌘 🌑 0️⃣ 1️⃣ ❓
 
-const B = flat("ɖ");
+const B = flat(Symbols.digit);
 
 export const alg: Exp = comp([
   atom("➕"),

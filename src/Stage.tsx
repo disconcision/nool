@@ -1,16 +1,15 @@
-import { Exp } from "./syntax/Exp";
+import * as Exp from "./syntax/Exp";
 import * as Statics from "./Statics";
 import * as Path from "./syntax/Path";
 import * as Projector from "./Projector";
 import * as World from "./data/World";
-import { is_path_valid } from "./syntax/Node";
+import { is_path_valid, id_at } from "./syntax/Node";
 import * as ID from "./syntax/ID";
-import { id_at } from "./syntax/Node";
 
 export type selection = "unselected" | Path.t;
 
 export type Stage = {
-  exp: Exp;
+  exp: Exp.t;
   selection: selection;
   info: Statics.InfoMap; //derived from exp
   projectors: Projector.PMap; //annotations
@@ -18,7 +17,7 @@ export type Stage = {
 
 export type t = Stage;
 
-const exp: Exp = World.init;
+const exp: Exp.t = World.init;
 
 export const init: Stage = {
   exp,
@@ -46,7 +45,7 @@ const rev = (path: Path.t): Path.t => {
   return blah.reverse();
 };
 
-const move_up = (exp: Exp, selection: number[]): Path.t => {
+const move_up = (exp: Exp.t, selection: number[]): Path.t => {
   if (selection.length === 0) return selection;
   const [last, ...tl] = rev(selection);
   const new_path = rev([last - 1, ...tl]);
@@ -56,7 +55,7 @@ const move_up = (exp: Exp, selection: number[]): Path.t => {
   } else return selection;
 };
 
-const move_down = (exp: Exp, selection: number[]): Path.t => {
+const move_down = (exp: Exp.t, selection: number[]): Path.t => {
   /* first, try to increment last idx of selection.
   if that gives a valid path, return it.
   then try to increment second last index, etc.
@@ -77,7 +76,7 @@ const move_down = (exp: Exp, selection: number[]): Path.t => {
   return move_down(exp, Array(selection.length).fill(0));
 };
 
-const move_left = (_exp: Exp, selection: number[]): Path.t => {
+const move_left = (_exp: Exp.t, selection: number[]): Path.t => {
   if (selection.length === 0) {
     return selection;
   } else {
@@ -85,7 +84,7 @@ const move_left = (_exp: Exp, selection: number[]): Path.t => {
   }
 };
 
-const move_right = (exp: Exp, selection: number[]): Path.t => {
+const move_right = (exp: Exp.t, selection: number[]): Path.t => {
   const new_selection = [...selection, 1];
   if (is_path_valid(new_selection, exp)) {
     return new_selection;
@@ -121,3 +120,7 @@ export const indicated_id = (stage: Stage): ID.t | undefined =>
   stage.selection === "unselected"
     ? undefined
     : id_at(stage.selection, stage.exp);
+
+export const projected_width = (stage: t) =>{
+  console.log("width: " +Exp.width(Projector.project_folds(stage.projectors, stage.exp)))
+  return Exp.width(Projector.project_folds(stage.projectors, stage.exp));}

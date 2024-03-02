@@ -3,6 +3,7 @@ import * as Node from "./Node";
 import * as Exp from "./Exp";
 import * as ID from "./ID";
 import * as Path from "./Path";
+import * as Symbols from "../data/Symbols";
 
 export type Symbol = { t: "Var"; name: string } | { t: "Const"; name: string };
 
@@ -266,31 +267,9 @@ export const transform_at_path = (
   }
 };
 
-export const transform_at_path2 = (
-  exp: Exp.t,
-  pat: Pat,
-  template: Pat,
-  path: Path.t
-): TransformResult => {
-  if (path.length === 0) {
-    return transform(exp, pat, template);
-  } else {
-    let [hd, ...tl] = path;
-    switch (exp.t) {
-      case "Atom":
-        return "NoMatch";
-      case "Comp":
-        //TODO: cleanup...
-        const res = transform_at_path(exp.kids[hd], pat, template, tl);
-        if (res === "NoMatch") return "NoMatch";
-        let kids = exp.kids.map((kid, index) => {
-          if (index === hd) {
-            const res = transform_at_path(kid, pat, template, tl);
-            if (res === "NoMatch") return kid;
-            else return res;
-          } else return kid;
-        });
-        return { ...exp, kids };
-    }
-  }
-};
+export const head_is =
+  (sym: string) =>
+  (node: t): boolean =>
+    Node.head(node)?.name === sym;
+
+export const is_digits = head_is(Symbols.digit);

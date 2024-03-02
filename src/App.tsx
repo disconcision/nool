@@ -8,6 +8,7 @@ import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Animate from "./Animate";
+import * as Tone from "tone";
 
 export type SetModel = SetStoreFunction<Model.t>;
 

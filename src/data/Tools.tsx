@@ -1,6 +1,7 @@
 import * as Pat from "../syntax/Pat";
 import * as Sound from "../Sound";
 import * as Transform from "../Transform";
+import * as Symbols from "./Symbols";
 
 type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
 
@@ -30,8 +31,8 @@ const times_x = bin_x("✖️");
 const times_y = bin_y("✖️");
 const equals_x = bin_x("🟰");
 
-const Bx = bin_x("ɖ");
-const By = bin_y("ɖ");
+const Bx = bin_x(Symbols.digit);
+const By = bin_y(Symbols.digit);
 const two = Bx(zero, one);
 
 const b_def_0: Base = {
