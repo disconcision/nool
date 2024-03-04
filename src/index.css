@@ -1,5 +1,5 @@
 :root {
-  --anim-factor: 1;
+  --anim-factor: 1.25;
 }
 
 .notransition * {
@@ -801,7 +801,7 @@ v .transform-view .label {
 }
 
 .node.comp.digits.selected > .head {
-  filter: brightness(2.0) !important;
+  filter: brightness(2) !important;
 }
 
 .node:not(.digits):has(.digits) > .digits {
@@ -890,21 +890,18 @@ v .transform-view .label {
   transform: scale(1.01);
 }
 
-.node-container.LinearInfix .node.comp *:nth-child(1) {
+/* HACK: Actual infix ops style: applies to all nodes with 3 children */
+.node-container.LinearInfix .node.comp *:nth-child(1):nth-last-child(3) {
   order: 2;
 }
-.node-container.LinearInfix .node.comp *:nth-child(2) {
+.node-container.LinearInfix .node.comp *:nth-child(2):nth-last-child(2) {
   order: 1;
 }
-.node-container.LinearInfix .node.comp *:nth-child(3) {
+.node-container.LinearInfix .node.comp *:nth-child(3):nth-last-child(1) {
   order: 3;
 }
-/* Special case for unary ops (TODO: Betterize) */
-.node-container.LinearInfix
-  .node.comp:has(> :nth-child(2):last-child)
-  *:nth-child(1) {
-  order: 1;
-}
+
+/* STYLE: ALPHANUMERIC NAMES */
 
 #seed.SingleChar .node.comp {
   border-left: 0.3px solid rgb(255 0 220 / 53%);
@@ -919,33 +916,31 @@ v .transform-view .label {
 }
 
 /* HACKY */
-#seed.SingleChar #stage .node.comp:not(.mask),
-#seed.SingleChar #noolbox .node.comp:not(.mask) {
+#seed.SingleChar .node.comp:not(.mask) {
   background: none;
 }
 
 #seed.SingleChar .node.atom,
 #seed.SingleChar .head {
-  font-family: "Roboto";
-  font-weight: 700;
+  padding: 0 0.25em 0 0.25em;
+  font-size: 1.3em;
   font-family: monospace;
-
+  /* font-weight: 700; */
   border-top: none;
   border-bottom: none;
   box-shadow: none;
 }
 #seed.SingleChar .node.atom,
+#seed.SingleChar .node.digits .head {
+  color: black;
+}
 #seed.SingleChar .head {
-  padding: 0 0.3em 0 0.3em;
+  color: #9c7bdf;
 }
-#seed.SingleChar .node.atom {
-  color: #474646;
-}
-#seed.SingleChar .head,
-#seed.SingleChar .node.digits > .node.atom {
-  color: #2d8b7e;
-}
-#seed.SingleChar .selected > .head {
+#seed.SingleChar .node.atom.selected,
+#seed.SingleChar .node.selected > .head {
+  animation-name: none;
+  color: white;
   -webkit-text-stroke-width: 0.02em;
   -webkit-text-stroke-color: black;
 }
@@ -1118,7 +1113,6 @@ body:has(#main.Dark) {
   right: 0em;
   top: 0.75em;
 }
-
 
 /* VIEW TRANSITIONS */
 
