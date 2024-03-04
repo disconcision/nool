@@ -376,26 +376,24 @@ code {
 }
 
 .node.enfolded {
-  border-left: 3.5px solid #9c7bdf ;
-  /* border-top: 0.7px solid #9c7bdf ;
-  border-bottom: 0.7px solid #9c7bdf ; */
+  /* important is hack to deal with digits; can remove after statics is extended */
+  border-left: 5px solid #9c7bdf !important;
 }
-*:not(.node-container) > .node.folded > .node.enfolded {
-  border-left: 1px solid #9c7bdf;
+.node.folded > .node.enfolded {
+  border-left: 2px solid #9c7bdf !important;
   background-color: #c7f0e3;
   box-shadow: inset 0.5em 0 1em #dacae6aa;
 }
-.node-container > .node.folded > .node.enfolded {
-  border-left: none;
+/* If we're only showing one punchout, make it clean */
+.node-container > .node.folded > *.head + .node.enfolded:last-child {
+  border-left: none !important;
   background: none;
-}
-.node-container > .node.folded > .node.enfolded {
-  /* border-left: none !important; */
+  box-shadow: 0.25em 0.25em 0.5em #773fcc40; /* HACK */
 }
 
 /* STAGE */
 
-.node.comp:not(.pat) {
+.node.comp {
   /*background-color: #005bff26;*/
   background: linear-gradient(
     222deg,
@@ -436,9 +434,10 @@ code {
   grid-column: unset;
 }
 .TreeTop .node-container.TreeTop .node.comp {
-  align-items: end;
+  grid-row: 2;
   display: grid;
   grid-auto-flow: row;
+  align-items: end;
   justify-items: center;
   border-radius: 3em 3em 1em 1em;
 }
@@ -594,6 +593,7 @@ v .transform-view .label {
   position: relative;
   display: flex;
   flex-direction: row;
+  background: none;
 }
 
 .NoMatch .node.pat.atom,
@@ -761,10 +761,9 @@ v .transform-view .label {
 
 .node.comp.䷶ {
   border-radius: 2.7em 0.3em 0.3em 2.7em;
-  display: grid;
+  /* display: grid;
   grid-auto-flow: unset;
-  grid-template-columns: fit-content(1em) 1fr;
-  grid-template-rows: repeat(1fr);
+  grid-template-columns: fit-content(1em) 1fr; */
   background: none;
   box-shadow: -1em 0em 1.5em #34b59516;
   border: none;
@@ -778,38 +777,34 @@ v .transform-view .label {
 
 /* NODE LAYOUT: DIGITS */
 
-#noolbox .node.digits .node.digits,
-#stage .node.digits .node.digits,
-#noolbox .node.digits .atom,
-#stage .node.digits .atom {
+.node.digits .node.digits,
+.node.digits > .node.atom {
   box-shadow: none;
   padding: 0;
   border: none;
 }
 
-#noolbox .node.digits,
-#stage .node.digits {
+.node.digits,
+.node.digits > .node.atom {
   border-radius: 1.1em;
   padding: 0;
   margin: 0;
-  background-color: #0000;
+  background: none;
   box-shadow: none;
   border-color: #0000;
 }
 
-#noolbox .node.comp.digits .head,
-#stage .node.comp.digits .head {
+.node.comp.digits .head {
   color: black;
   text-shadow: none;
   padding: 0;
 }
 
-#stage .node.comp.digits.selected .head {
-  filter: brightness(1) !important;
+.node.comp.digits.selected > .head {
+  filter: brightness(2.0) !important;
 }
 
-#noolbox .node:not(.digits):has(.digits) > .digits,
-#stage .node:not(.digits):has(.digits) > .digits {
+.node:not(.digits):has(.digits) > .digits {
   padding-left: 0.15em;
   padding-right: 0.15em;
 }
@@ -911,14 +906,18 @@ v .transform-view .label {
   order: 1;
 }
 
-#seed.SingleChar #stage .node.comp,
-#seed.SingleChar #noolbox .node.comp {
+#seed.SingleChar .node.comp {
   border-left: 0.3px solid rgb(255 0 220 / 53%);
   border-right: 0.3px solid rgb(119 198 168);
   border-top: none;
   border-bottom: none;
   border-radius: 0.8em;
 }
+
+#seed.SingleChar .node.comp.digits {
+  border-color: #ffff;
+}
+
 /* HACKY */
 #seed.SingleChar #stage .node.comp:not(.mask),
 #seed.SingleChar #noolbox .node.comp:not(.mask) {
@@ -935,12 +934,15 @@ v .transform-view .label {
   border-bottom: none;
   box-shadow: none;
 }
+#seed.SingleChar .node.atom,
+#seed.SingleChar .head {
+  padding: 0 0.3em 0 0.3em;
+}
 #seed.SingleChar .node.atom {
-  padding: 0 0.4em 0 0.4em;
   color: #474646;
 }
-#seed.SingleChar .head {
-  padding: 0 0.35em 0 0.35em;
+#seed.SingleChar .head,
+#seed.SingleChar .node.digits > .node.atom {
   color: #2d8b7e;
 }
 #seed.SingleChar .selected > .head {

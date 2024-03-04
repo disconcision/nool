@@ -4,15 +4,14 @@ import { Model } from "../Model";
 import * as Action from "../Action";
 import { ExpView } from "./ExpView";
 import * as Hover from "../Hover";
-import { depth, width } from "../syntax/Node";
-import * as Projector from "../Projector";
 import * as Stage from "../Stage";
 
 const stage_scale = (w: number) => {
-  if (w < 10) {
-    return '0.8em';
+  /*TODO: magic numbers */
+  if (w < 12) {
+    return "0.8em";
   } else {
-    return `${100/1.85/w}vh`;
+    return `${100 / 1.85 / w}vh`;
   }
 };
 
