@@ -9,10 +9,10 @@ import { Transform, flip, at_path } from "../Transform";
 import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
-import * as Sound from "../Sound";
 import { map_ids } from "../syntax/Node";
 import * as Util from "../Util";
 import * as Stage from "../Stage";
+import * as Symbols from "../data/Symbols";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   props
@@ -24,6 +24,8 @@ export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
   );
 };
 
+const is_digits = Pat.is_digits;
+
 const PatView: Component<{
   p: Pat.t;
   is_head: boolean;
@@ -34,6 +36,9 @@ const PatView: Component<{
       return (
         <div
           id={`pat-${props.p.id}`}
+          classList={{
+            digits: is_digits(props.p),
+          }}
           class={`pat ${props.p.sym.name} ${
             props.is_head ? "head pat" : "node atom pat"
           }`}
@@ -44,10 +49,20 @@ const PatView: Component<{
     }
     case "Comp":
       return (
-        <div id={`pat-${props.p.id}`} class="node comp pat">
-          <For each={props.p.kids}>
+        <div
+          id={`pat-${props.p.id}`}
+          classList={{
+            digits: is_digits(props.p),
+          }}
+          class="node comp pat"
+        >
+          <For each={is_digits(props.p) ? props.p.kids.slice(1) : props.p.kids}>
             {(kid, i) =>
-              PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
+              PatView({
+                p: kid,
+                is_head: i() === 0 && !is_digits(props.p),
+                symbols: props.symbols,
+              })
             }
           </For>
         </div>
@@ -210,12 +225,15 @@ const TransformView: Component<{
   );
 };
 
-const select_transforms = (stage:Stage.t,tools: ToolBox.t): [number, Transform][] => {
+const select_transforms = (
+  stage: Stage.t,
+  tools: ToolBox.t
+): [number, Transform][] => {
   //const filtered_transforms = filter_transforms(stage, tools.transforms);
   const filtered_transforms = tools.transforms;
   /* want to take tools.size tools starting at tools.offset (index into tools)
     and treat the list as a ring buffer */
-  
+
   const len = filtered_transforms.length;
   const offset = tools.offset % len;
   const size = tools.size;
@@ -255,7 +273,7 @@ export const ToolsView: Component<{
               t: "wheelNumTools",
               offset,
             });
-          }, 1000)();
+          }, 250)();
         } else {
           throttle(() => {
             const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
@@ -264,7 +282,7 @@ export const ToolsView: Component<{
               t: "wheelTools",
               offset: offset,
             });
-          }, 1000)();
+          }, 250)();
         }
       }}
     >

@@ -37,6 +37,12 @@ export function map_ids<T>(f: (id: ID.t) => ID.t, e: t<T>): t<T> {
   }
 }
 
+export function head<T>(e: t<T>): T | undefined {
+  return e.t == "Comp" && e.kids.length > 0 && e.kids[0].t == "Atom"
+    ? e.kids[0].sym
+    : undefined;
+}
+
 /* Zero out all ids */
 export function erase<T>(x: t<T>): t<T> {
   return map_ids((_) => 0, x);
@@ -54,6 +60,17 @@ export function depth<T>(node: t<T>): number {
       return 0;
     case "Comp":
       return 1 + Math.max(...node.kids.map(depth));
+  }
+}
+
+export function width<T>(node: t<T>): number {
+  //TODO: Minus max/-1 special casting on treeleft projection
+  //TODO: This doesn't work with digits... need to unabstract
+  switch (node.t) {
+    case "Atom":
+      return 1;
+    case "Comp":
+      return Math.max(1, -1 + node.kids.reduce((acc, n) => acc + width(n), 0));
   }
 }
 

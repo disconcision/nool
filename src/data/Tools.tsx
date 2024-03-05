@@ -1,13 +1,13 @@
 import * as Pat from "../syntax/Pat";
 import * as Sound from "../Sound";
 import * as Transform from "../Transform";
+import * as Symbols from "./Symbols";
 
 type Base = { source: Pat.t; result: Pat.t; sound: Sound.Sfxbank };
 
-
-
 const zero = Pat.p_const("🌑");
 const one = Pat.p_const("🌘");
+const one2 = Pat.p_const("🌘");
 const hole = Pat.p_const("❓");
 
 const var_a = Pat.p_var("♫");
@@ -30,6 +30,41 @@ const plus_y = bin_y("➕");
 const times_x = bin_x("✖️");
 const times_y = bin_y("✖️");
 const equals_x = bin_x("🟰");
+
+const Bx = bin_x(Symbols.digit);
+const By = bin_y(Symbols.digit);
+const two = Bx(zero, one);
+
+const b_def_0: Base = {
+  source: plus_x(one, one),
+  result: two,
+  sound: "tiup",
+};
+const b_def_1: Base = {
+  source: Bx(var_a, var_b),
+  result: plus_x(var_a, times_x(var_b, two)),
+  sound: "tiup",
+};
+const b_thm_0: Base = {
+  source: Bx(one, var_a),
+  result: plus_x(Bx(zero, var_a), one),
+  sound: "tiup",
+};
+const b_thm_1: Base = {
+  source: Bx(var_a, zero),
+  result: times_x(var_a, two),
+  sound: "tiup",
+};
+const b_thm_2: Base = {
+  source: plus_x(Bx(zero, var_a), By(var_c, var_b)),
+  result: Bx(var_c, plus_x(var_a, var_b)),
+  sound: "tiup",
+};
+const b_thm_3: Base = {
+  source: plus_x(Bx(one, var_a), By(one2, var_b)),
+  result: Bx(zero, plus_x(var_a, plus_x(var_b, one2))),
+  sound: "tiup",
+};
 
 const commute_plus: Base = {
   source: plus_x(var_a, var_b),
@@ -87,13 +122,13 @@ const distribute_times_plus: Base = {
 
 const mk_mk = (result: Pat.t): Base => ({
   source: hole,
-  result:result,
-  sound: "klohk",//TODO
+  result: result,
+  sound: "klohk", //TODO
 });
 const mk_wrap = (result: Pat.t): Base => ({
   source: var_a,
-  result:result,
-  sound: "klohk",//TODO
+  result: result,
+  sound: "klohk", //TODO
 });
 const mk_one = mk_mk(one);
 const mk_zero = mk_mk(zero);
@@ -147,6 +182,12 @@ const mk = ({ source, result, sound }: Base): Transform.t => ({
 });
 
 export const init = [
+  b_def_0,
+  b_def_1,
+  b_thm_0,
+  b_thm_1,
+  b_thm_2,
+  b_thm_3,
   associate_plus,
   commute_plus,
   identity_plus,
@@ -158,4 +199,4 @@ export const init = [
   double_neg,
 ].map(mk);
 
-export const _init =makers.map(mk);
+export const _init = makers.map(mk);

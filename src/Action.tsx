@@ -4,6 +4,8 @@ import * as Hover from "./Hover";
 import * as Settings from "./Settings";
 import * as Transform from "./Transform";
 import * as Pat from "./syntax/Pat";
+import * as Projector from "./Projector";
+import * as ID from "./syntax/ID";
 
 export type Inject = (_: Action) => void;
 
@@ -16,8 +18,8 @@ export type Action =
   | { t: "setSelect"; path: Path.t }
   | { t: "moveStage"; direction: Direction }
   | { t: "moveTool"; direction: Direction }
-  | { t: "wheelTools"; offset: number}
-  | { t: "wheelNumTools"; offset: number}
+  | { t: "wheelTools"; offset: number }
+  | { t: "wheelNumTools"; offset: number }
   | { t: "unsetSelections" }
   | {
       t: "transformNode";
@@ -35,6 +37,7 @@ export type Action =
   | { t: "applyTransform"; idx: number; direction: "forward" | "reverse" }
   | { t: "applyTransformSelected" }
   | { t: "flipTransform"; idx: number }
-  | { t: "Noop" };
+  | { t: "Noop" }
+  | { t: "Project"; id: ID.t | undefined; action: Projector.Action };
 
 export type t = Action;

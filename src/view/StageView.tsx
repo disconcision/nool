@@ -4,9 +4,16 @@ import { Model } from "../Model";
 import * as Action from "../Action";
 import { ExpView } from "./ExpView";
 import * as Hover from "../Hover";
-import { depth } from "../syntax/Node";
+import * as Stage from "../Stage";
 
-const stage_scale = (d: number) => (d == 0 ? 1 : 4 / (d + 1));
+const stage_scale = (w: number) => {
+  /*TODO: magic numbers */
+  if (w < 12) {
+    return "0.8em";
+  } else {
+    return `${100 / 1.85 / w}vh`;
+  }
+};
 
 export const StageView: Component<{
   model: Model;
@@ -14,7 +21,9 @@ export const StageView: Component<{
 }> = (props) => (
   <div
     id="stage"
-    style={`font-size: ${stage_scale(depth(props.model.stage.exp))}em`}
+    style={`font-size: ${stage_scale(
+      Stage.projected_width(props.model.stage)
+    )}`}
   >
     <div id="debug" style="display:none">
       <div>selection.path: {props.model.stage.selection}</div>
