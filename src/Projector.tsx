@@ -19,10 +19,11 @@ export type PMap = Map<ID.t, t>;
 
 export const init: PMap = (() => {
   const map = new Map<ID.t, t>();
-  map.set(69, { folded: "Folded" });
-  map.set(68, { folded: "Folded" });
-  map.set(66, { folded: "Folded" });
+  map.set(77, { folded: "Folded" });
+  map.set(79, { folded: "Folded" });
+  map.set(81, { folded: "Folded" });
   map.set(20, { folded: "Enfolded" });
+  map.set(82, { folded: "Folded" });
   return map;
 })();
 

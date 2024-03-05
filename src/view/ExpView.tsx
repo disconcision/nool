@@ -135,6 +135,26 @@ const common_clss = ({ node, mask, info, selection }: expviewprops): string => {
   return `node ${is_selected ? "selected" : ""} ${mask_cls} depth-${depth}`;
 };
 
+const is_code = (info: Statics.InfoMap, node: Exp.t): boolean =>
+  Statics.get(info, node.id).cls.t == "Code";
+
+  const is_file = (info: Statics.InfoMap, node: Exp.t): boolean =>
+  Statics.get(info, node.id).cls.t == "File";
+
+  const is_room = (info: Statics.InfoMap, node: Exp.t): boolean =>
+  Statics.get(info, node.id).cls.t == "Room";
+
+const is_head =
+  (info: Statics.InfoMap, node: Exp.t) =>
+  (i: number): boolean => {
+    const cls = Statics.get(info, node.id).cls;
+    if (cls.t == "Code") {
+      return Statics.is_delim(cls.form, i);
+    } else {
+      return i === 0;
+    }
+  };
+
 const ExpViewGo: Component<expviewprops> = (props) => {
   switch (props.node.t) {
     case "Atom":
@@ -182,6 +202,9 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               classList={{
                 animate: props.animate,
                 digits: Exp.is_digits(props.node),
+                code: is_code(props.info, props.node),
+                room: is_room(props.info, props.node),
+                file: is_file(props.info, props.node),
                 folded: Projector.is_folded(props.node.id, props.projectors),
                 enfolded: Projector.is_enfolded(
                   props.node.id,
@@ -207,7 +230,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
                       selection={props.selection}
                       node={kid()}
                       animate={props.animate /*&& eff(props)*/}
-                      is_head={i === 0}
+                      is_head={is_head(props.info, props.node)(i)} // TODO: more complex is_head for code forms
                       inject={props.inject}
                       mask={props.mask}
                       symbols={props.symbols}

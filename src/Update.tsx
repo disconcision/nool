@@ -16,6 +16,8 @@ import * as Util from "./Util";
 import { reconcile } from "solid-js/store";
 import * as Projectors from "./Projector";
 import * as Tone from "tone";
+import * as Statics from "./Statics";
+import { id_at } from "./syntax/Node";
 
 export type result = Model.t | "NoChange";
 
@@ -28,7 +30,10 @@ export const of_theme = (theme: Settings.theme): [number, number] => {
   }
 };
 
-export  const sound = async (model: Model.t, action: Action.t): Promise<void> => {
+export const sound = async (
+  model: Model.t,
+  action: Action.t
+): Promise<void> => {
   await Tone.start();
   const [pitch, volume] = of_theme(model.settings.theme);
   switch (action.t) {
@@ -279,6 +284,14 @@ export const go = (
   } else {
     console.log("Action Success: " + action.t);
     const doIt = () => setModel(result);
+    const indicated_id = Stage.indicated_id(result.stage);
+    if (indicated_id)
+      console.log(
+        "ci: " +
+          Statics.string_of_cls(
+            Statics.get(result.stage.info, indicated_id).cls
+          )
+      );
     //setModel(reconcile(result, { merge: true, key: "kids" }));
     if (action.t === "setHover" || !document.startViewTransition) {
       console.log("setHover: Don't transition:" + action.t);

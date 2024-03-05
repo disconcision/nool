@@ -1,5 +1,6 @@
 import * as Node from "./Node";
 import * as Symbols from "../data/Symbols";
+import * as Statics from "../Statics";
 
 export type t = Node.t<string>;
 export type Exp = t;
@@ -12,6 +13,8 @@ export const equals = Node.equals;
 export const equals_id = Node.equals_id;
 export const erase = Node.erase;
 export const depth = Node.depth;
+
+export const of_atom = (e: Exp): string => (e.t == "Atom" ? e.sym : "headless");
 
 export const head = (e: Exp): string =>
   e.t == "Comp" && e.kids.length > 0 && e.kids[0].t == "Atom"
@@ -46,11 +49,12 @@ export const is_digits = (e: t) => head_is(Symbols.digit, e);
 
 export const width = (node: t): number => {
   //TODO: Currently special casting on treeleft projection
+  //TODO: Special case for code below
   switch (node.t) {
     case "Atom":
       return 1;
     case "Comp":
-      return is_digits(node)
+      return is_digits(node) || Statics.get_code_form(node) != "NotCode"
         ? 1
         : Math.max(1, -1 + node.kids.reduce((acc, n) => acc + width(n), 0));
   }
