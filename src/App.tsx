@@ -19,7 +19,7 @@ const App: Component = () => {
   // Get URL parameters for Hazel integration
   const urlParams = new URLSearchParams(window.location.search);
   const hazelId = urlParams.get("id");
-  const isHazelEmbed = !!hazelId;
+  const [isHazelEmbed] = createSignal(!!hazelId);
 
   const [model, setModel] = createStore({ ...Model.init });
   const [constraints, setConstraints] = createSignal<{
@@ -48,7 +48,7 @@ const App: Component = () => {
   let hazelIntegration: ReturnType<typeof useHazelIntegration> | null = null;
   let enhancedInject = inject;
   
-  if (isHazelEmbed) {
+  if (isHazelEmbed()) {
     hazelIntegration = useHazelIntegration({
       id: hazelId,
       codec: "json",
@@ -88,24 +88,49 @@ const App: Component = () => {
   // document.addEventListener("transitionend", (e) => {
   //   in_transition = false;
   // });
-  // Apply Hazel constraints to main container
+  // Apply Hazel constraints with responsive scaling
   const mainStyle = () => {
     const c = constraints();
-    return c ? {
-      "max-width": `${c.maxWidth}px`,
-      "max-height": `${c.maxHeight}px`,
-    } : {};
+    if (!c) return {};
+    
+    // Nool's natural dimensions (tight around content with padding)
+    const naturalWidth = 640;
+    const naturalHeight = 480;
+    
+    // Calculate scale factor - never scale up, only down
+    const scaleX = c.maxWidth / naturalWidth;
+    const scaleY = c.maxHeight / naturalHeight;
+    const scale = Math.min(1, scaleX, scaleY);
+    
+    if (scale < 1) {
+      // Scale down when constrained
+      return {
+        transform: `scale(${scale})`,
+        "transform-origin": "top left",
+        width: `${naturalWidth}px`,
+        height: `${naturalHeight}px`,
+      };
+    } else {
+      // Use natural size with max constraints
+      return {
+        "max-width": `${c.maxWidth}px`,
+        "max-height": `${c.maxHeight}px`,
+      };
+    }
   };
 
   return (
     <div
       id="main"
       class={model.settings.theme}
-      classList={{ selected: model.stage.selection === "unselected" }}
+      classList={{ 
+        selected: model.stage.selection === "unselected",
+        "hazel-embed": isHazelEmbed()
+      }}
       style={mainStyle()}
     >
       {Seed({ model, inject: enhancedInject })}
-      {!isHazelEmbed && SettingsView({ model, inject: enhancedInject })}
+      {!isHazelEmbed() && SettingsView({ model, inject: enhancedInject })}
     </div>
   );
 };
