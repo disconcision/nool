@@ -3,6 +3,7 @@ import { createStore, SetStoreFunction } from "solid-js/store";
 import { go } from "./Update";
 import * as Model from "./Model";
 import * as Action from "./Action";
+import * as Stage from "./Stage";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
@@ -26,6 +27,7 @@ const App: Component = () => {
     maxWidth: number;
     maxHeight: number;
   } | null>(null);
+  const [hazelReady, setHazelReady] = createSignal(!isHazelEmbed());
 
   Animate.init();
 
@@ -55,7 +57,21 @@ const App: Component = () => {
       onInit: (valueStr: string) => {
         console.log("Received init from Hazel:", valueStr);
         const exp = deserializeFromHazel(valueStr);
-        setModel("stage", "exp", exp);
+        // Use proper stage update to recalculate statics and projectors
+        const newStage = Stage.put_exp(model.stage, exp);
+        setModel("stage", newStage);
+        setHazelReady(true); // Show UI now that we have hazel data
+        
+        // Force reflow/repaint after a short delay to fix rendering issues
+        setTimeout(() => {
+          document.body.offsetHeight; // Force reflow
+          if (hazelIntegration) {
+            const rect = document.getElementById("main")?.getBoundingClientRect();
+            if (rect) {
+              hazelIntegration.resize(rect.width, rect.height);
+            }
+          }
+        }, 100);
       },
       onConstraints: (c) => {
         console.log("Received constraints from Hazel:", c);
@@ -129,8 +145,10 @@ const App: Component = () => {
       }}
       style={mainStyle()}
     >
-      {Seed({ model, inject: enhancedInject })}
-      {!isHazelEmbed() && SettingsView({ model, inject: enhancedInject })}
+      <div style={{ opacity: hazelReady() ? 1 : 0 }}>
+        {Seed({ model, inject: enhancedInject })}
+        {!isHazelEmbed() && SettingsView({ model, inject: enhancedInject })}
+      </div>
     </div>
   );
 };
