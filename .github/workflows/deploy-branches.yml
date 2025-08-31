@@ -11,14 +11,14 @@ jobs:
       #- name: Debugging with ssh
       #  uses: lhotari/action-upterm@v1
       - name: Checkout nool repo on current branch # STEP 1
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: source
       - name: Add name of current branch to environment as BRANCH_NAME
         uses: nelonoel/branch-name@v1.0.1
       - name: Retrieve build environment if cached # STEP 2
         id: build-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: '/home/runner/.opam/'
           key: ${{ runner.os }}-modules-${{ hashFiles('./source/pnp-lock.yaml') }}
@@ -43,7 +43,7 @@ jobs:
           pnpm run build
         working-directory: ./source
       - name: Checkout website build artifacts repo # STEP 4
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: disconcision/disconcision.github.io
           token: ${{ secrets.DEPLOY_NOOL }}
