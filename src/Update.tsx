@@ -16,7 +16,6 @@ import * as Path from "./syntax/Path";
 import * as Animate from "./Animate";
 import * as Util from "./Util";
 
-
 export type result = Model.t | "NoChange";
 
 export const of_theme = (theme: Settings.theme): [number, number] => {
@@ -206,7 +205,8 @@ export const update = (model: Model.t, action: Action.t): result => {
         },
       };
     case "wheelNumTools":
-      const clamp = (x:number, a:number, b:number) => Math.max( a, Math.min(x, b) );
+      const clamp = (x: number, a: number, b: number) =>
+        Math.max(a, Math.min(x, b));
       console.log("wheelNumTools:" + action.offset + ":" + model.tools.size);
       return {
         ...model,
@@ -215,9 +215,7 @@ export const update = (model: Model.t, action: Action.t): result => {
           size: clamp(
             model.tools.size + action.offset,
             1,
-            model.tools.transforms.length,
-            
-  
+            model.tools.transforms.length
           ),
         },
       };

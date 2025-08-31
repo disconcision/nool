@@ -1114,51 +1114,12 @@ body:has(#main.Dark) {
   color: black !important;
 }
 
-::view-transition-old(flip-node-selected),
-::view-transition-new(flip-node-selected) {
-  /*transition: none;
-  transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;*/
-  /*animation-duration: 200ms !important;
-    transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;
-  height: auto;
-  right: 0;
-  left: auto;
-  transform-origin: right center;*/
-}
-.selected {
-  /* needs some tlc. dont want internals to show during transition
-  */
-  view-transition-name: flip-node-selected;
-}
-#main.setSelect .selected,
-#main.unsetSelections .selected {
-  /* needs some tlc. dont want internals to show during transition
-  */
-  view-transition-name: flip-node-selected !important;
-}
-
-#seed .icon {
-  view-transition-name: flip-seed-icon;
-}
-#seed #noolbox {
-  view-transition-name: flip-noolbox;
-}
-#seed .previews {
-  /* view-transition-name: flip-previews; */
-}
-
 ::view-transition-group(flip-node-selected) {
-  view-transition-name: selected;
-  animation-timing-function: easeInBack; /*easeInBack; easeOutBounce;*/
+  animation-timing-function: easeInBack;
   animation-duration: calc(var(--anim-factor) * 0.2s);
-}
-::view-transition-old(flip-node-selected) {
-}
-::view-transition-new(flip-node-selected) {
 }
 
 ::view-transition-group(*) {
-  /*pointer-events: none;*/
   animation-duration: calc(var(--anim-factor) * 0.25s);
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
@@ -1167,24 +1128,10 @@ body:has(#main.Dark) {
 ::view-transition-new(*) {
   height: 100%;
   width: 100%;
-  /*animation-name: none !important;*/
-  /*animation-name: none !important;
-  animation-fill-mode: forwards;
-  opacity: 0;*/
-  /*animation-name: none;*/
 }
 ::view-transition-old(*) {
   height: 100%;
   width: 100%;
-  /*animation-name: none !important;*/
-  /*animation-name: none !important;*/
-
-  /*pointer-events: none;*/
-  /*animation-name: none;*/
-}
-
-::view-transition {
-  /*pointer-events: none;*/
 }
 
 .selected-transition * {
