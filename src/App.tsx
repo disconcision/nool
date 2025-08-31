@@ -10,11 +10,13 @@ import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Animate from "./Animate";
 import { useHazelIntegration } from "./hazel/useHazelIntegration";
-import { serializeForHazel, deserializeFromHazel } from "./hazel/hazel-serialization";
+import {
+  serializeForHazel,
+  deserializeFromHazel,
+} from "./hazel/hazel-serialization";
 //import { Toolbar } from "./view/ToolsView";
 
 export type SetModel = SetStoreFunction<Model.t>;
-
 
 const App: Component = () => {
   // Get URL parameters for Hazel integration
@@ -28,28 +30,63 @@ const App: Component = () => {
     maxHeight: number;
   } | null>(null);
   const [hazelReady, setHazelReady] = createSignal(!isHazelEmbed());
+  let activeTransition: ViewTransition | null = null;
+  let pendingHoverAction: Action.t | null = null;
 
   Animate.init();
 
   const inject = (a: Action.t) => {
-    console.log(a);
-    if (a.t === "setHover" || !document.startViewTransition) {
-      console.log("sethover dont transition:" + a.t);
+    // CRITICAL: setHover actions must be deferred during view transitions.
+    // Transform actions trigger hover changes when tool sides flip (mouse position changes),
+    // causing DOM updates that int`erfere with ongoing view transitions and break animations.
+    // Solution: defer hover actions until transition completes, then apply the final hover state.
+    if (a.t === "setHover") {
+      if (activeTransition) {
+        pendingHoverAction = a;
+        return;
+      }
       go(model, setModel, a);
       return;
     }
-    const guy2 = document.getElementById("main");
-    guy2 ? guy2.classList.add(a.t) : console.log("no guy r add");
-    let v = document.startViewTransition(() => go(model, setModel, a));
-    v.finished.then(() =>
-      guy2 ? guy2.classList.remove(a.t) : console.log("no guy 2 rm")
-    );
+
+    if (!document.startViewTransition) {
+      go(model, setModel, a);
+      return;
+    }
+
+    const main = document.getElementById("main");
+    main?.classList.add(a.t);
+
+    // Assign transition names just before transition
+    Animate.assignTransitionNames(main, a.t);
+
+    activeTransition = document.startViewTransition(() => {
+      go(model, setModel, a);
+      // Re-assign transition names to NEW elements after DOM update
+      const mainAfter = document.getElementById("main");
+      // Force style recomputation before reassigning transition names
+      mainAfter?.offsetHeight;
+      Animate.assignTransitionNames(mainAfter, a.t);
+    });
+
+    activeTransition.finished.then(() => {
+      main?.classList.remove(a.t);
+      Animate.cleanupTransitionNames(main);
+      activeTransition = null;
+
+      // Process any pending hover action
+      if (pendingHoverAction) {
+        const deferredAction = pendingHoverAction;
+        pendingHoverAction = null;
+        go(model, setModel, deferredAction);
+      }
+    });
   };
 
   // Setup Hazel integration if running as exolivelit
   let hazelIntegration: ReturnType<typeof useHazelIntegration> | null = null;
   let enhancedInject = inject;
-  
+
   if (isHazelEmbed()) {
     hazelIntegration = useHazelIntegration({
       id: hazelId,
@@ -61,12 +98,14 @@ const App: Component = () => {
         const newStage = Stage.put_exp(model.stage, exp);
         setModel("stage", newStage);
         setHazelReady(true); // Show UI now that we have hazel data
-        
+
         // Force reflow/repaint after a short delay to fix rendering issues
         setTimeout(() => {
           document.body.offsetHeight; // Force reflow
           if (hazelIntegration) {
-            const rect = document.getElementById("main")?.getBoundingClientRect();
+            const rect = document
+              .getElementById("main")
+              ?.getBoundingClientRect();
             if (rect) {
               hazelIntegration.resize(rect.width, rect.height);
             }
@@ -108,16 +147,16 @@ const App: Component = () => {
   const mainStyle = () => {
     const c = constraints();
     if (!c) return {};
-    
+
     // Nool's natural dimensions (tight around content with padding)
     const naturalWidth = 640;
     const naturalHeight = 480;
-    
+
     // Calculate scale factor - never scale up, only down
     const scaleX = c.maxWidth / naturalWidth;
     const scaleY = c.maxHeight / naturalHeight;
     const scale = Math.min(1, scaleX, scaleY);
-    
+
     if (scale < 1) {
       // Scale down when constrained
       return {
@@ -139,9 +178,9 @@ const App: Component = () => {
     <div
       id="main"
       class={model.settings.theme}
-      classList={{ 
+      classList={{
         selected: model.stage.selection === "unselected",
-        "hazel-embed": isHazelEmbed()
+        "hazel-embed": isHazelEmbed(),
       }}
       style={mainStyle()}
     >
