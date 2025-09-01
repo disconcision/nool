@@ -2,6 +2,17 @@
   --anim-factor: 2;
 }
 
+/* Hazel embed adjustments */
+.hazel-embed #stage,
+.hazel-embed #noolbox {
+  /* height: 9.2em; */
+  /* Match toolbox height */
+}
+
+#main.hazel-embed {
+  padding: 0em; /* More padding for better visual spacing */
+}
+
 .notransition * {
   transition: none !important;
 }
