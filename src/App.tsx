@@ -12,23 +12,59 @@ import * as Animate from "./Animate";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
-
 const App: Component = () => {
   const [model, setModel] = createStore({ ...Model.init });
+  let activeTransition: ViewTransition | null = null;
+  let pendingHoverAction: Action.t | null = null;
+
   Animate.init();
+
   const inject = (a: Action.t) => {
-    console.log(a);
-    if (a.t === "setHover" || !document.startViewTransition) {
-      console.log("sethover dont transition:" + a.t);
+    // CRITICAL: setHover actions must be deferred during view transitions.
+    // Transform actions trigger hover changes when tool sides flip (mouse position changes),
+    // causing DOM updates that interfere with ongoing view transitions and break animations.
+    // Solution: defer hover actions until transition completes, then apply the final hover state.
+    if (a.t === "setHover") {
+      if (activeTransition) {
+        pendingHoverAction = a;
+        return;
+      }
       go(model, setModel, a);
       return;
     }
-    const guy2 = document.getElementById("main");
-    guy2 ? guy2.classList.add(a.t) : console.log("no guy r add");
-    let v = document.startViewTransition(() => go(model, setModel, a));
-    v.finished.then(() =>
-      guy2 ? guy2.classList.remove(a.t) : console.log("no guy 2 rm")
-    );
+
+    if (!document.startViewTransition) {
+      go(model, setModel, a);
+      return;
+    }
+
+    const main = document.getElementById("main");
+    main?.classList.add(a.t);
+
+    // Assign transition names just before transition
+    Animate.assignTransitionNames(main, a.t);
+
+    activeTransition = document.startViewTransition(() => {
+      go(model, setModel, a);
+      // Re-assign transition names to NEW elements after DOM update
+      const mainAfter = document.getElementById("main");
+      // Force style recomputation before reassigning transition names
+      mainAfter?.offsetHeight;
+      Animate.assignTransitionNames(mainAfter, a.t);
+    });
+
+    activeTransition.finished.then(() => {
+      main?.classList.remove(a.t);
+      Animate.cleanupTransitionNames(main);
+      activeTransition = null;
+
+      // Process any pending hover action
+      if (pendingHoverAction) {
+        const deferredAction = pendingHoverAction;
+        pendingHoverAction = null;
+        go(model, setModel, deferredAction);
+      }
+    });
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
