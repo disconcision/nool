@@ -332,6 +332,31 @@ projection toggles (CSS grid relayouts) animate through the same layer.
   opening), and exit ghosts sort at (old depth − 0.25) so eliminated
   wrappers recede under the survivors that replace them (the identity-elim
   blue-flash bug).
+- **Shadow hunt, concluded (GPU trace + bisection).** The long tasks were on
+  the GPU process, not the renderer — texture re-raster, not script/layout.
+  Three separate shadow-raster sources, three different treatments:
+  1. *Overlay clones*: always-on `box-shadow: none` for `.motion-layer`
+     (moving nodes are shadowless in flight — motion masks it). Crucially
+     the rule is ALWAYS-ON: toggling a class on the real stage per-morph
+     invalidates the whole tree and costs ~76ms re-raster by itself — the
+     first "shadowless while morphing" attempt was self-defeating. Flatten
+     invalidation, not just geometry.
+  2. *The dimmed stage*: permanently promoted (`will-change: opacity` on
+     the stage root) so its shadowed texture stays warm; dimming is a pure
+     opacity flip on an existing compositor layer.
+  3. *The toolbox* — the sneaky one: every exp change flips some rows'
+     match/NoMatch classes, and those rows repaint their 10-layer pat
+     shadows even on keyboard-applied transforms (no toolbox DOM change at
+     all). `will-change: opacity` on `.source`/`.result` makes the
+     container-opacity part compositor-only (65→33ms, zero visual change);
+     the last 33ms only goes away by cheapening the pat shadow stack —
+     shipped as Shift+D (`body.cheapshadows`, calibrated 4-layer
+     approximation, max pixel delta 26/255 vs the original) for aesthetic
+     judgment. Defaults: ~30ms residual (≈2 frames at 120Hz); with
+     cheapshadows: zero stalls.
+  Report lesson: in a capture substrate the perf battle is fought in the
+  compositor's invalidation/promotion model, and *bystander* UI (the
+  toolbox) can dominate the cost of animating the stage.
 - **Clone animations are kept, only transitions are killed.** The blanket
   `animation:none` on clones had disabled the selected-head glow
   (`pulse-scale` animates filter brightness) — glow vanished for the morph's

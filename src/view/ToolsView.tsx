@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import { Component, createMemo } from "solid-js";
 import { For, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
 import * as Pat from "../syntax/Pat";
@@ -75,7 +75,11 @@ const TransformView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
-  const t = (): Transform => props.model.tools.transforms[props.idx];
+  /* Memo (reference equality): the transforms array is replaced wholesale
+   * on every flip, but untouched rows keep their Transform references —
+   * without this every row rebuilds its pat DOM (and re-rasters its shadow
+   * stack) on every tool use, which measured ~160ms per press. */
+  const t = createMemo((): Transform => props.model.tools.transforms[props.idx]);
   const source_cls = () =>
     matches_at(props.model.stage, t().source) === "NoMatch"
       ? "NoMatch"

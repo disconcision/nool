@@ -69,6 +69,38 @@ body.noshadows #seed * {
   box-shadow: none !important;
   text-shadow: none !important;
 }
+/* Toolbox rows repaint when their match status flips; promoting the sides
+   makes the container-opacity part of that flip compositor-only (halves the
+   repaint stall, zero visual change). */
+#noolbox .source,
+#noolbox .result {
+  will-change: opacity;
+}
+/* Debug (Shift+D): 4-layer approximation of the 10-layer toolbox pat shadow.
+   Eliminates the remaining toolbox repaint stall (~33ms) at the cost of a
+   subtle softness difference (max pixel delta 26/255 measured). */
+body.cheapshadows.noshadows #seed * {
+  box-shadow: none !important; /* Shift+S still wins when both are on */
+}
+.Light body.cheapshadows .transform-view .pat.node,
+body.cheapshadows .Light .transform-view .pat.node {
+  box-shadow: 0.1em 0.1em 0.25em #90c2b366, 0.4em 0.4em 1.2em #90c2b34e,
+    -0.1em -0.1em 0.25em #e4ffe966, -0.4em -0.4em 1.2em #d6fff04e !important;
+}
+/* Moving clones render without box-shadows — they are ~all of the texture
+   raster cost (measured ~170ms vs <20ms). Always-on so no invalidation is
+   triggered; the real stage keeps its shadows and its warm textures. The
+   synthetic selection layer keeps its glow (it IS a box-shadow).
+   Text-shadows stay everywhere (cheap; they carry the embossed glyphs). */
+#motion-overlay .motion-layer:not(.motion-selection),
+#motion-overlay .motion-layer:not(.motion-selection) * {
+  box-shadow: none !important;
+}
+/* Keep the stage content permanently on its own compositor layer so dimming
+   it for a morph is an opacity flip on an existing texture, not a re-raster. */
+#stage .node-container > .node {
+  will-change: opacity;
+}
 
 @keyframes spin {
   0% {
