@@ -372,16 +372,22 @@ export const grab = (
     ax: c.anchor.x + rel.x * c.anchor.w,
     ay: c.anchor.y + rel.y * c.anchor.h,
   }));
-  show_vis(grabbedId, cands, targets, a0);
-  console.table(
-    cands.map((c, i) => ({
-      tool: c.idx,
-      dir: c.reversed ? "reverse" : "forward",
-      target: `${Math.round(targets[i].ax)},${Math.round(targets[i].ay)}`,
-      travel: Math.round(Math.hypot(targets[i].ax - a0.x, targets[i].ay - a0.y)),
-      nodes: c.measured.size,
-    }))
-  );
+  /* Debug overlay (rails, anchor dots, t readout) — toggleable. update_vis
+   * degrades to a no-op when show_vis hasn't run. */
+  if (model.settings.dragDebug) {
+    show_vis(grabbedId, cands, targets, a0);
+    console.table(
+      cands.map((c, i) => ({
+        tool: c.idx,
+        dir: c.reversed ? "reverse" : "forward",
+        target: `${Math.round(targets[i].ax)},${Math.round(targets[i].ay)}`,
+        travel: Math.round(
+          Math.hypot(targets[i].ax - a0.x, targets[i].ay - a0.y)
+        ),
+        nodes: c.measured.size,
+      }))
+    );
+  }
 
   /* # The knob-on-rails mechanic.
    *

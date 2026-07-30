@@ -24,6 +24,8 @@ import drag_off from "../assets/icons/noun-tool-3376727.svg"
 import drag_on from "../assets/icons/noun-transformation-6040368.svg"
 import mech_rails from "../assets/icons/noun-cycle-4446.svg"
 import mech_closest from "../assets/icons/noun-cycle-1793611.svg"
+import debug_on from "../assets/icons/noun-1831710.svg"
+import debug_off from "../assets/icons/noun-1831712.svg"
 
 //TODO: qr code to disable id display
 
@@ -91,6 +93,8 @@ const dragging_icon = (dragging: boolean): string =>
 const drag_mechanic_icon = (m: Settings.dragMechanic): string =>
   m === "Rails" ? mech_rails : mech_closest;
 
+const drag_debug_icon = (on: boolean): string => (on ? debug_on : debug_off);
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
@@ -109,6 +113,40 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return dragging_icon(settings.dragging);
     case "ToggleDragMechanic":
       return drag_mechanic_icon(settings.dragMechanic);
+    case "ToggleDragDebug":
+      return drag_debug_icon(settings.dragDebug);
+  }
+};
+
+/* Hover tooltips: what the toggle does + its current state. */
+const action_title = (action: Settings.Action, settings: Settings.t): string => {
+  switch (action) {
+    case "ToggleSound":
+      return `Sound: ${settings.sound ? "on" : "off"}`;
+    case "ToggleMotion":
+      return `Motion: ${settings.motion}`;
+    case "TogglePreview":
+      return `Adjacent-possible preview: ${settings.preview ? "on" : "off"}`;
+    case "ToggleProjection":
+      return `Projection: ${settings.projection}`;
+    case "ToggleSymbols":
+      return `Symbols: ${settings.symbols}`;
+    case "ToggleDark":
+      return `Theme: ${settings.theme}`;
+    case "ToggleDragging":
+      return `Drag mode (drag nodes to rewrite): ${
+        settings.dragging ? "on" : "off"
+      }`;
+    case "ToggleDragMechanic":
+      return `Drag mechanic: ${
+        settings.dragMechanic === "Rails"
+          ? "Rails (knob rides rails; change rules at the hub)"
+          : "Closest (nearest track wins each frame)"
+      }`;
+    case "ToggleDragDebug":
+      return `Drag debug overlay (rails, anchors, t readout): ${
+        settings.dragDebug ? "on" : "off"
+      }`;
   }
 };
 
@@ -120,6 +158,7 @@ let icon = (
   <img
     class="icon"
     src={action_icon(action, settings)}
+    title={action_title(action, settings)}
     onmousedown={setSetting(inject, action)}
   />
 );
@@ -137,6 +176,7 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
     {icon(props.inject, props.model.settings, "ToggleDragging")}
     {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
+    {icon(props.inject, props.model.settings, "ToggleDragDebug")}
 
   </div>
 );

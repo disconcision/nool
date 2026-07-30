@@ -21,6 +21,8 @@ export type t = {
    * selecting for the noolbox */
   dragging: boolean;
   dragMechanic: dragMechanic;
+  /* drag debug overlay: rails, anchor dots, live t readout */
+  dragDebug: boolean;
 };
 
 export type Action =
@@ -31,7 +33,8 @@ export type Action =
   | "ToggleSymbols"
   | "ToggleDark"
   | "ToggleDragging"
-  | "ToggleDragMechanic";
+  | "ToggleDragMechanic"
+  | "ToggleDragDebug";
 
 export const init: t = {
   sound: true,
@@ -42,6 +45,7 @@ export const init: t = {
   theme: "Light",
   dragging: false,
   dragMechanic: "Rails",
+  dragDebug: true,
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -92,5 +96,7 @@ export const update = (settings: t, action: Action): t => {
         ...settings,
         dragMechanic: settings.dragMechanic === "Rails" ? "Closest" : "Rails",
       };
+    case "ToggleDragDebug":
+      return { ...settings, dragDebug: !settings.dragDebug };
   }
 };
