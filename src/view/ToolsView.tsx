@@ -130,12 +130,28 @@ const TransformView: Component<{
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
   const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
+  const toggleDragTool = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.inject({ t: "toggleDragTool", idx: props.idx });
+  };
   return (
     <div
       id={`transform-${props.idx}`}
       class={`transform-view`}
       onpointerdown={do_nothing}
     >
+      {/* drag-loadout toggle: which rules generate drag candidates
+          (visible in drag mode only, via CSS) */}
+      <div
+        class={`drag-toggle ${
+          props.model.tools.dragActive[props.idx] ? "active" : ""
+        }`}
+        title={`Draggable: ${
+          props.model.tools.dragActive[props.idx] ? "on" : "off"
+        }`}
+        onpointerdown={toggleDragTool}
+      />
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${

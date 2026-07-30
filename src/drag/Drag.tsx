@@ -43,12 +43,6 @@ const stage_scale = (d: number) => (d == 0 ? 1 : 4 / (d + 1));
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
-/* Which tools generate drag candidates. Temporarily narrowed to
- * commutativity and distributivity while the interaction is tuned; null
- * means all tools. (The eventual mechanism is the enabled-rules loadout —
- * see design/captured-geometry.md, "Rule gating".) */
-const DRAG_TOOL_IDXS: number[] | null = [1, 5, 7];
-
 /* All states reachable by applying an enabled transform (either direction)
  * at the grabbed node OR any of its ancestors, ids preserved, structurally
  * deduplicated. Ancestor sites are what make dragging feel right: commuting
@@ -77,7 +71,8 @@ export const enumerate = (
   }[] = [];
   for (const site of sites) {
     model.tools.transforms.forEach((t, idx) => {
-      if (DRAG_TOOL_IDXS && !DRAG_TOOL_IDXS.includes(idx)) return;
+      /* per-rule loadout toggles (the circles beside the rules) */
+      if (!model.tools.dragActive[idx]) return;
       for (const [transform, reversed] of [
         [t, false],
         [flip(t), true],

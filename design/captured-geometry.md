@@ -282,7 +282,7 @@ Per drag (or per click-animation):
      triggered copy so the dragged node's id survives" — nool's hydration
      needs the same grab-aware preference eventually.
    - Still open: chain; emerge provenance for identity/distribute
-     enters-exits; drag-rule loadout UI (DRAG_TOOL_IDXS is a stopgap);
+     enters-exits; drag-rule loadout: per-rule toggle circles in the noolbox (drag mode only) now drive enumeration via tools.dragActive;
      near-collinear rail acquisition tie-breaks (first capture is by
      perpendicular distance and can pick the shorter of two nearly-parallel
      rails).

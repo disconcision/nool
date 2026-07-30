@@ -8,6 +8,9 @@ export type t = {
   transforms: Transform.t[];
   offset: number;
   size: number;
+  /* which tools generate drag candidates (index-aligned with transforms;
+   * both directions of a tool together) */
+  dragActive: boolean[];
 };
 
 export const init: t = {
@@ -15,7 +18,14 @@ export const init: t = {
   transforms: Tools.init,
   offset: 0,
   size: 5,
+  /* default loadout: commutativity (+,×) and distributivity */
+  dragActive: Tools.init.map((_, i) => [1, 5, 7].includes(i)),
 };
+
+export const toggle_drag_tool = (tools: t, idx: number): t => ({
+  ...tools,
+  dragActive: tools.dragActive.map((a, i) => (i === idx ? !a : a)),
+});
 
 export const update_selector = (tools: t, f: (_: Path.t) => Path.t): t => ({
   ...tools,

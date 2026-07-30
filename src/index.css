@@ -1039,6 +1039,37 @@ v .transform-view .label {
   animation: none !important;
 }
 
+/* Drag-loadout toggles: small circles left of each rule, centered on the
+   row (in line with the arrow); drag mode only. */
+.transform-view {
+  position: relative;
+}
+.drag-toggle {
+  display: none;
+  position: absolute;
+  left: -0.55em;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.32em;
+  height: 0.32em;
+  border-radius: 50%;
+  border: 0.045em solid #ffffffcc;
+  background: transparent;
+  box-shadow: 0 0 0.15em #0003;
+  cursor: pointer;
+  z-index: 12;
+}
+#seed.dragging .drag-toggle {
+  display: block;
+}
+.drag-toggle:hover {
+  scale: 1.25;
+}
+.drag-toggle.active {
+  background: #ffffffdd;
+  box-shadow: 0 0 0.3em #ffffffaa;
+}
+
 /* Drag probe: hidden mount for measuring candidate states. */
 #stage .drag-probe {
   position: absolute;

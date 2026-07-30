@@ -188,6 +188,11 @@ export const update = (model: Model.t, action: Action.t): result => {
         ...model,
         tools: ToolBox.flip_transform(model.tools, action.idx),
       };
+    case "toggleDragTool":
+      return {
+        ...model,
+        tools: ToolBox.toggle_drag_tool(model.tools, action.idx),
+      };
     case "Noop":
       return "NoChange";
     case "wheelTools":
