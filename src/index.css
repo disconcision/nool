@@ -87,15 +87,17 @@ body.cheapshadows .Light .transform-view .pat.node {
   box-shadow: 0.1em 0.1em 0.25em #90c2b366, 0.4em 0.4em 1.2em #90c2b34e,
     -0.1em -0.1em 0.25em #e4ffe966, -0.4em -0.4em 1.2em #d6fff04e !important;
 }
-/* Moving clones render without box-shadows — they are ~all of the texture
-   raster cost (measured ~170ms vs <20ms). Always-on so no invalidation is
-   triggered; the real stage keeps its shadows and its warm textures. The
-   synthetic selection layer keeps its glow (it IS a box-shadow).
-   Text-shadows stay everywhere (cheap; they carry the embossed glyphs). */
+/* EXPERIMENT (step 1 of shadow-strategy ladder): clone shadow strip
+   disabled to re-measure post-rigid-grouping. A/B on the 6-projection-
+   toggle workload showed identical mount stalls (~85ms, DOM-bound) and
+   frame times (8.2ms mean @120Hz) either way — the ~170ms shadow-raster
+   cost from the drag-dev era is gone on desktop. Re-feel on mobile and
+   worst-case drags before deleting this block for good.
 #motion-overlay .motion-layer:not(.motion-selection),
 #motion-overlay .motion-layer:not(.motion-selection) * {
   box-shadow: none !important;
 }
+*/
 /* Keep the stage content permanently on its own compositor layer so dimming
    it for a morph is an opacity flip on an existing texture, not a re-raster. */
 #stage .node-container > .node {
