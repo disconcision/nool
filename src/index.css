@@ -32,10 +32,25 @@
   /* punch through the hidden stage container the overlay lives inside */
   visibility: visible;
 }
+/* Transitions would fight the per-frame style writes; animations (pulse
+   glows etc.) are kept — they're part of node appearance and don't touch
+   driven properties. */
 #motion-overlay .motion-layer,
 #motion-overlay .motion-layer * {
   transition: none !important;
-  animation: none !important;
+}
+/* While morphing, the real content stays painted but invisible (dimmed, not
+   visibility-hidden) so revealing it at teardown is compositor-only work.
+   The overlay itself must not be dimmed — it is a sibling of the content. */
+#stage .node-container.motion-dimmed > :not(#motion-overlay) {
+  opacity: 0.001 !important;
+  pointer-events: none !important;
+}
+/* During a selection morph the glow travels as a synthetic overlay layer;
+   suppress the live glow so it doesn't double. */
+#stage .node-container.selection-morphing .node.selected {
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 /* Context shells: boxless wrappers replicating a clone's real ancestor
    classes so descendant selectors and inheritance apply to layers. */
@@ -1142,9 +1157,9 @@ body:has(#main.Dark) {
 
 
 .Light .transform-view .pat.node {
-  box-shadow: 0.05em 0.05em 0.1em #196c5344, 0.1em 0.1em 0.2em #196c5344,
-    0.2em 0.2em 0.4em #196c5344, 0.4em 0.4em 0.8em #196c5322,
-    0.8em 0.8em 1.6em #90c2b322, -0.05em -0.05em 0.1em #f0fff6aa,
-    -0.1em -0.1em 0.2em #f0fff666, -0.2em -0.2em 0.4em #f0fff622,
-    -0.4em -0.4em 0.8em #f0fff622, -0.8em -0.8em 1.6em #f0fff622;
+  box-shadow: 0.05em 0.05em 0.1em #90c2b344, 0.1em 0.1em 0.2em #90c2b344,
+    0.2em 0.2em 0.4em #90c2b344, 0.4em 0.4em 0.8em #90c2b344,
+    0.8em 0.8em 1.6em #90c2b344, -0.05em -0.05em 0.1em #e0ffe544,
+    -0.1em -0.1em 0.2em #ebfff744, -0.2em -0.2em 0.4em #d2fff044,
+    -0.4em -0.4em 0.8em #cff2e644, -0.8em -0.8em 1.6em #d2fff044;
 }

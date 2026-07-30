@@ -44,6 +44,12 @@ type Layer = {
   depth: number;
   parentId: string | null;
   members: Map<string, Member> | null; // group layers: contained ids
+  /* "translate": size/font constant — base styles set once, per-frame motion
+   * via the compositable `translate` property (rasterize once, no repaint).
+   * `translate` rather than `transform` so clone animations (pulse-scale
+   * etc., which animate transform) compose instead of clobbering it.
+   * "box": size changes — left/top/size/font interpolated per frame. */
+  mode: "translate" | "box";
 };
 
 type Tween = {
@@ -182,18 +188,44 @@ const shrink = (b: Box, factor: number): Box => ({
   font: b.font * factor,
 });
 
+const set_base_box = (l: Layer): void => {
+  const s = l.el.style;
+  s.left = `${l.from.x}px`;
+  s.top = `${l.from.y}px`;
+  s.width = `${l.from.w}px`;
+  s.height = `${l.from.h}px`;
+  s.fontSize = `${l.from.font}px`;
+  if (l.mode === "translate") {
+    s.willChange = "translate, opacity";
+  } else {
+    s.translate = ""; // clear residue on reused (retargeted) elements
+    s.willChange = "";
+  }
+};
+
 const apply_frame = (layers: Map<string, Layer>, t: number): void => {
   for (const l of layers.values()) {
     const b = lerpBox(l.from, l.to, t);
     const s = l.el.style;
-    s.left = `${b.x}px`;
-    s.top = `${b.y}px`;
-    s.width = `${b.w}px`;
-    s.height = `${b.h}px`;
-    s.fontSize = `${b.font}px`;
+    if (l.mode === "translate") {
+      s.translate = `${b.x - l.from.x}px ${b.y - l.from.y}px`;
+    } else {
+      s.left = `${b.x}px`;
+      s.top = `${b.y}px`;
+      s.width = `${b.w}px`;
+      s.height = `${b.h}px`;
+      s.fontSize = `${b.font}px`;
+    }
     s.opacity = `${clamp01(lerp(l.fromOpacity, l.toOpacity, t))}`;
   }
 };
+
+const layer_mode = (from: Box, to: Box): "translate" | "box" =>
+  Math.abs(from.w - to.w) < 0.5 &&
+  Math.abs(from.h - to.h) < 0.5 &&
+  Math.abs(from.font - to.font) < 0.5
+    ? "translate"
+    : "box";
 
 const eased_now = (tw: Tween): number =>
   easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
@@ -212,10 +244,17 @@ const ensure_overlay = (): HTMLElement | null => {
   return overlay;
 };
 
-const set_stage_hidden = (hidden: boolean): void => {
+/* The real content is dimmed (opacity ~0) rather than visibility-hidden so
+ * its texture stays rasterized: revealing it at teardown is then a pure
+ * compositor operation instead of a full repaint (which measured ~120ms). */
+const set_stage_dimmed = (dimmed: boolean): void => {
   const c = stage_container();
-  if (c) c.style.visibility = hidden ? "hidden" : "";
+  if (c) c.classList.toggle("motion-dimmed", dimmed);
 };
+
+/* Cached selection glow styling, for morphing to "unselected". */
+let sel_style: { outline: string; boxShadow: string; radius: string } | null =
+  null;
 
 const finish = (): void => {
   if (tween) {
@@ -223,7 +262,35 @@ const finish = (): void => {
     tween = null;
   }
   if (overlay) overlay.replaceChildren();
-  set_stage_hidden(false);
+  set_stage_dimmed(false);
+  stage_container()?.classList.remove("selection-morphing");
+};
+
+const run_tween = (
+  layers: Map<string, Layer>,
+  duration: number,
+  dim: boolean
+): void => {
+  const ov = ensure_overlay();
+  if (!ov) return;
+  const ordered = [...layers.values()].sort((a, b) => a.depth - b.depth);
+  ov.replaceChildren(...ordered.map((l) => l.mount));
+  if (dim) set_stage_dimmed(true);
+  for (const l of layers.values()) set_base_box(l);
+  tween = { layers, start: performance.now(), duration, raf: 0 };
+  apply_frame(layers, 0);
+  const step = (): void => {
+    if (!tween) return;
+    const x = (performance.now() - tween.start) / tween.duration;
+    if (x >= 1) {
+      apply_frame(tween.layers, 1);
+      finish();
+      return;
+    }
+    apply_frame(tween.layers, easeInOutBack(clamp01(x)));
+    tween.raf = requestAnimationFrame(step);
+  };
+  tween.raf = requestAnimationFrame(step);
 };
 
 /* Run a model update, animating stage nodes from where they are displayed
@@ -235,6 +302,9 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     finish();
     return;
   }
+
+  const pre_selected =
+    stage_container()?.querySelector(".node.selected")?.id ?? null;
 
   /* Before: what is currently displayed — the mid-flight blend if a tween
    * is active, else the live DOM. Group members are reconstructed from
@@ -272,25 +342,74 @@ export const animate = (apply: () => void, enabled: boolean): void => {
 
   const after = measure();
 
-  /* No-change guard: skip the overlay when geometry is undisturbed. */
+  /* Keep the selection glow styling cached while a selected node exists. */
+  const post_selected_el =
+    stage_container()?.querySelector<HTMLElement>(".node.selected") ?? null;
+  const post_selected = post_selected_el?.id ?? null;
+  if (post_selected_el) {
+    const cs = getComputedStyle(post_selected_el);
+    sel_style = {
+      outline: cs.outline,
+      boxShadow: cs.boxShadow,
+      radius: cs.borderRadius,
+    };
+  }
+
+  /* No-change guard: skip the overlay when geometry is undisturbed. A pure
+   * selection change still gets a morph: a synthetic glow layer travels
+   * from the old selected node's box to the new one's (the live glow is
+   * suppressed meanwhile), recreating the old view-transition effect. */
   if (!prev) {
     let changed = after.size !== before.size;
     if (!changed) {
+      /* 1.5px: selection border/outline changes jiggle boxes by ~1px; a
+       * full morph for that is invisible-but-costly, and it would shadow
+       * the selection-glow morph below. */
       for (const [id, m] of after) {
         const b = before.get(id);
         if (
           !b ||
-          Math.abs(b.box.x - m.box.x) > 0.5 ||
-          Math.abs(b.box.y - m.box.y) > 0.5 ||
-          Math.abs(b.box.w - m.box.w) > 0.5 ||
-          Math.abs(b.box.h - m.box.h) > 0.5
+          Math.abs(b.box.x - m.box.x) > 1.5 ||
+          Math.abs(b.box.y - m.box.y) > 1.5 ||
+          Math.abs(b.box.w - m.box.w) > 1.5 ||
+          Math.abs(b.box.h - m.box.h) > 1.5
         ) {
           changed = true;
           break;
         }
       }
     }
-    if (!changed) return;
+    if (!changed) {
+      if (pre_selected !== post_selected && sel_style) {
+        const from_box = pre_selected ? before.get(pre_selected)?.box : undefined;
+        const to_box = post_selected ? after.get(post_selected)?.box : undefined;
+        if (from_box || to_box) {
+          const el = document.createElement("div");
+          el.className = "motion-layer motion-selection";
+          el.style.outline = sel_style.outline;
+          el.style.boxShadow = sel_style.boxShadow;
+          el.style.borderRadius = sel_style.radius;
+          el.dataset.motionId = "@selection";
+          const from = from_box ?? to_box!;
+          const to = to_box ?? from_box!;
+          const layer: Layer = {
+            el,
+            mount: el,
+            from,
+            to,
+            fromOpacity: from_box ? 1 : 0,
+            toOpacity: to_box ? 1 : 0,
+            depth: 999,
+            parentId: null,
+            members: null,
+            mode: layer_mode(from, to),
+          };
+          stage_container()?.classList.add("selection-morphing");
+          run_tween(new Map([["@selection", layer]]), 200 * anim_factor(), false);
+        }
+      }
+      return;
+    }
   }
 
   const ov = ensure_overlay();
@@ -422,21 +541,24 @@ export const animate = (apply: () => void, enabled: boolean): void => {
         depth: a.depth,
         parentId: a.parentId,
         members,
+        mode: layer_mode(b!.box, a.box),
       });
       return;
     }
     const el = shallow_clone(a.el);
     with_ancestor_filters(el, a.el, a.parentId);
+    const from = b ? b.box : shrink(a.box, 0.5);
     add_layer(id, {
       el,
       mount: mount_with_shells(el, a.parentId),
-      from: b ? b.box : shrink(a.box, 0.5),
+      from,
       to: a.box,
       fromOpacity: b ? b.opacity : 0,
       toOpacity: 1,
       depth: a.depth,
       parentId: a.parentId,
       members: null,
+      mode: layer_mode(from, a.box),
     });
     for (const k of after_kids.get(id) ?? []) walk(k);
   };
@@ -461,32 +583,9 @@ export const animate = (apply: () => void, enabled: boolean): void => {
       depth: b.depth,
       parentId: b.parentId,
       members: null,
+      mode: "box",
     });
   }
 
-  /* Flat stacking: parents (shallower) paint below children (deeper). */
-  const ordered = [...layers.values()].sort((a, b) => a.depth - b.depth);
-  ov.replaceChildren(...ordered.map((l) => l.mount));
-  set_stage_hidden(true);
-
-  tween = {
-    layers,
-    start: performance.now(),
-    duration: 250 * anim_factor(),
-    raf: 0,
-  };
-  apply_frame(layers, 0);
-
-  const step = (): void => {
-    if (!tween) return;
-    const x = (performance.now() - tween.start) / tween.duration;
-    if (x >= 1) {
-      apply_frame(tween.layers, 1);
-      finish();
-      return;
-    }
-    apply_frame(tween.layers, easeInOutBack(clamp01(x)));
-    tween.raf = requestAnimationFrame(step);
-  };
-  tween.raf = requestAnimationFrame(step);
+  run_tween(layers, 250 * anim_factor(), true);
 };

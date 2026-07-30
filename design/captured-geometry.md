@@ -297,6 +297,52 @@ projection toggles (CSS grid relayouts) animate through the same layer.
 - How chain re-measurement interacts with the depth-rescale (scene zoom
   mid-chain).
 
+## Step-1 findings, round 3: performance + remaining fidelity (2026-07-29)
+
+- **Measured the "waggy frames": not per-frame cost, but two paint storms.**
+  rAF instrumentation during morphs: median frame 8.3ms (≈120fps), setup
+  burst (measure→apply→measure→clones) only ~6ms — but a ~150ms stall right
+  after overlay build (first rasterization of all layer textures: stacked
+  blurred box-shadows at dpr 2.2) and a ~117ms stall exactly at teardown
+  (unhiding the visibility-hidden stage forces a from-scratch repaint).
+  This is precisely VT's architectural advantage: view transitions *reuse
+  the already-painted page* as textures and never re-raster.
+- **Fixes:** (1) dim, don't hide — the real content keeps `opacity: 0.001`
+  (via `.motion-dimmed > :not(#motion-overlay)`, since opacity on the
+  container would dim the overlay inside it) so its texture stays warm and
+  teardown is a pure compositor flip: the end stall is *eliminated*.
+  (2) translation-only layers (the common case, especially rigid groups)
+  are driven by the compositable `translate` property + `will-change` —
+  rasterize once, move on the compositor; only size-changing layers pay
+  per-frame layout/paint. `translate` rather than `transform` so clone
+  animations (pulse-scale etc. animate `transform`) compose instead of
+  clobbering. Result: one ~95ms hitch at press (reads as input latency),
+  none mid-flight or at the end. Report lesson: a capture substrate must
+  manage *texture lifetime*, not just boxes — "keep everything painted;
+  reveal by opacity; move by transform" is the VT playbook, reconstructible
+  by hand.
+- **Clone animations are kept, only transitions are killed.** The blanket
+  `animation:none` on clones had disabled the selected-head glow
+  (`pulse-scale` animates filter brightness) — glow vanished for the morph's
+  duration. Transitions still must die (they fight per-frame style writes);
+  animations don't touch driven properties (and `translate` driving keeps
+  clear of their `transform`). Measurement happens under a `motion-measuring`
+  freeze so animated scale never contaminates boxes.
+- **Selection morph reinstated as a synthetic layer.** VT's
+  `flip-node-selected` used to slide the white selection glow between nodes'
+  outlines. Now: on a pure selection change (geometry otherwise still), a
+  single synthetic div carrying the captured outline/box-shadow/radius
+  tweens between the old and new selected boxes over the *live* (undimmed)
+  stage, while `.selection-morphing` suppresses the real glow. This
+  foreshadows the "selection as its own overlay entity" idea for drags.
+- **Guard threshold matters:** selection border changes jiggle boxes ~0.9px;
+  at a 0.5px threshold every selection click ran a full dim+overlay morph
+  (invisible but costly, and it shadowed the selection path). Threshold now
+  1.5px.
+- Toolbox shadow reverted to the deployed-exolivelit soft variant — the
+  harder one came from the unpushed "css tweaks" commit ported earlier and
+  had never actually shipped.
+
 ## Report notes (capture-vs-internalize observations as they accrue)
 
 - (seed) Costs unique to capture: clone fidelity tax (computed-style
