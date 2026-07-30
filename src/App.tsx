@@ -26,6 +26,10 @@ const App: Component = () => {
   };
   document.addEventListener("keydown", Keyboard.keydown(inject), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
+  // Debug: Shift+S toggles shadows, to compare morph rasterization cost
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "S") document.body.classList.toggle("noshadows");
+  });
   return (
     <div
       id="main"

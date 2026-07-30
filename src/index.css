@@ -63,6 +63,12 @@
   transition: none !important;
   scale: none !important;
 }
+/* Debug (Shift+S): kill shadows to compare morph rasterization cost. */
+body.noshadows #seed,
+body.noshadows #seed * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
 
 @keyframes spin {
   0% {

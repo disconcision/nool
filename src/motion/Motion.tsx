@@ -290,7 +290,17 @@ const run_tween = (
     apply_frame(tween.layers, easeInOutBack(clamp01(x)));
     tween.raf = requestAnimationFrame(step);
   };
-  tween.raf = requestAnimationFrame(step);
+  /* The first painted frame pays the layer rasterization cost (tens of ms).
+   * Start the clock only after it has presented — otherwise the first
+   * visible frame lands mid-curve and the animation's opening is skipped. */
+  tween.raf = requestAnimationFrame(() => {
+    if (!tween) return;
+    tween.raf = requestAnimationFrame(() => {
+      if (!tween) return;
+      tween.start = performance.now();
+      step();
+    });
+  });
 };
 
 /* Run a model update, animating stage nodes from where they are displayed
@@ -580,7 +590,10 @@ export const animate = (apply: () => void, enabled: boolean): void => {
       to: shrink(b.box, 0.8),
       fromOpacity: b.opacity,
       toOpacity: 0,
-      depth: b.depth,
+      /* Nudge below same-depth survivors: when a wrapper is eliminated its
+       * child takes its old depth, and the receding ghost (often a large
+       * tinted box) must paint UNDER the arriving content, not over it. */
+      depth: b.depth - 0.25,
       parentId: b.parentId,
       members: null,
       mode: "box",
