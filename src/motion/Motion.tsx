@@ -325,13 +325,25 @@ const capture_before = (): {
   return { before, exit_sources, prev };
 };
 
+/* Provenance-driven enter/exit geometry (the demo's emergeFrom, adapted):
+ * an entering node can GROW OUT of a source node's current box instead of
+ * fading in; an exiting node can CONVERGE INTO a target node's destination
+ * box instead of fading in place. */
+export type EmergeOpts = {
+  /* enter id → before id whose box it emerges from */
+  emerge?: Map<string, string>;
+  /* exit id → after id whose box it converges into */
+  converge?: Map<string, string>;
+};
+
 /* Build the flat layer set morphing `before` (blend/live boxes) into
  * `after` (measured target: live DOM or a hidden probe). */
 const build_layers = (
   before: Map<string, BeforeInfo>,
   after: Map<string, Measured>,
   exit_sources: Map<string, HTMLElement>,
-  reuse_exit_els: boolean
+  reuse_exit_els: boolean,
+  opts?: EmergeOpts
 ): Map<string, Layer> => {
   /* Adjacency for the after and before structures. */
   const after_kids = new Map<string | null, string[]>();
@@ -461,13 +473,17 @@ const build_layers = (
     }
     const el = shallow_clone(a.el);
     with_ancestor_filters(el, a.el, a.parentId);
-    const from = b ? b.box : shrink(a.box, 0.5);
+    /* enters with an emerge source start AT the source's box, fully
+     * visible — creation reads as pulling out, not fading in */
+    const src = b ? undefined : opts?.emerge?.get(id);
+    const srcBox = src ? before.get(src)?.box : undefined;
+    const from = b ? b.box : srcBox ?? shrink(a.box, 0.5);
     layers.set(id, {
       el,
       mount: mount_with_shells(el, a.parentId),
       from,
       to: a.box,
-      fromOpacity: b ? b.opacity : 0,
+      fromOpacity: b ? b.opacity : srcBox ? 1 : 0,
       toOpacity: 1,
       depth: a.depth,
       parentId: a.parentId,
@@ -487,11 +503,16 @@ const build_layers = (
     if (!src) continue;
     const el = reuse_exit_els ? src : exit_clone(src, (did) => after.has(did));
     with_ancestor_filters(el, null, b.parentId);
+    /* exits with a converge target are absorbed into it (they travel to
+     * its destination box while fading) instead of dissolving in place */
+    const tgtBox = opts?.converge?.get(id)
+      ? after.get(opts.converge!.get(id)!)?.box
+      : undefined;
     layers.set(id, {
       el,
       mount: mount_with_shells(el, b.parentId),
       from: b.box,
-      to: shrink(b.box, 0.8),
+      to: tgtBox ?? shrink(b.box, 0.8),
       fromOpacity: b.opacity,
       toOpacity: 0,
       /* Nudge below same-depth survivors: when a wrapper is eliminated its
@@ -654,10 +675,13 @@ export const animate = (apply: () => void, enabled: boolean): void => {
  * (typically a hidden-probe measurement of a candidate state). Retargeting
  * to a different candidate mid-drag: just call again — the current blend
  * becomes the new origin. */
-export const manual_start = (after: Map<string, Measured>): boolean => {
+export const manual_start = (
+  after: Map<string, Measured>,
+  opts?: EmergeOpts
+): boolean => {
   const { before, exit_sources, prev } = capture_before();
   if (before.size === 0) return false;
-  const layers = build_layers(before, after, exit_sources, !!prev);
+  const layers = build_layers(before, after, exit_sources, !!prev, opts);
   if (!mount_layers(layers, true)) return false;
   tween = {
     layers,

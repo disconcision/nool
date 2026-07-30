@@ -281,8 +281,27 @@ Per drag (or per click-animation):
      is an id-plumbing accident. The demo solves this with "prefer the
      triggered copy so the dragged node's id survives" — nool's hydration
      needs the same grab-aware preference eventually.
-   - Still open: chain; emerge provenance for identity/distribute
-     enters-exits; drag-rule loadout: per-rule toggle circles in the noolbox (drag mode only) now drive enumeration via tools.dragActive;
+   - **Emerge/converge v1 landed (drag path).** The demo's emergeFrom,
+     adapted: entering nodes start AT a source node's box, fully visible,
+     and pull out (identity-intro: the new + and 0 grow out of the grabbed
+     operand); exiting nodes converge into the box of whatever replaces
+     the rewrite site while fading (identity-elim: the wrap ghost is
+     absorbed into the survivor's destination). Provenance is a geometric
+     stand-in for now: enters emerge from the GRAB (the demo's
+     expanding-rewrite trigger rule), exits converge into the site's
+     replacement root. The demo's id-discipline audit, for the record:
+     (1) wildcard bindings keep matched ids [nool has this]; (2) repeated
+     wildcards prefer the TRIGGERED copy [nool picks arbitrarily — the
+     die-lottery]; (3) every fresh id records emergeFrom provenance
+     (clones from originals, expanding ops from the trigger) [nool
+     discards]; (4) the engine synthesizes before-states from provenance,
+     bidirectionally [now partially ported]. True Pat-level provenance
+     would upgrade (2)+(3): distribute's clone would emerge from the
+     ORIGINAL die rather than the grab, and merge convergence would target
+     the surviving copy rather than the site root. Identity plumbing is
+     animation semantics.
+   - Still open: chain; click-path emerge (needs the rewrite site plumbed
+     into noolbox actions); Pat-level provenance (above);
      near-collinear rail acquisition tie-breaks (first capture is by
      perpendicular distance and can pick the shorter of two nearly-parallel
      rails).

@@ -22,7 +22,7 @@ import * as Exp from "./../syntax/Exp";
 import * as ID from "./../syntax/ID";
 import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
-import { depth, freshen } from "./../syntax/Node";
+import { depth, freshen, id_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
 
 export type Candidate = {
@@ -36,6 +36,11 @@ export type Candidate = {
   /* grabbed node's box in this candidate (always present: candidates where
    * the grab vanishes are not offered — like the demo, triggers survive) */
   anchor: Motion.Box;
+  /* provenance geometry: created nodes emerge from the grab; consumed
+   * nodes converge into the site's replacement (v1 stand-ins for real
+   * rewrite-level emergeFrom provenance — see design doc) */
+  emerge: Map<string, string>;
+  converge: Map<string, string>;
 };
 
 /* Must mirror StageView's depth-derived scale. */
@@ -179,11 +184,27 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
       probe.dispose();
       continue;
     }
+    /* Provenance geometry (v1): entering nodes emerge from the grab (the
+     * demo's expanding-rewrite rule, trigger-relative); exiting nodes
+     * converge into whatever now occupies the rewrite site. */
+    const emerge = new Map<string, string>();
+    for (const id of probe.measured.keys())
+      if (!live.has(id)) emerge.set(id, key);
+    const converge = new Map<string, string>();
+    const siteRoot = id_at(c.site, c.exp);
+    if (siteRoot !== undefined) {
+      const siteKey = `node-${siteRoot}`;
+      if (probe.measured.has(siteKey))
+        for (const id of live.keys())
+          if (!probe.measured.has(id)) converge.set(id, siteKey);
+    }
     out.push({
       ...c,
       measured: probe.measured,
       dispose: probe.dispose,
       anchor,
+      emerge,
+      converge,
     });
   }
   return out;
@@ -438,7 +459,10 @@ export const grab = (
   const set_active = (i: number, t: number): void => {
     if (i !== active) {
       active = i;
-      Motion.manual_start(cands[i].measured);
+      Motion.manual_start(cands[i].measured, {
+        emerge: cands[i].emerge,
+        converge: cands[i].converge,
+      });
     }
     activeT = t;
     Motion.manual_set(t);
