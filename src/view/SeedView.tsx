@@ -10,13 +10,15 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
 ) => (
   <div
     id="seed"
-    class={`${props.model.settings.projection} ${props.model.settings.symbols}`}
-    classList={{
-      notransition: props.model.settings.motion === "Off",
-      noanimation: props.model.settings.motion === "Off",
-      notransformation: props.model.settings.motion === "Off",
-      dragging: props.model.settings.dragging,
-    }}
+    /* single class expression: mixing a reactive `class` with `classList`
+     * lets a class re-evaluation clobber the classList-managed names */
+    class={
+      `${props.model.settings.projection} ${props.model.settings.symbols}` +
+      (props.model.settings.motion === "Off"
+        ? " notransition noanimation notransformation"
+        : "") +
+      (props.model.settings.dragging ? " dragging" : "")
+    }
     onmousedown={(e) => {
       e.preventDefault();
       props.inject({ t: "unsetSelections" });

@@ -34,8 +34,12 @@ const App: Component = () => {
   return (
     <div
       id="main"
-      class={model.settings.theme}
-      classList={{ selected: model.stage.selection === "unselected" }}
+      /* single class expression: a `class` re-evaluation (theme toggle)
+       * would clobber classList-managed names */
+      class={
+        model.settings.theme +
+        (model.stage.selection === "unselected" ? " selected" : "")
+      }
     >
       <Seed model={model} inject={inject} />
       <SettingsView model={model} inject={inject} />
