@@ -29,6 +29,8 @@
   position: absolute;
   margin: 0;
   box-sizing: border-box;
+  /* punch through the hidden stage container the overlay lives inside */
+  visibility: visible;
 }
 #motion-overlay .motion-layer,
 #motion-overlay .motion-layer * {

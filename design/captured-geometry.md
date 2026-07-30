@@ -220,11 +220,23 @@ projection toggles (CSS grid relayouts) animate through the same layer.
   construction so there is no end-of-tween pop.
 - **Clone fidelity tax was lower than budgeted** for nool's DOM: since comp
   heads and atom glyphs are their own id'd elements, shallow clones are
-  mostly bare rounded-rect boxes; class-carried styling (theme, depth,
-  shadows, mask tints) survives because the overlay lives inside `#main`,
-  and explicit px font-size defeats the em cascade. No computed-style
-  snapshotting was needed yet (may change under drag, where clones live
-  longer and themes can flip mid-flight).
+  mostly bare rounded-rect boxes, and explicit px font-size defeats the em
+  cascade. No computed-style snapshotting was needed yet (may change under
+  drag, where clones live longer and themes can flip mid-flight).
+- **Context-scoped selectors were the first real fidelity bug** (user-visible
+  style loss mid-morph). Much of nool's node styling lives under
+  `#stage .node.comp`, `.node-container.<projection> …`, `#seed.<symbols> …`
+  — none of which matched clones mounted in an overlay outside `#seed`. Fix:
+  mount the overlay INSIDE the hidden `.node-container` and give layers
+  `visibility: visible` (visibility, unlike display, is inherited but
+  overridable). Clones then live in the genuine cascade context — even
+  `:has(.selected)` rules keep working against the real hidden structure —
+  and no CSS had to be rewritten. Report lesson: in the capture approach,
+  "flatten the geometry, not the context" — hoisted layers should stay
+  inside the subtree whose selectors style them. Residual gap: structural
+  pseudo-classes (`:nth-child`, `:first-child`) over a node's *children*
+  can't match shallow clones (children are separate layers); none of nool's
+  current node styling depends on these in a way that shows.
 - **Costs paid**: `transition/animation: none !important` needed on clones
   (the live nodes' own CSS transitions would fight per-frame style writes);
   glyph *content* swaps instantly when a surviving node changes appearance

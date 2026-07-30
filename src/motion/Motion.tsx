@@ -123,13 +123,18 @@ const apply_frame = (layers: Map<string, Layer>, t: number): void => {
 const eased_now = (tw: Tween): number =>
   easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
 
+/* The overlay lives INSIDE the (hidden) stage container so clones keep the
+ * full cascade context — #seed.<projection>.<symbols>, #stage, theme classes,
+ * .node-container.<mode> — and context-scoped rules still match. Layers
+ * override the container's visibility:hidden with visibility:visible. */
 const ensure_overlay = (): HTMLElement | null => {
-  if (overlay && overlay.isConnected) return overlay;
-  const main = document.getElementById("main");
-  if (!main) return null;
-  overlay = document.createElement("div");
-  overlay.id = "motion-overlay";
-  main.appendChild(overlay);
+  const container = stage_container();
+  if (!container) return null;
+  if (!overlay || !overlay.isConnected) {
+    overlay = document.createElement("div");
+    overlay.id = "motion-overlay";
+  }
+  if (overlay.parentElement !== container) container.appendChild(overlay);
   return overlay;
 };
 
