@@ -49,6 +49,22 @@ Related loose ends:
   on its clone — same raster family, currently cheap because heads are
   small, but worth folding into whatever shadow strategy wins.
 
+## Drag overlap legibility (pinned 2026-07-29)
+
+Translucent node backgrounds compose confusingly when subtrees cross during
+drags. Options discussed (none adopted yet):
+1. Solid backdrop traveling with moving nodes — correct fix for composition
+   confusion, but changes how node colors read (they're translucent tints
+   over the scene by design). Revisit jointly with the shadow-sprite work
+   (opaque card-backs simplify nine-slice shadows).
+2. Mask-style tint on the moving subtree — rejected as default: washes
+   glyphs, and reads as "preview highlight" not "in hand".
+3. Restore box-shadow on ONLY the held subtree's layer (+ optional 1.02-1.05
+   scale-up) — cheap (one layer's raster), adds a depth cue so crossing
+   reads as occlusion. Current lean.
+4. Dim non-participating layers slightly during drag (opacity ~0.75,
+   compositor-free). Composes with 3.
+
 ## Toolbox motion (pinned 2026-07-29)
 
 The toolbox is outside the motion layer: tool flips and match-status changes
