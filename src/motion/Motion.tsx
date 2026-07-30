@@ -182,22 +182,6 @@ const full_clone = (el: HTMLElement): HTMLElement => {
   return c;
 };
 
-/* Exit ghost: the removed subtree, minus descendants that survive (those
- * travel as their own layers). */
-const exit_clone = (
-  el: HTMLElement,
-  survives: (id: string) => boolean
-): HTMLElement => {
-  const c = el.cloneNode(true) as HTMLElement;
-  c.querySelectorAll<HTMLElement>('[id^="node-"], [id^="sym-"]').forEach((d) => {
-    if (survives(d.id)) d.remove();
-  });
-  strip_ids(c);
-  c.classList.add("motion-layer");
-  c.dataset.motionId = el.id;
-  return c;
-};
-
 const shrink = (b: Box, factor: number): Box => ({
   x: b.x + (b.w * (1 - factor)) / 2,
   y: b.y + (b.h * (1 - factor)) / 2,
@@ -495,7 +479,9 @@ const build_layers = (
       to: a.box,
       fromOpacity: b ? b.opacity : srcBox ? 1 : 0,
       toOpacity: 1,
-      depth: a.depth,
+      /* emerging nodes sit slightly behind established ones, so creation
+       * reads as coming out from behind */
+      depth: !b && srcBox ? a.depth - 0.4 : a.depth,
       parentId: a.parentId,
       members: null,
       mode: layer_mode(from, a.box),
@@ -504,18 +490,17 @@ const build_layers = (
   };
   for (const r of after_kids.get(null) ?? []) walk(r);
 
-  /* Exits: topmost removed subtrees fade as one ghost (survivors stripped —
-   * they travel as their own layers). */
+  /* Exits: per-node layers, exactly dual to enters. With a converge target,
+   * merges travel to coincide with the surviving twin (full opacity) and
+   * absorptions shrink into the target's box (full opacity — the dual of
+   * grow); nothing fades. Without provenance (click-path), fall back to
+   * fade-in-place. */
   for (const [id, b] of before) {
     if (after.has(id)) continue;
-    if (b.parentId && before.has(b.parentId) && !after.has(b.parentId)) continue;
     const src = exit_sources.get(id);
     if (!src) continue;
-    const el = reuse_exit_els ? src : exit_clone(src, (did) => after.has(did));
+    const el = reuse_exit_els ? src : shallow_clone(src);
     with_ancestor_filters(el, null, b.parentId);
-    /* exits with a converge target travel to it: merges coincide with the
-     * surviving twin at full opacity; absorptions shrink into the target
-     * while fading */
     const cv = opts?.converge?.get(id);
     const tgtBox = cv ? after.get(cv.target)?.box : undefined;
     layers.set(id, {
@@ -524,11 +509,11 @@ const build_layers = (
       from: b.box,
       to: tgtBox
         ? cv!.mode === "absorb"
-          ? shrink(tgtBox, 0.2)
+          ? shrink(tgtBox, 0.15)
           : tgtBox
         : shrink(b.box, 0.8),
       fromOpacity: b.opacity,
-      toOpacity: tgtBox && cv!.mode === "merge" ? 1 : 0,
+      toOpacity: tgtBox ? 1 : 0,
       /* Nudge below same-depth survivors: when a wrapper is eliminated its
        * child takes its old depth, and the receding ghost (often a large
        * tinted box) must paint UNDER the arriving content, not over it. */

@@ -316,10 +316,28 @@ Per drag (or per click-animation):
      the sharper proxy, and true rewrite-recorded provenance remains the
      endgame (fixes the die-lottery, distribute-clone source preference,
      and removes the guessing entirely).
-   - Exit-layer granularity limitation: ghosts are per-topmost-removed-
-     subtree, so factor's losing die rides inside the ×2 ghost rather than
-     merging independently onto the surviving die. Per-member exit
-     splitting by provenance is the fix (with Pat-level provenance).
+   - **The correspondence model, unified (exits made dual to enters).**
+     A morph is (before, after, correspondence), total over node ids:
+     MOVE (id in both → lerp box); EMERGE (after-only → source + clone|grow);
+     CONVERGE (before-only → target + merge|absorb). Geometry is fully
+     codified and mode-symmetric: clone starts AT the source's box
+     (kind-matched node→node/sym→sym/head→head), grow starts at 15% of it;
+     merge ends AT the target's box, absorb ends at 15% of it; NOTHING
+     fades, and emerging layers sit slightly behind established ones
+     (z −0.4) so creation comes out from behind. Exits are now per-node
+     layers (the whole-ghost granularity is gone), so factor's losing die
+     merges independently onto the survivor and the ×2 merges onto ×1 —
+     verified at opacity 1 throughout. The asymmetry Andrew caught
+     (scrubbing forward looked right, the reverse OPERATION didn't) was
+     precisely the enters-rich/exits-coarse imbalance; with duality,
+     scrub-reverse ≈ reverse-drag by construction.
+   - **Prefer-the-grabbed-copy landed at the candidate level**: when a
+     merge rule consumes the grabbed subtree but keeps a structural twin,
+     the grabbed subtree (ids and all) is spliced over the twin — sound
+     because we commit the exact candidate exp. Both dice now afford
+     factoring, and the OTHER copy becomes the merging exit. This is the
+     demo's applyRewrite rule done without touching Pat; rewrite-recorded
+     provenance remains the cleaner endgame.
    - Still open: chain; click-path emerge (needs the rewrite site plumbed
      into noolbox actions); Pat-level provenance (above);
      near-collinear rail acquisition tie-breaks (first capture is by

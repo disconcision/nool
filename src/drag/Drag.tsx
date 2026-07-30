@@ -116,27 +116,86 @@ const provenance = (
       mode: nodeSpec.mode,
     });
   }
-  /* exits: topmost removed subtrees */
+  /* exits: per-node, exactly dual to enters. Atoms merge into a
+   * site-scoped structural twin; comps merge into a site-scoped same-head
+   * comp (their heads following head→head); anything without a
+   * counterpart absorbs into the site's replacement. */
   const siteRoot = id_at(site, candExp);
   const siteKey = siteRoot !== undefined ? `node-${siteRoot}` : null;
-  const candSubs = all_subtrees(candExp);
-  for (const [key, m] of live) {
+  const siteCand = subtree_at(site, candExp);
+  const siteCandSubs = siteCand ? all_subtrees(siteCand) : [];
+  for (const [key] of live) {
     if (cand.has(key) || !key.startsWith("node-")) continue;
-    const p = m.parentId;
-    if (p && live.has(p) && !cand.has(p)) continue; // inside a bigger exit
     const g = liveIdx.get(+key.slice(5));
+    if (!g) continue;
     let spec: Motion.ConvergeSpec | null = null;
-    if (g) {
-      const twin = candSubs.find(
-        (s) => Exp.equals(s, g) && cand.has(`node-${s.id}`)
+    if (g.t === "Atom") {
+      const twin = siteCandSubs.find(
+        (s) => s.t === "Atom" && Exp.equals(s, g) && cand.has(`node-${s.id}`)
       );
       if (twin) spec = { target: `node-${twin.id}`, mode: "merge" };
+    } else {
+      const hs = head_sym(g);
+      const twin = hs
+        ? siteCandSubs.find(
+            (s) => head_sym(s) === hs && cand.has(`node-${s.id}`)
+          )
+        : undefined;
+      if (twin) {
+        spec = { target: `node-${twin.id}`, mode: "merge" };
+        /* the comp's head merges into the twin's head */
+        const gh = g.kids[0];
+        const th = (twin as Exp.t & { t: "Comp" }).kids[0];
+        if (gh && th && !cand.has(`node-${gh.id}`) && cand.has(`node-${th.id}`))
+          converge.set(`node-${gh.id}`, {
+            target: `node-${th.id}`,
+            mode: "merge",
+          });
+      }
     }
     if (!spec && siteKey && cand.has(siteKey))
       spec = { target: siteKey, mode: "absorb" };
-    if (spec) converge.set(key, spec);
+    if (spec && !converge.has(key)) converge.set(key, spec);
+  }
+  /* sym exits follow their node's target (sym→sym when possible) */
+  for (const [key] of live) {
+    if (cand.has(key) || !key.startsWith("sym-")) continue;
+    const nodeSpec = converge.get(`node-${key.slice(4)}`);
+    if (!nodeSpec) continue;
+    const symTgt = `sym-${nodeSpec.target.slice(5)}`;
+    converge.set(key, {
+      target: cand.has(symTgt) ? symTgt : nodeSpec.target,
+      mode: nodeSpec.mode,
+    });
   }
   return { emerge, converge };
+};
+
+/* Prefer-the-grabbed-copy (the demo's rule, done at the candidate level):
+ * if a rewrite consumed the grabbed subtree but kept a structural twin
+ * (merge rules pick an arbitrary copy's ids), splice the grabbed subtree —
+ * ids and all — over the twin. The grab then survives, both copies afford
+ * the drag, and the OTHER copy becomes the exit that merges into it. Sound
+ * because we commit the exact candidate exp. */
+const replace_by_id = (e: Exp.t, targetId: number, repl: Exp.t): Exp.t => {
+  if (e.id === targetId) return repl;
+  if (e.t === "Atom") return e;
+  const kids = e.kids.map((k) => replace_by_id(k, targetId, repl));
+  return kids.every((k, i) => k === e.kids[i]) ? e : { ...e, kids };
+};
+
+const prefer_grab = (
+  candExp: Exp.t,
+  site: number[],
+  liveGrab: Exp.t | undefined
+): Exp.t => {
+  if (!liveGrab) return candExp;
+  if (index_by_id(candExp).has(liveGrab.id)) return candExp; // grab survives
+  const siteCand = subtree_at(site, candExp);
+  const twin = siteCand
+    ? all_subtrees(siteCand).find((s) => Exp.equals(s, liveGrab))
+    : undefined;
+  return twin ? replace_by_id(candExp, twin.id, liveGrab) : candExp;
 };
 
 /* Must mirror StageView's depth-derived scale. */
@@ -268,8 +327,10 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
   );
   const live = container ? Motion.measure_root(container) : new Map();
   const key = `node-${grabbedId}`;
+  const liveGrab = index_by_id(model.stage.exp).get(grabbedId);
   const out: Candidate[] = [];
-  for (const c of enumerate(model, grabbedId)) {
+  for (const raw of enumerate(model, grabbedId)) {
+    const c = { ...raw, exp: prefer_grab(raw.exp, raw.site, liveGrab) };
     const probe = probe_candidate(c.exp, model.settings);
     if (!probe) continue;
     const anchor = probe.measured.get(key)?.box;
