@@ -1345,3 +1345,81 @@ body:has(#main.Dark) {
     -0.1em -0.1em 0.2em #ebfff744, -0.2em -0.2em 0.4em #d2fff044,
     -0.4em -0.4em 0.8em #cff2e644, -0.8em -0.8em 1.6em #d2fff044;
 }
+
+/* ============ Mobile / touch ============ */
+
+/* Kill the tap-highlight rectangle (the "weird misshapen focus box" on
+   mobile) and long-press callout/selection on the play surface; pointer
+   interactions provide their own feedback. */
+#seed,
+#seed *,
+#settings-panel .icon,
+#drag-vis,
+#drag-vis * {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Touch drags must own the gesture: no scroll/pull-to-refresh stealing
+   pointermoves mid-drag. Inert on mouse devices. */
+#seed {
+  touch-action: none;
+}
+
+/* Keep the app inside the VISIBLE viewport despite mobile URL bars. */
+@supports (height: 100dvh) {
+  body,
+  #seed {
+    height: 100dvh;
+  }
+}
+
+/* Small screens (narrow OR short — landscape phones are short): scale the
+   whole scene with the viewport (em-based layout makes this a single knob).
+   Desktop is untouched. */
+@media (max-width: 820px), (max-height: 520px) {
+  #main {
+    font-size: clamp(1.05rem, min(6vw, 8.5vh), 3rem);
+  }
+}
+
+/* Portrait: stack — stage on top, noolbox below (thumb-reachable).
+   Projection-specific #seed directions (TreeTop/Linear) still win. */
+@media (max-width: 820px) and (orientation: portrait) {
+  #seed {
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: 1em;
+  }
+}
+
+/* Coarse pointers: keep tap targets finger-sized even at small em, and
+   spread the corner clusters so the bigger targets don't overlap. */
+@media (pointer: coarse) {
+  #settings-panel .icon {
+    width: max(0.5em, 30px);
+    padding: max(0.15em, 8px);
+  }
+  #settings-panel .icon:nth-child(5) {
+    right: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(6) {
+    top: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(7) {
+    top: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(8) {
+    left: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(9) {
+    left: max(0.75em, 52px);
+    top: max(0.75em, 52px);
+  }
+  .drag-toggle {
+    width: max(0.32em, 20px);
+    height: max(0.32em, 20px);
+  }
+}

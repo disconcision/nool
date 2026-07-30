@@ -71,3 +71,18 @@ The toolbox is outside the motion layer: tool flips and match-status changes
 snap instantly (VT used to crossfade them). Fine for now; revisit when the
 toolbox itself becomes a drag surface (tools-as-draggables), which will want
 the box-tween treatment extended to `pat-*` ids.
+
+## Mobile (pinned 2026-07-30)
+
+Mobile pass v1 landed: tap-highlight/callout/selection suppressed on the
+play surface, touch-action:none so drags own the gesture, 100dvh, viewport
+font clamp (narrow OR short screens), portrait stacks stage-over-noolbox,
+coarse-pointer tap-target enlargement, drag mode defaults on for touch.
+Open items:
+- Toolbox scrolling is wheel-only, so touch can't scroll the tool window
+  (only the visible rows' loadout toggles are reachable). Options: touch
+  drag-to-scroll on #noolbox, or show all rules on mobile (tools.size = all).
+- Landscape phones keep the side-by-side layout; possibly cramped with big
+  expressions. Revisit after real-device testing.
+- Keyboard-only affordances (1-4/space/arrows, Shift+S/D debug) have no
+  touch equivalents.
