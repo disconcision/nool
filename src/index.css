@@ -312,6 +312,15 @@ code {
   /* mix-blend-mode: color-dodge; */
   outline: 0.1em solid white;
 }
+/* Root-selection press feedback: #main carries .selected when the stage
+   selection is "unselected" (the root — the window itself — is what's
+   selected). Holding the pointer down on the background creeps the window
+   corners in (the border-radius transition above), relaxing on release.
+   Pressing a node removes .selected in the same tick, so this only bites
+   on background presses. */
+#main.selected:active {
+  border-radius: 5em;
+}
 .logo {
   position: absolute;
   width: 5em;

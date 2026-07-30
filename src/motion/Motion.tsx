@@ -633,8 +633,30 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     }
     if (!changed) {
       if (pre_selected !== post_selected && sel_style) {
-        const from_box = pre_selected ? before.get(pre_selected)?.box : undefined;
-        const to_box = post_selected ? after.get(post_selected)?.box : undefined;
+        /* With no node selected the root (#main — the whole window) IS the
+         * selection: the glow expands out to the window's box on unselect
+         * and shrinks back down from it on the next select, instead of
+         * fading. (Its outline ends up just past the viewport edge, where
+         * #main's own permanent white outline conceptually lives.) */
+        const root_el = document.getElementById("main");
+        const root_box: Box | undefined = root_el
+          ? (() => {
+              const r = root_el.getBoundingClientRect();
+              return {
+                x: r.x,
+                y: r.y,
+                w: r.width,
+                h: r.height,
+                font: parseFloat(getComputedStyle(root_el).fontSize),
+              };
+            })()
+          : undefined;
+        const from_box =
+          (pre_selected ? before.get(pre_selected)?.box : undefined) ??
+          root_box;
+        const to_box =
+          (post_selected ? after.get(post_selected)?.box : undefined) ??
+          root_box;
         if (from_box || to_box) {
           const el = document.createElement("div");
           el.className = "motion-layer motion-selection";
