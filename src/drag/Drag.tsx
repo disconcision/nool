@@ -398,17 +398,34 @@ const clear_vis = (): void => {
 const track_color = (c: { idx: number; reversed: boolean }): string =>
   `hsl(${Math.round(c.idx * 137.508) % 360} 70% ${c.reversed ? 62 : 45}%)`;
 
-/* 1–2 glyph code from the transform's name: first-word initial (inverse
- * takes V, leaving I to identity) plus the first operator glyph. Unnamed
- * transforms fall back to their toolbox index. */
+/* Rule code from the transform's name: first-word initial (inverse takes
+ * V, leaving I to identity) plus the first operator glyph. Rendered as
+ * the letter with one compact column beside it — reversal r superscript
+ * over the operator subscript. Unnamed transforms fall back to their
+ * toolbox index. */
 const OP_GLYPH: Record<string, string> = { plus: "+", times: "×", neg: "−" };
-const code_of = (c: Candidate): string => {
+const code_el = (c: Candidate): HTMLElement => {
   const name = c.transform.name;
-  if (!name) return `${c.idx}`;
+  const span = document.createElement("span");
+  span.className = "rule-code";
+  if (!name) {
+    span.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
+    return span;
+  }
   const [head, ...rest] = name.split("_");
-  const initial = head === "inverse" ? "V" : head[0].toUpperCase();
+  span.append(head === "inverse" ? "V" : head[0].toUpperCase());
   const op = rest.map((w) => OP_GLYPH[w]).find(Boolean) ?? "";
-  return `${initial}${op}${c.reversed ? "ʳ" : ""}`;
+  if (op || c.reversed) {
+    const stack = document.createElement("span");
+    stack.className = "code-stack";
+    const sup = document.createElement("span");
+    sup.textContent = c.reversed ? "r" : "";
+    const sub = document.createElement("span");
+    sub.textContent = op;
+    stack.append(sup, sub);
+    span.append(stack);
+  }
+  return span;
 };
 
 const show_vis = (
@@ -468,9 +485,13 @@ const show_vis = (
     dot.className = "anchor-dot";
     dot.style.left = `${tg.ax}px`;
     dot.style.top = `${tg.ay}px`;
-    dot.style.background = color;
-    dot.style.borderColor = color;
-    dot.textContent = code_of(c);
+    /* reversed: inverted — white dot, the rule's solid color as ink (the
+     * white field is the reversal marker; ink matches the forward dot) */
+    const solid = track_color({ idx: c.idx, reversed: false });
+    dot.style.background = c.reversed ? "white" : solid;
+    dot.style.borderColor = solid;
+    if (c.reversed) dot.style.color = solid;
+    dot.replaceChildren(code_el(c));
     v.appendChild(dot);
     dots.push(dot);
   });
@@ -508,10 +529,13 @@ const update_vis = (cands: Candidate[], active: number, t: number): void => {
   s.tlabel.style.display = "";
   s.tlabel.style.left = `${fx}px`;
   s.tlabel.style.top = `${fy}px`;
-  s.tlabel.textContent = `${code_of(c)} t=${t.toFixed(2)}${
-    t > COMMIT_T ? " ✓" : ""
-  }`;
-  s.tlabel.style.background = `hsl(${Math.round(c.idx * 137.508) % 360} 70% 35%)`;
+  s.tlabel.replaceChildren(
+    code_el(c),
+    ` t=${t.toFixed(2)}${t > COMMIT_T ? " ✓" : ""}`
+  );
+  const dark = `hsl(${Math.round(c.idx * 137.508) % 360} 70% 35%)`;
+  s.tlabel.style.background = c.reversed ? "white" : dark;
+  s.tlabel.style.color = c.reversed ? dark : "white";
 };
 
 // # The drag itself

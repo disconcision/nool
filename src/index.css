@@ -1124,6 +1124,24 @@ v .transform-view .label {
 #drag-vis .anchor-dot.vanishing {
   color: inherit;
 }
+/* Rule codes: letter + one compact column (reversal r superscript over
+   the operator subscript). The empty sup slot keeps operators sitting
+   subscript-low on unreversed codes. */
+#drag-vis .rule-code {
+  display: inline-flex;
+  align-items: center;
+}
+#drag-vis .code-stack {
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 0.62em;
+  line-height: 1.05;
+  text-align: left;
+  margin-left: 0.1em;
+}
+#drag-vis .code-stack > span {
+  min-height: 1em;
+}
 #drag-vis .anchor-dot.active {
   scale: 1.35;
   box-shadow: 0 0 8px #000a;
