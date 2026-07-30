@@ -289,36 +289,36 @@ const probe_candidate = (
   return { measured: Motion.measure_root(cont, dx, dy), dispose };
 };
 
+/* A node's LOCAL tree position: parent id and index among its kids. */
+const local_pos = (
+  e: Exp.t,
+  m: Map<number, { parent: number | null; index: number }> = new Map(),
+  parent: number | null = null,
+  index = 0
+): Map<number, { parent: number | null; index: number }> => {
+  m.set(e.id, { parent, index });
+  if (e.t === "Comp") e.kids.forEach((k, i) => local_pos(k, m, e.id, i));
+  return m;
+};
+
 /* Affordance filter: the grab must be a MOVER in the candidate, not a
- * passenger. If the grabbed node's box maps rigidly through its parent's
- * own displacement (same relative position and scale), the rule relocated
- * an enclosing subtree and the grab merely rode along — that drag belongs
- * to the ancestor (grab it instead). This is the demo's trigger discipline
- * (nodes inside wildcard bindings don't fire rules), derived from measured
- * geometry instead of pattern annotations. */
+ * passenger — judged logically: it moves iff its local tree position
+ * (parent, or index within it) changed. A node deep inside a relocated
+ * subtree keeps both and reads as riding along (grab the ancestor
+ * instead); a rewrite's fixed point (the root under commute/associate)
+ * keeps both and no longer counts as moving just because its box
+ * reflowed. Consumed or created grabs are genuine participants. This is
+ * the demo's trigger discipline, judged on tree structure instead of
+ * measured geometry. */
 const grab_is_mover = (
-  live: Map<string, Motion.Measured>,
-  cand: Map<string, Motion.Measured>,
-  grabbedKey: string
+  liveExp: Exp.t,
+  candExp: Exp.t,
+  grabbedId: ID.t
 ): boolean => {
-  const lx = live.get(grabbedKey);
-  const cx = cand.get(grabbedKey);
-  if (!lx || !cx) return true; // vanishes or appears: a genuine participant
-  const pKey = lx.parentId;
-  if (!pKey) return true;
-  const lp = live.get(pKey);
-  const cp = cand.get(pKey);
-  if (!lp || !cp) return true; // parent restructured: genuine participant
-  const s = cp.box.w / Math.max(1e-6, lp.box.w);
-  const ex = cp.box.x + (lx.box.x - lp.box.x) * s;
-  const ey = cp.box.y + (lx.box.y - lp.box.y) * s;
-  const ew = lx.box.w * s;
-  const eps = 2;
-  const rode_along =
-    Math.abs(ex - cx.box.x) < eps &&
-    Math.abs(ey - cx.box.y) < eps &&
-    Math.abs(ew - cx.box.w) < eps;
-  return !rode_along;
+  const l = local_pos(liveExp).get(grabbedId);
+  const c = local_pos(candExp).get(grabbedId);
+  if (!l || !c) return true;
+  return l.parent !== c.parent || l.index !== c.index;
 };
 
 export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
@@ -337,7 +337,7 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
     /* No anchor = the grab is consumed by this rewrite; it has no track to
      * ride. Such rules are reached by grabbing a node that survives (e.g.
      * factoring via the shared factor or the sum, not the product). */
-    if (!anchor || !grab_is_mover(live, probe.measured, key)) {
+    if (!anchor || !grab_is_mover(model.stage.exp, c.exp, grabbedId)) {
       probe.dispose();
       continue;
     }
