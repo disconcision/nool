@@ -584,8 +584,11 @@ code {
   box-shadow: #0000;
 }
 
-.node-container.LinearInfix .node.selected:has(> *),
-.node-container.LinearInfix .node.selected:has(> *):hover {
+/* Selected comps only (their kids get dotted outlines below): atoms also
+   have a child (the sym wrapper), so :has(> *) would suppress their
+   selection glow while giving them no dotted replacement. */
+.node-container.LinearInfix .node.selected:has(> .node),
+.node-container.LinearInfix .node.selected:has(> .node):hover {
   border: 0;
   outline: 0.03em solid #ffffff;
   box-shadow: 0px 0px 0.6em #ffffff;
