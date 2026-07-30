@@ -64,6 +64,8 @@ type Tween = {
   start: number;
   duration: number;
   raf: number;
+  /* per-tween easing; easeInOutBack when unset */
+  ease?: (x: number) => number;
   /* present while a drag drives t directly; no clock runs */
   manual?: { t: number };
 };
@@ -109,6 +111,10 @@ const easeInOutBack = (x: number): number => {
     ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
     : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
 };
+
+/* Fast start, gentle landing — for retargeted glow hops, where most of
+ * the travel must happen in the few frames before the next key repeat. */
+const easeOutCubic = (x: number): number => 1 - Math.pow(1 - x, 3);
 
 const anim_factor = (): number => {
   const v = parseFloat(
@@ -232,7 +238,9 @@ const layer_mode = (from: Box, to: Box): "translate" | "box" =>
 const eased_now = (tw: Tween): number =>
   tw.manual
     ? tw.manual.t
-    : easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
+    : (tw.ease ?? easeInOutBack)(
+        clamp01((performance.now() - tw.start) / tw.duration)
+      );
 
 const ensure_overlay = (): HTMLElement | null => {
   /* The overlay lives INSIDE the (hidden) stage container so clones keep
@@ -277,13 +285,27 @@ const capture_before = (): {
   before: Map<string, BeforeInfo>;
   exit_sources: Map<string, HTMLElement>;
   prev: Tween | null;
+  /* true when `before` came from a consumed full morph's overlay layers —
+   * their els may be adopted as exit clones. False when `before` is a live
+   * measurement (no tween, or only the synthetic glow was in flight). */
+  reuse_exits: boolean;
+  /* mid-flight box of an interrupted selection-glow layer, for retargeting */
+  glow_box: Box | null;
 } => {
   const before = new Map<string, BeforeInfo>();
   const exit_sources = new Map<string, HTMLElement>();
   const prev = tween;
+  let glow_box: Box | null = null;
   if (prev) {
     const t = eased_now(prev);
     for (const [id, l] of prev.layers) {
+      if (id === "@selection") {
+        /* synthetic glow layer, not a node: capture its blend so the next
+         * selection morph can pick up where it left off, but keep it out
+         * of the node before-state */
+        glow_box = lerpBox(l.from, l.to, t);
+        continue;
+      }
       const op = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
       if (op < 0.01 && l.toOpacity === 0) continue; // fully-faded exit: drop
       const blend = lerpBox(l.from, l.to, t);
@@ -300,13 +322,19 @@ const capture_before = (): {
     }
     cancelAnimationFrame(prev.raf);
     tween = null;
-  } else {
+  }
+  const reuse_exits = before.size > 0;
+  if (!reuse_exits) {
+    /* No real node layers in flight — the live DOM is fully painted and
+     * authoritative. (Capturing a glow-only tween's layers here instead
+     * made every node read as an enter: the stage dimmed and faded back
+     * in on each rapid selection change.) */
     for (const [id, m] of measure()) {
       before.set(id, { box: m.box, opacity: 1, depth: m.depth, parentId: m.parentId });
       exit_sources.set(id, m.el);
     }
   }
-  return { before, exit_sources, prev };
+  return { before, exit_sources, prev, reuse_exits, glow_box };
 };
 
 /* Provenance-driven enter/exit geometry (the demo's emergeFrom/emergeMode,
@@ -537,7 +565,7 @@ const mount_layers = (layers: Map<string, Layer>, dim: boolean): boolean => {
   return true;
 };
 
-const start_clock = (duration: number): void => {
+const start_clock = (duration: number, immediate = false): void => {
   if (!tween) return;
   tween.duration = duration;
   const step = (): void => {
@@ -548,9 +576,15 @@ const start_clock = (duration: number): void => {
       finish();
       return;
     }
-    apply_frame(tween.layers, easeInOutBack(clamp01(x)));
+    apply_frame(tween.layers, (tween.ease ?? easeInOutBack)(clamp01(x)));
     tween.raf = requestAnimationFrame(step);
   };
+  /* Immediate: no warm-up, for cheap single-layer tweens that may only
+   * get a frame or two before being retargeted again (key repeat). */
+  if (immediate) {
+    tween.raf = requestAnimationFrame(step);
+    return;
+  }
   /* The first painted frame pays the layer rasterization cost (tens of ms).
    * Start the clock only after it has presented — otherwise the first
    * visible frame lands mid-curve and the animation's opening is skipped. */
@@ -567,12 +601,13 @@ const start_clock = (duration: number): void => {
 const run_tween = (
   layers: Map<string, Layer>,
   duration: number,
-  dim: boolean
+  dim: boolean,
+  opts?: { ease?: (x: number) => number; immediate?: boolean }
 ): void => {
   if (!mount_layers(layers, dim)) return;
-  tween = { layers, start: performance.now(), duration, raf: 0 };
+  tween = { layers, start: performance.now(), duration, raf: 0, ease: opts?.ease };
   apply_frame(layers, 0);
-  start_clock(duration);
+  start_clock(duration, opts?.immediate);
 };
 
 /* Run a model update, animating stage nodes from where they are displayed
@@ -588,17 +623,24 @@ export const animate = (apply: () => void, enabled: boolean): void => {
   const pre_selected =
     stage_container()?.querySelector(".node.selected")?.id ?? null;
 
-  const { before, exit_sources, prev } = capture_before();
+  const { before, exit_sources, prev, reuse_exits, glow_box } =
+    capture_before();
 
   apply();
 
   const after = measure();
 
-  /* Keep the selection glow styling cached while a selected node exists. */
+  /* Keep the selection glow styling cached while a selected node exists —
+   * but not mid-morph: the selection-morphing class suppresses the live
+   * glow, so capturing then would cache an invisible style and rapid
+   * selection changes would travel an invisible outline. */
   const post_selected_el =
     stage_container()?.querySelector<HTMLElement>(".node.selected") ?? null;
   const post_selected = post_selected_el?.id ?? null;
-  if (post_selected_el) {
+  if (
+    post_selected_el &&
+    !stage_container()?.classList.contains("selection-morphing")
+  ) {
     const cs = getComputedStyle(post_selected_el);
     sel_style = {
       outline: cs.outline,
@@ -610,8 +652,10 @@ export const animate = (apply: () => void, enabled: boolean): void => {
   /* No-change guard: skip the overlay when geometry is undisturbed. A pure
    * selection change still gets a morph: a synthetic glow layer travels
    * from the old selected node's box to the new one's (the live glow is
-   * suppressed meanwhile), recreating the old view-transition effect. */
-  if (!prev) {
+   * suppressed meanwhile), recreating the old view-transition effect.
+   * `before` is a live measurement whenever reuse_exits is false, so the
+   * comparison is meaningful even when a glow-only tween was consumed. */
+  if (!reuse_exits) {
     let changed = after.size !== before.size;
     if (!changed) {
       /* 1.5px: selection border/outline changes jiggle boxes by ~1px; a
@@ -632,7 +676,10 @@ export const animate = (apply: () => void, enabled: boolean): void => {
       }
     }
     if (!changed) {
-      if (pre_selected !== post_selected && sel_style) {
+      /* Run the glow morph when the selection changed, or when an
+       * interrupted glow still needs to finish traveling (e.g. held
+       * arrow keys at the edge of the tree re-trigger no-op updates). */
+      if ((pre_selected !== post_selected || glow_box) && sel_style) {
         /* With no node selected the root (#main — the whole window) IS the
          * selection: the glow expands out to the window's box on unselect
          * and shrinks back down from it on the next select, instead of
@@ -651,7 +698,11 @@ export const animate = (apply: () => void, enabled: boolean): void => {
               };
             })()
           : undefined;
+        /* Retarget from the interrupted glow's mid-flight box when there
+         * is one, so rapid selection changes read as one continuous
+         * outline chasing the selection. */
         const from_box =
+          glow_box ??
           (pre_selected ? before.get(pre_selected)?.box : undefined) ??
           root_box;
         const to_box =
@@ -679,14 +730,28 @@ export const animate = (apply: () => void, enabled: boolean): void => {
             mode: layer_mode(from, to),
           };
           stage_container()?.classList.add("selection-morphing");
-          run_tween(new Map([["@selection", layer]]), 200 * anim_factor(), false);
+          /* Retargets (key repeat) get a short, fast-starting hop with no
+           * warm-up — un-scaled by anim factor, since keeping up with the
+           * input is responsiveness, not spectacle. The outline then rides
+           * about a hop behind and settles when the keys stop. */
+          const retarget = !!glow_box;
+          run_tween(
+            new Map([["@selection", layer]]),
+            retarget ? 120 : 200 * anim_factor(),
+            false,
+            retarget ? { ease: easeOutCubic, immediate: true } : undefined
+          );
+          return;
         }
       }
+      /* Consumed a tween but ran nothing in its place: tear down so the
+       * live DOM (and its selection glow) isn't left suppressed. */
+      if (prev) finish();
       return;
     }
   }
 
-  const layers = build_layers(before, after, exit_sources, !!prev);
+  const layers = build_layers(before, after, exit_sources, reuse_exits);
   run_tween(layers, 250 * anim_factor(), true);
 };
 
@@ -700,9 +765,9 @@ export const manual_start = (
   after: Map<string, Measured>,
   opts?: EmergeOpts
 ): boolean => {
-  const { before, exit_sources, prev } = capture_before();
+  const { before, exit_sources, reuse_exits } = capture_before();
   if (before.size === 0) return false;
-  const layers = build_layers(before, after, exit_sources, !!prev, opts);
+  const layers = build_layers(before, after, exit_sources, reuse_exits, opts);
   if (!mount_layers(layers, true)) return false;
   tween = {
     layers,
