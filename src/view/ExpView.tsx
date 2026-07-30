@@ -22,12 +22,19 @@ type expviewprops = {
   inject: Action.Inject;
   mask: Pat.Binding[];
   symbols: Settings.symbols;
+  /* drag mode: pointerdown grabs the node instead of selecting it */
+  grab?: (id: number, e: PointerEvent) => void;
 };
 
-const setSelect = (props: expviewprops) => (e: Event) => {
+const setSelect = (props: expviewprops) => (e: PointerEvent) => {
+  /* preventDefault also suppresses the compatibility mousedown, which would
+   * otherwise bubble to #seed and fire unsetSelections */
   e.preventDefault();
-  //above modulates whether shake occurs for some reason?
   e.stopPropagation();
+  if (props.grab) {
+    props.grab(props.node.id, e);
+    return;
+  }
   props.inject({
     t: "setSelect",
     path: Statics.get(props.info, props.node.id).path,
@@ -87,6 +94,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               inject={props.inject}
               mask={props.mask}
               symbols={props.symbols}
+              grab={props.grab}
             />
           )}
         </For>
@@ -100,6 +108,7 @@ export const ExpView: Component<{
   inject: Action.Inject;
   mask: Pat.Binding[];
   symbols: Settings.symbols;
+  grab?: (id: number, e: PointerEvent) => void;
 }> = (props) => (
   <ExpViewGo
     info={props.stage.info}
@@ -109,6 +118,7 @@ export const ExpView: Component<{
     mask={props.mask}
     is_head={false}
     symbols={props.symbols}
+    grab={props.grab}
   />
 );
 

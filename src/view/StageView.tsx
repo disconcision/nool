@@ -3,6 +3,7 @@ import { Model } from "../Model";
 import * as Action from "../Action";
 import { ExpView } from "./ExpView";
 import * as Hover from "../Hover";
+import * as Drag from "../drag/Drag";
 import { depth } from "../syntax/Node";
 
 const stage_scale = (d: number) => (d == 0 ? 1 : 4 / (d + 1));
@@ -26,6 +27,11 @@ export const StageView: Component<{
           inject={props.inject}
           mask={mask()}
           symbols={props.model.settings.symbols}
+          grab={
+            props.model.settings.dragging
+              ? (id, e) => Drag.grab(props.model, id, e)
+              : undefined
+          }
         />
       </div>
     </div>

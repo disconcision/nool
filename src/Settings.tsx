@@ -13,6 +13,9 @@ export type t = {
   projection: projection;
   symbols: symbols;
   theme: theme;
+  /* drag mode: stage pointerdown grabs nodes for drag-rewrites instead of
+   * selecting for the noolbox */
+  dragging: boolean;
 };
 
 export type Action =
@@ -21,7 +24,8 @@ export type Action =
   | "TogglePreview"
   | "ToggleProjection"
   | "ToggleSymbols"
-  | "ToggleDark";
+  | "ToggleDark"
+  | "ToggleDragging";
 
 export const init: t = {
   sound: true,
@@ -30,6 +34,7 @@ export const init: t = {
   projection: "TreeLeft",
   symbols: "Emoji",
   theme: "Light",
+  dragging: false,
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -73,5 +78,7 @@ export const update = (settings: t, action: Action): t => {
         case "Dark":
           return { ...settings, theme: "Light" };
       }
+    case "ToggleDragging":
+      return { ...settings, dragging: !settings.dragging };
   }
 };

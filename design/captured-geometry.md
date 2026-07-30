@@ -170,9 +170,24 @@ Per drag (or per click-animation):
 1. ~~Stability + VT removal + box-snapshot tween layer, proven on existing
    *button* clicks (a win even if drag stalls).~~ **Done 2026-07-29**, see
    status below.
-2. Hidden-mount candidate measurement: pointerdown → enumerate (via existing
-   `PreView.do_transforms` / `Pat.matches_at_id`) → measure → visualize
-   anchors.
+2. ~~Hidden-mount candidate measurement: pointerdown → enumerate → measure →
+   visualize anchors.~~ **Done 2026-07-29.** Drag is a separate mode
+   (`settings.dragging`, corner-icon toggle below the sound icon) so it
+   can't interfere with noolbox interaction. `src/drag/Drag.tsx`: grabbing a
+   node enumerates transforms applicable at it (both directions, ids
+   PRESERVED — unlike PreView's deliberate freshening — then `freshen` for
+   dup-id normalization, structurally deduped), renders each candidate into
+   a hidden probe inside #stage (explicit px font-size replicating the
+   depth-derived stage scale, center-aligned to the live scene), and
+   batch-measures per-id boxes. Debug overlay shows the grabbed node's box
+   and a colored anchor dot per candidate (hollow = grab vanishes in that
+   candidate; falls back to candidate root). Measured cost: ~10ms for 5
+   candidates — drag-start budgeting confirmed trivial. Immediately visible
+   in the dots: **coincident anchors** (different rules placing the grabbed
+   node at the same point) — the loadout-conflict phenomenon, now literally
+   observable geometry. Enumeration is root-anchored for now (rules that
+   rewrite the grabbed subtree itself); trigger-annotation ergonomics
+   deferred to step 4.
 3. Overlay + `between` over one id-pure rule (commute) to validate feel.
 4. closest-of-betweens + snap + chain; then emerge for identity/distribute.
 

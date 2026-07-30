@@ -20,6 +20,8 @@ import palette_1 from "../assets/icons/noun-palette-1918496.svg";
 import alphabet from "../assets/icons/noun-alphabet-3591519.svg"
 import ded from "../assets/icons/noun-dead-5130035.svg"
 import prims from "../assets/icons/noun-geometry-4695832.svg"
+import drag_off from "../assets/icons/noun-tool-3376727.svg"
+import drag_on from "../assets/icons/noun-transformation-6040368.svg"
 
 //TODO: qr code to disable id display
 
@@ -81,6 +83,9 @@ const theme_icon = (theme: Settings.theme): string => {
   }
 };
 
+const dragging_icon = (dragging: boolean): string =>
+  dragging ? drag_on : drag_off;
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
@@ -95,6 +100,8 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return symbols_icon(settings.symbols);
     case "ToggleDark":
       return theme_icon(settings.theme);
+    case "ToggleDragging":
+      return dragging_icon(settings.dragging);
   }
 };
 
@@ -121,6 +128,7 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
-    
+    {icon(props.inject, props.model.settings, "ToggleDragging")}
+
   </div>
 );
