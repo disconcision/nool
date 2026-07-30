@@ -33,10 +33,9 @@ export type Candidate = {
   exp: Exp.t;
   measured: Map<string, Motion.Measured>;
   dispose: () => void;
-  /* grabbed node's box in this candidate; null if the grab vanishes there */
-  anchor: Motion.Box | null;
-  /* fallback: candidate root box (used when the grab vanishes) */
-  root: Motion.Box | null;
+  /* grabbed node's box in this candidate (always present: candidates where
+   * the grab vanishes are not offered — like the demo, triggers survive) */
+  anchor: Motion.Box;
 };
 
 /* Must mirror StageView's depth-derived scale. */
@@ -177,7 +176,11 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
   for (const c of enumerate(model, grabbedId)) {
     const probe = probe_candidate(c.exp, model.settings);
     if (!probe) continue;
-    if (!grab_is_mover(live, probe.measured, key)) {
+    const anchor = probe.measured.get(key)?.box;
+    /* No anchor = the grab is consumed by this rewrite; it has no track to
+     * ride. Such rules are reached by grabbing a node that survives (e.g.
+     * factoring via the shared factor or the sum, not the product). */
+    if (!anchor || !grab_is_mover(live, probe.measured, key)) {
       probe.dispose();
       continue;
     }
@@ -185,8 +188,7 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
       ...c,
       measured: probe.measured,
       dispose: probe.dispose,
-      anchor: probe.measured.get(key)?.box ?? null,
-      root: probe.measured.get(`node-${c.exp.id}`)?.box ?? null,
+      anchor,
     });
   }
   return out;
@@ -202,7 +204,7 @@ type VisState = {
   foot: HTMLElement;
   tlabel: HTMLElement;
   a0: { x: number; y: number };
-  targets: ({ ax: number; ay: number } | null)[];
+  targets: { ax: number; ay: number }[];
 };
 
 let vis_state: VisState | null = null;
@@ -228,7 +230,7 @@ const hue_of = (i: number, n: number): number =>
 const show_vis = (
   grabbedId: ID.t,
   cands: Candidate[],
-  targets: ({ ax: number; ay: number } | null)[],
+  targets: { ax: number; ay: number }[],
   a0: { x: number; y: number }
 ): void => {
   const v = ensure_vis();
@@ -251,51 +253,42 @@ const show_vis = (
   cands.forEach((c, i) => {
     const tg = targets[i];
     const hue = hue_of(i, cands.length);
-    if (tg) {
-      const reachable =
-        Math.hypot(tg.ax - a0.x, tg.ay - a0.y) >= MIN_TRAVEL;
-      const line = document.createElementNS(SVGNS, "line");
-      line.setAttribute("x1", `${a0.x}`);
-      line.setAttribute("y1", `${a0.y}`);
-      line.setAttribute("x2", `${tg.ax}`);
-      line.setAttribute("y2", `${tg.ay}`);
-      line.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
-      line.classList.add("track");
-      if (!reachable) line.classList.add("unreachable");
-      svg.appendChild(line);
-      lines.push(line);
-      if (reachable) {
-        /* commit-threshold tick, perpendicular at t = COMMIT_T */
-        const mx = a0.x + (tg.ax - a0.x) * COMMIT_T;
-        const my = a0.y + (tg.ay - a0.y) * COMMIT_T;
-        const len = Math.hypot(tg.ax - a0.x, tg.ay - a0.y);
-        const px = (-(tg.ay - a0.y) / len) * 5;
-        const py = ((tg.ax - a0.x) / len) * 5;
-        const tick = document.createElementNS(SVGNS, "line");
-        tick.setAttribute("x1", `${mx - px}`);
-        tick.setAttribute("y1", `${my - py}`);
-        tick.setAttribute("x2", `${mx + px}`);
-        tick.setAttribute("y2", `${my + py}`);
-        tick.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
-        tick.classList.add("track-tick");
-        svg.appendChild(tick);
-      }
-    } else {
-      lines.push(document.createElementNS(SVGNS, "line")); // placeholder
+    const reachable = Math.hypot(tg.ax - a0.x, tg.ay - a0.y) >= MIN_TRAVEL;
+    const line = document.createElementNS(SVGNS, "line");
+    line.setAttribute("x1", `${a0.x}`);
+    line.setAttribute("y1", `${a0.y}`);
+    line.setAttribute("x2", `${tg.ax}`);
+    line.setAttribute("y2", `${tg.ay}`);
+    line.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+    line.classList.add("track");
+    if (!reachable) line.classList.add("unreachable");
+    svg.appendChild(line);
+    lines.push(line);
+    if (reachable) {
+      /* commit-threshold tick, perpendicular at t = COMMIT_T */
+      const mx = a0.x + (tg.ax - a0.x) * COMMIT_T;
+      const my = a0.y + (tg.ay - a0.y) * COMMIT_T;
+      const len = Math.hypot(tg.ax - a0.x, tg.ay - a0.y);
+      const px = (-(tg.ay - a0.y) / len) * 5;
+      const py = ((tg.ax - a0.x) / len) * 5;
+      const tick = document.createElementNS(SVGNS, "line");
+      tick.setAttribute("x1", `${mx - px}`);
+      tick.setAttribute("y1", `${my - py}`);
+      tick.setAttribute("x2", `${mx + px}`);
+      tick.setAttribute("y2", `${my + py}`);
+      tick.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+      tick.classList.add("track-tick");
+      svg.appendChild(tick);
     }
-    if (tg) {
-      const dot = document.createElement("div");
-      dot.className = "anchor-dot" + (c.anchor ? "" : " vanishing");
-      dot.style.left = `${tg.ax}px`;
-      dot.style.top = `${tg.ay}px`;
-      dot.style.background = c.anchor ? `hsl(${hue} 70% 45%)` : "transparent";
-      dot.style.borderColor = `hsl(${hue} 70% 45%)`;
-      dot.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
-      v.appendChild(dot);
-      dots.push(dot);
-    } else {
-      dots.push(null);
-    }
+    const dot = document.createElement("div");
+    dot.className = "anchor-dot";
+    dot.style.left = `${tg.ax}px`;
+    dot.style.top = `${tg.ay}px`;
+    dot.style.background = `hsl(${hue} 70% 45%)`;
+    dot.style.borderColor = `hsl(${hue} 70% 45%)`;
+    dot.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
+    v.appendChild(dot);
+    dots.push(dot);
   });
   /* projection foot + live t readout, shown while a candidate is active */
   const foot = document.createElement("div");
@@ -345,10 +338,13 @@ const update_vis = (cands: Candidate[], active: number, t: number): void => {
 const MIN_TRAVEL = 12;
 const ENGAGE_PX = 4;
 const COMMIT_T = 0.5;
-/* Stickiness: a challenger track must be this many px closer than the
- * active one to steal the drag (status-quo bias; prevents mid-drag track
- * theft by nearly-collinear segments). */
-const STICKINESS = 24;
+/* The knob counts as "at the hub" (free to change rails) within this many
+ * px of the grab point. */
+const HUB_PX = 10;
+/* Max knob speed along the rails, px per frame (~120Hz). Fast enough to
+ * feel 1:1 under the pointer; slow enough that flowing out of the hub onto
+ * a new rail reads as motion, not teleportation. */
+const KNOB_SPEED = 20;
 
 export const grab = (
   model: Model.t,
@@ -367,84 +363,132 @@ export const grab = (
       }
     : { x: 0.5, y: 0.5 };
   const a0 = { x: e.clientX, y: e.clientY };
-  const targets = cands.map((c) => {
-    const box = c.anchor ?? c.root;
-    if (!box) return null;
-    return { ax: box.x + rel.x * box.w, ay: box.y + rel.y * box.h };
-  });
+  const targets = cands.map((c) => ({
+    ax: c.anchor.x + rel.x * c.anchor.w,
+    ay: c.anchor.y + rel.y * c.anchor.h,
+  }));
   show_vis(grabbedId, cands, targets, a0);
   console.table(
     cands.map((c, i) => ({
       tool: c.idx,
       dir: c.reversed ? "reverse" : "forward",
-      target: targets[i] ? `${Math.round(targets[i]!.ax)},${Math.round(targets[i]!.ay)}` : "-",
-      travel: targets[i]
-        ? Math.round(Math.hypot(targets[i]!.ax - a0.x, targets[i]!.ay - a0.y))
-        : 0,
+      target: `${Math.round(targets[i].ax)},${Math.round(targets[i].ay)}`,
+      travel: Math.round(Math.hypot(targets[i].ax - a0.x, targets[i].ay - a0.y)),
       nodes: c.measured.size,
     }))
   );
 
-  let engaged = false;
-  let active = -1;
-  let lastT = 0;
-
-  const onMove = (ev: PointerEvent): void => {
-    const p = { x: ev.clientX, y: ev.clientY };
-    if (!engaged) {
-      if (Math.hypot(p.x - a0.x, p.y - a0.y) < ENGAGE_PX) return;
-      engaged = true;
-    }
-    /* closest-of-betweens: project the pointer onto each grab→anchor
-     * segment; nearest segment wins its parameter as the blend t. The
-     * active track is sticky: challengers must beat it by STICKINESS px. */
+  /* # The knob-on-rails mechanic.
+   *
+   * The drag state is not "which candidate is nearest the pointer" (a
+   * classifier — discontinuous at its decision boundaries) but the position
+   * of a knob on a star-shaped rail network joined at the grab point. The
+   * pointer doesn't set the state, it PULLS on it: each frame the knob
+   * chases the pointer's projection along its current rail at bounded
+   * speed, and may change rails only at the hub. Continuity is by
+   * construction; commitment far from the hub is topology, not a tuned
+   * threshold. */
+  const rails = targets.map((tg) => {
+    const vx = tg.ax - a0.x;
+    const vy = tg.ay - a0.y;
+    const len = Math.hypot(vx, vy);
+    return { vx, vy, len, ok: len >= MIN_TRAVEL };
+  });
+  const proj_t = (p: { x: number; y: number }, i: number): number => {
+    const r = rails[i];
+    return clamp01(
+      ((p.x - a0.x) * r.vx + (p.y - a0.y) * r.vy) / (r.len * r.len)
+    );
+  };
+  const perp_d = (p: { x: number; y: number }, i: number, t: number): number => {
+    const r = rails[i];
+    return Math.hypot(p.x - (a0.x + t * r.vx), p.y - (a0.y + t * r.vy));
+  };
+  /* Best rail to flow onto from the hub: pointer must pull beyond the hub
+   * radius on it; nearest by perpendicular distance wins. */
+  const outward_rail = (p: { x: number; y: number }): number => {
     let best = -1;
     let bestD = Infinity;
-    let bestT = 0;
-    let activeD = Infinity;
-    let activeT = 0;
-    targets.forEach((tg, i) => {
-      if (!tg) return;
-      const vx = tg.ax - a0.x;
-      const vy = tg.ay - a0.y;
-      const len2 = vx * vx + vy * vy;
-      if (len2 < MIN_TRAVEL * MIN_TRAVEL) return;
-      const t = clamp01(((p.x - a0.x) * vx + (p.y - a0.y) * vy) / len2);
-      const d = Math.hypot(p.x - (a0.x + t * vx), p.y - (a0.y + t * vy));
-      if (i === active) {
-        activeD = d;
-        activeT = t;
-      }
+    rails.forEach((r, i) => {
+      if (!r.ok) return;
+      const t = proj_t(p, i);
+      if (t * r.len <= HUB_PX) return;
+      const d = perp_d(p, i, t);
       if (d < bestD) {
         bestD = d;
         best = i;
-        bestT = t;
       }
     });
-    if (best < 0) return;
-    if (active >= 0 && best !== active && activeD < Infinity) {
-      if (bestD >= activeD - STICKINESS) {
-        best = active;
-        bestT = activeT;
+    return best;
+  };
+
+  let engaged = false;
+  let rail = -1; // current rail (-1: resting at the hub)
+  let knobT = 0; // knob parameter on the current rail
+  let pointer = { x: e.clientX, y: e.clientY };
+  let raf = 0;
+
+  const step = (): void => {
+    if (engaged) {
+      if (rail < 0) {
+        const j = outward_rail(pointer);
+        if (j >= 0) {
+          rail = j;
+          knobT = 0;
+          Motion.manual_start(cands[j].measured);
+        }
+      } else {
+        /* At the hub, rails may be changed freely — and this must be
+         * checked BEFORE chasing: a diagonal pull toward another rail
+         * usually still projects positively onto the current one, and the
+         * knob would exit the hub along the wrong rail. */
+        const knobPx = knobT * rails[rail].len;
+        if (knobPx <= HUB_PX) {
+          const j = outward_rail(pointer);
+          if (j >= 0 && j !== rail) {
+            rail = j;
+            knobT = Math.min(knobPx / rails[j].len, 1);
+            Motion.manual_start(cands[j].measured);
+          }
+        }
+        /* chase the pointer's projection along the current rail */
+        const tTar = proj_t(pointer, rail);
+        const dPx = (tTar - knobT) * rails[rail].len;
+        const move = Math.max(-KNOB_SPEED, Math.min(KNOB_SPEED, dPx));
+        knobT = clamp01(knobT + move / rails[rail].len);
+      }
+      if (rail >= 0) {
+        Motion.manual_set(knobT);
+        update_vis(cands, rail, knobT);
       }
     }
-    if (best !== active) {
-      active = best;
-      Motion.manual_start(cands[best].measured);
-    }
-    lastT = bestT;
-    Motion.manual_set(bestT);
-    update_vis(cands, active, bestT);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__knob = {
+      rail,
+      t: +knobT.toFixed(3),
+      engaged,
+      px: { ...pointer },
+      frames: (((window as any).__knob?.frames as number) ?? 0) + 1,
+    };
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+
+  const onMove = (ev: PointerEvent): void => {
+    pointer = { x: ev.clientX, y: ev.clientY };
+    if (!engaged && Math.hypot(pointer.x - a0.x, pointer.y - a0.y) >= ENGAGE_PX)
+      engaged = true;
   };
 
   const onUp = (): void => {
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
     window.removeEventListener("pointercancel", onUp);
+    cancelAnimationFrame(raf);
     clear_vis();
-    if (engaged && active >= 0) {
-      if (lastT > COMMIT_T) {
-        const c = cands[active];
+    if (engaged && rail >= 0) {
+      if (knobT > COMMIT_T) {
+        const c = cands[rail];
         /* animate() captures the manual blend as its origin: seamless */
         inject({
           t: "transformNode",
