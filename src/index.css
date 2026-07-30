@@ -1108,8 +1108,8 @@ v .transform-view .label {
 }
 #drag-vis .anchor-dot {
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   border: 2px solid;
@@ -1146,27 +1146,34 @@ v .transform-view .label {
   scale: 1.35;
   box-shadow: 0 0 8px #000a;
 }
-#drag-vis svg {
+/* Rails layer: fixed full-viewport like #drag-vis but BEHIND the stage
+   (negative z-index paints above the page background, under in-flow
+   content); the translucent node pills let the rails show through. */
+#drag-vis-rails {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+#drag-vis-rails svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
-#drag-vis .track {
-  stroke-width: 2;
-  opacity: 0.35;
-  stroke-dasharray: 4 4;
+#drag-vis-rails .track {
+  stroke-width: 1;
+  opacity: 0.55;
 }
-#drag-vis .track.active {
-  stroke-width: 4;
-  opacity: 0.9;
-  stroke-dasharray: none;
+#drag-vis-rails .track.active {
+  stroke-width: 3;
+  opacity: 0.95;
 }
-#drag-vis .track.unreachable {
-  opacity: 0.12;
+#drag-vis-rails .track.unreachable {
+  opacity: 0.15;
 }
-#drag-vis .track-tick {
+#drag-vis-rails .track-tick {
   stroke-width: 2;
   opacity: 0.6;
 }

@@ -386,8 +386,21 @@ const ensure_vis = (): HTMLElement => {
   return vis;
 };
 
+/* Rails live in a separate negative-z layer BEHIND the stage — the
+ * translucent node pills let them show through — while dots and readouts
+ * stay in the top layer. */
+let vis_rails: HTMLElement | null = null;
+const ensure_rails = (): HTMLElement => {
+  if (vis_rails && vis_rails.isConnected) return vis_rails;
+  vis_rails = document.createElement("div");
+  vis_rails.id = "drag-vis-rails";
+  document.body.appendChild(vis_rails);
+  return vis_rails;
+};
+
 const clear_vis = (): void => {
   vis?.replaceChildren();
+  vis_rails?.replaceChildren();
   vis_state = null;
 };
 
@@ -448,7 +461,7 @@ const show_vis = (
   }
   /* tracks: one segment per reachable candidate, tick at the commit point */
   const svg = document.createElementNS(SVGNS, "svg");
-  v.appendChild(svg);
+  ensure_rails().replaceChildren(svg);
   const lines: SVGLineElement[] = [];
   const dots: (HTMLElement | null)[] = [];
   cands.forEach((c, i) => {
@@ -485,11 +498,12 @@ const show_vis = (
     dot.className = "anchor-dot";
     dot.style.left = `${tg.ax}px`;
     dot.style.top = `${tg.ay}px`;
-    /* reversed: inverted — white dot, the rule's solid color as ink (the
-     * white field is the reversal marker; ink matches the forward dot) */
+    /* reversed: inverted — all-white dot, the rule's solid color as ink
+     * (the white field is the reversal marker; ink matches the forward
+     * dot) */
     const solid = track_color({ idx: c.idx, reversed: false });
     dot.style.background = c.reversed ? "white" : solid;
-    dot.style.borderColor = solid;
+    dot.style.borderColor = c.reversed ? "white" : solid;
     if (c.reversed) dot.style.color = solid;
     dot.replaceChildren(code_el(c));
     v.appendChild(dot);
