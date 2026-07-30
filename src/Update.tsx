@@ -98,11 +98,23 @@ export const update = (model: Model.t, action: Action.t): result => {
   switch (action.t) {
     case "restart":
       return Model.init;
-    case "setSetting":
+    case "setSetting": {
+      const settings = Settings.update(model.settings, action.action);
+      /* Entering drag mode retires the selection mechanic wholesale
+       * (pointerdown grabs; see also App/SeedView/Keyboard gating). */
+      const entering_drag = settings.dragging && !model.settings.dragging;
       return {
         ...model,
-        settings: Settings.update(model.settings, action.action),
+        settings,
+        ...(entering_drag
+          ? {
+              stage: Stage.unset_selection(model.stage),
+              tools: ToolBox.unset(model.tools),
+              hover: Hover.init,
+            }
+          : {}),
       };
+    }
     case "setSelect":
       if (
         model.stage.selection === "unselected"

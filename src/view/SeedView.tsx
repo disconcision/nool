@@ -21,7 +21,9 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
     }
     onmousedown={(e) => {
       e.preventDefault();
-      props.inject({ t: "unsetSelections" });
+      /* drag mode has no selection mechanic; background clicks are inert */
+      if (!props.model.settings.dragging)
+        props.inject({ t: "unsetSelections" });
     }}
   >
     <ToolsView model={props.model} inject={props.inject} />

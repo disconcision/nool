@@ -36,9 +36,14 @@ const App: Component = () => {
       id="main"
       /* single class expression: a `class` re-evaluation (theme toggle)
        * would clobber classList-managed names */
+      /* window-as-root-node selection metaphor: suppressed in drag mode,
+       * where the selection mechanic (and its page-level pseudo-node) is
+       * disabled entirely */
       class={
         model.settings.theme +
-        (model.stage.selection === "unselected" ? " selected" : "")
+        (model.stage.selection === "unselected" && !model.settings.dragging
+          ? " selected"
+          : "")
       }
     >
       <Seed model={model} inject={inject} />

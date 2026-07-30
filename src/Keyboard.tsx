@@ -49,6 +49,8 @@ export const keydown =
     const dir = arrow_of(event.key);
     if (dir) {
       event.preventDefault();
+      /* drag mode has no selection mechanic to move */
+      if (model.settings.dragging) return;
       /* Screen-space movement, measured off the rendered stage at press
        * time; no candidate in that direction means no move (and no sound) */
       const path = Navigate.next(model.stage, dir);
