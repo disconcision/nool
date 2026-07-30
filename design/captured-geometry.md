@@ -228,9 +228,37 @@ Per drag (or per click-animation):
      are excluded. Report note: affordance selection is ANOTHER thing
      measured geometry can decide that analytic substrates express through
      annotations — the "who moves" question has a purely geometric answer.
-   - Still open: snap radius, branch-transition smoothing on deliberate
-     switches, chain; emerge provenance for identity/distribute
-     enters-exits; drag-rule loadout UI (DRAG_TOOL_IDXS is a stopgap).
+   - **Knob-on-rails mechanic landed (replaces stickiness entirely).**
+     Andrew's articulation, formalized: dispatch-by-nearest-candidate is a
+     *classifier*, and classifiers have decision boundaries where the
+     visual state teleports; hysteresis only moves the boundaries. Instead
+     the drag state is a *configuration*: a knob on a star-shaped rail
+     network joined at the grab point. The pointer pulls, the knob chases
+     the pointer's projection along its current rail at bounded speed
+     (KNOB_SPEED 20px/frame), and rails can be changed only within a 10px
+     hub radius (evaluated before the chase — a diagonal pull toward
+     another rail still projects positively onto the current one).
+     Consequences, all verified: continuity by construction (no jumps,
+     ever); "commitment" far from the hub is *topology*, not a tuned
+     threshold — you return through the junction to change rules; near-hub
+     switching is essentially free; arcs under the hub rest the knob at the
+     junction. The trap (locally parked while another rail is globally
+     closer) is deliberate — it is what makes it read as a mechanism.
+     Report framing: dragology's `between` blends a *field* over candidate
+     positions (Delaunay); the rail mechanic is the 1-skeleton of the same
+     geometry with enforced continuity — a genuinely different, more
+     mechanical interaction point in the same design space.
+   - **Vanishing grabs are not offered.** If the grabbed node has no box in
+     a candidate (the rewrite consumes it, e.g. grabbing a product that
+     factoring merges away), the candidate is dropped — matching the
+     demo, whose triggers always survive. This also fixed a real bug: the
+     old fallback anchored such candidates to the candidate ROOT box, whose
+     rel-mapped position swung wildly with the within-node click position.
+   - Still open: chain; emerge provenance for identity/distribute
+     enters-exits; drag-rule loadout UI (DRAG_TOOL_IDXS is a stopgap);
+     near-collinear rail acquisition tie-breaks (first capture is by
+     perpendicular distance and can pick the shorter of two nearly-parallel
+     rails).
 
 ## Status
 
