@@ -212,12 +212,25 @@ Per drag (or per click-animation):
    grounds the demo's `#`-trigger design — triggers are which-moving-subterm
    annotations — and largely answers the step-4 trigger question from the
    geometry side. ~14 candidates over ancestor sites measure in ~18ms.
-4. closest-of-betweens refinement: snap radius, stickiness/hysteresis
-   (observed: a short segment nearly collinear with a longer drag direction
-   reaches t>0.5 quickly and can steal the commit — dragology's
-   withSnapRadius/stickiness exist precisely for this), branch-transition
-   smoothing on candidate switches, chain; then emerge provenance for
-   identity/distribute enters-exits.
+4. closest-of-betweens refinement — in progress:
+   - **Stickiness landed** (24px challenger margin): the active track keeps
+     the drag unless another is meaningfully closer; kills mid-drag track
+     theft by nearly-collinear segments.
+   - **Mover-not-passenger affordance filter landed**: a candidate is
+     offered at grab-node X only if X *itself* moves in it — if X's box
+     maps rigidly through its parent's displacement, the rule relocated an
+     enclosing subtree and X merely rode along; that drag belongs to the
+     ancestor (grab it instead). Derived purely from measured geometry (no
+     pattern annotations), this reproduces the demo's trigger discipline
+     (nodes inside wildcard bindings don't fire rules). Verified: grabbing
+     a factored (+ a b) inside (× k (+ a b)) offers exactly commute-times
+     and distribute — ancestor commutes that would carry the whole product
+     are excluded. Report note: affordance selection is ANOTHER thing
+     measured geometry can decide that analytic substrates express through
+     annotations — the "who moves" question has a purely geometric answer.
+   - Still open: snap radius, branch-transition smoothing on deliberate
+     switches, chain; emerge provenance for identity/distribute
+     enters-exits; drag-rule loadout UI (DRAG_TOOL_IDXS is a stopgap).
 
 ## Status
 

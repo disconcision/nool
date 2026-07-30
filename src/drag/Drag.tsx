@@ -135,16 +135,57 @@ const probe_candidate = (
   return { measured: Motion.measure_root(cont, dx, dy), dispose };
 };
 
+/* Affordance filter: the grab must be a MOVER in the candidate, not a
+ * passenger. If the grabbed node's box maps rigidly through its parent's
+ * own displacement (same relative position and scale), the rule relocated
+ * an enclosing subtree and the grab merely rode along — that drag belongs
+ * to the ancestor (grab it instead). This is the demo's trigger discipline
+ * (nodes inside wildcard bindings don't fire rules), derived from measured
+ * geometry instead of pattern annotations. */
+const grab_is_mover = (
+  live: Map<string, Motion.Measured>,
+  cand: Map<string, Motion.Measured>,
+  grabbedKey: string
+): boolean => {
+  const lx = live.get(grabbedKey);
+  const cx = cand.get(grabbedKey);
+  if (!lx || !cx) return true; // vanishes or appears: a genuine participant
+  const pKey = lx.parentId;
+  if (!pKey) return true;
+  const lp = live.get(pKey);
+  const cp = cand.get(pKey);
+  if (!lp || !cp) return true; // parent restructured: genuine participant
+  const s = cp.box.w / Math.max(1e-6, lp.box.w);
+  const ex = cp.box.x + (lx.box.x - lp.box.x) * s;
+  const ey = cp.box.y + (lx.box.y - lp.box.y) * s;
+  const ew = lx.box.w * s;
+  const eps = 2;
+  const rode_along =
+    Math.abs(ex - cx.box.x) < eps &&
+    Math.abs(ey - cx.box.y) < eps &&
+    Math.abs(ew - cx.box.w) < eps;
+  return !rode_along;
+};
+
 export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
+  const container = document.querySelector<HTMLElement>(
+    "#stage .node-container"
+  );
+  const live = container ? Motion.measure_root(container) : new Map();
+  const key = `node-${grabbedId}`;
   const out: Candidate[] = [];
   for (const c of enumerate(model, grabbedId)) {
     const probe = probe_candidate(c.exp, model.settings);
     if (!probe) continue;
+    if (!grab_is_mover(live, probe.measured, key)) {
+      probe.dispose();
+      continue;
+    }
     out.push({
       ...c,
       measured: probe.measured,
       dispose: probe.dispose,
-      anchor: probe.measured.get(`node-${grabbedId}`)?.box ?? null,
+      anchor: probe.measured.get(key)?.box ?? null,
       root: probe.measured.get(`node-${c.exp.id}`)?.box ?? null,
     });
   }
