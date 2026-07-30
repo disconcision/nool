@@ -346,12 +346,17 @@ const HUB_PX = 10;
  * a new rail reads as motion, not teleportation. */
 const KNOB_SPEED = 20;
 
+/* Only one drag at a time: a new grab (or any stuck state) force-ends the
+ * previous one. */
+let end_current: (() => void) | null = null;
+
 export const grab = (
   model: Model.t,
   inject: Action.Inject,
   grabbedId: ID.t,
   e: PointerEvent
 ): void => {
+  end_current?.();
   const cands = candidates(model, grabbedId);
   const live = document.getElementById(`node-${grabbedId}`)?.getBoundingClientRect();
   /* grab offset within the node, mapped proportionally into each candidate's
@@ -423,72 +428,97 @@ export const grab = (
   };
 
   let engaged = false;
-  let rail = -1; // current rail (-1: resting at the hub)
-  let knobT = 0; // knob parameter on the current rail
+  let active = -1; // current rail / active candidate
+  let activeT = 0; // blend parameter on it
   let pointer = { x: e.clientX, y: e.clientY };
   let raf = 0;
 
-  const step = (): void => {
+  const set_active = (i: number, t: number): void => {
+    if (i !== active) {
+      active = i;
+      Motion.manual_start(cands[i].measured);
+    }
+    activeT = t;
+    Motion.manual_set(t);
+    update_vis(cands, active, t);
+  };
+
+  /* Rails: the knob chases the pointer along its current rail at bounded
+   * speed; rails change only at the hub. Runs on its own clock. */
+  const rails_step = (): void => {
     if (engaged) {
-      if (rail < 0) {
+      if (active < 0) {
         const j = outward_rail(pointer);
-        if (j >= 0) {
-          rail = j;
-          knobT = 0;
-          Motion.manual_start(cands[j].measured);
-        }
+        if (j >= 0) set_active(j, 0);
       } else {
         /* At the hub, rails may be changed freely — and this must be
          * checked BEFORE chasing: a diagonal pull toward another rail
          * usually still projects positively onto the current one, and the
          * knob would exit the hub along the wrong rail. */
-        const knobPx = knobT * rails[rail].len;
+        const knobPx = activeT * rails[active].len;
         if (knobPx <= HUB_PX) {
           const j = outward_rail(pointer);
-          if (j >= 0 && j !== rail) {
-            rail = j;
-            knobT = Math.min(knobPx / rails[j].len, 1);
-            Motion.manual_start(cands[j].measured);
-          }
+          if (j >= 0 && j !== active)
+            set_active(j, Math.min(knobPx / rails[j].len, 1));
         }
         /* chase the pointer's projection along the current rail */
-        const tTar = proj_t(pointer, rail);
-        const dPx = (tTar - knobT) * rails[rail].len;
+        const tTar = proj_t(pointer, active);
+        const dPx = (tTar - activeT) * rails[active].len;
         const move = Math.max(-KNOB_SPEED, Math.min(KNOB_SPEED, dPx));
-        knobT = clamp01(knobT + move / rails[rail].len);
-      }
-      if (rail >= 0) {
-        Motion.manual_set(knobT);
-        update_vis(cands, rail, knobT);
+        set_active(active, clamp01(activeT + move / rails[active].len));
       }
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__knob = {
-      rail,
-      t: +knobT.toFixed(3),
+      rail: active,
+      t: +activeT.toFixed(3),
       engaged,
       px: { ...pointer },
       frames: (((window as any).__knob?.frames as number) ?? 0) + 1,
     };
-    raf = requestAnimationFrame(step);
+    raf = requestAnimationFrame(rails_step);
   };
-  raf = requestAnimationFrame(step);
+
+  /* Closest: memoryless per-frame nearest-segment dispatch (the original,
+   * pre-stickiness behavior) — kept for comparison via the mechanic
+   * toggle. Jumps at decision boundaries are inherent to it. */
+  const closest_move = (): void => {
+    let best = -1;
+    let bestD = Infinity;
+    let bestT = 0;
+    rails.forEach((r, i) => {
+      if (!r.ok) return;
+      const t = proj_t(pointer, i);
+      const d = perp_d(pointer, i, t);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+        bestT = t;
+      }
+    });
+    if (best >= 0) set_active(best, bestT);
+  };
+
+  const mechanic = model.settings.dragMechanic;
+  if (mechanic === "Rails") raf = requestAnimationFrame(rails_step);
 
   const onMove = (ev: PointerEvent): void => {
     pointer = { x: ev.clientX, y: ev.clientY };
     if (!engaged && Math.hypot(pointer.x - a0.x, pointer.y - a0.y) >= ENGAGE_PX)
       engaged = true;
+    if (engaged && mechanic === "Closest") closest_move();
   };
 
   const onUp = (): void => {
+    end_current = null;
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
     window.removeEventListener("pointercancel", onUp);
     cancelAnimationFrame(raf);
     clear_vis();
-    if (engaged && rail >= 0) {
-      if (knobT > COMMIT_T) {
-        const c = cands[rail];
+    if (engaged && active >= 0) {
+      if (activeT > COMMIT_T) {
+        const c = cands[active];
         /* animate() captures the manual blend as its origin: seamless */
         inject({
           t: "transformNode",
@@ -506,4 +536,5 @@ export const grab = (
   window.addEventListener("pointermove", onMove);
   window.addEventListener("pointerup", onUp);
   window.addEventListener("pointercancel", onUp);
+  end_current = onUp;
 };

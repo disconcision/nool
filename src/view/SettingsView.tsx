@@ -22,6 +22,8 @@ import ded from "../assets/icons/noun-dead-5130035.svg"
 import prims from "../assets/icons/noun-geometry-4695832.svg"
 import drag_off from "../assets/icons/noun-tool-3376727.svg"
 import drag_on from "../assets/icons/noun-transformation-6040368.svg"
+import mech_rails from "../assets/icons/noun-cycle-4446.svg"
+import mech_closest from "../assets/icons/noun-cycle-1793611.svg"
 
 //TODO: qr code to disable id display
 
@@ -86,6 +88,9 @@ const theme_icon = (theme: Settings.theme): string => {
 const dragging_icon = (dragging: boolean): string =>
   dragging ? drag_on : drag_off;
 
+const drag_mechanic_icon = (m: Settings.dragMechanic): string =>
+  m === "Rails" ? mech_rails : mech_closest;
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
@@ -102,6 +107,8 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return theme_icon(settings.theme);
     case "ToggleDragging":
       return dragging_icon(settings.dragging);
+    case "ToggleDragMechanic":
+      return drag_mechanic_icon(settings.dragMechanic);
   }
 };
 
@@ -129,6 +136,7 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
     {icon(props.inject, props.model.settings, "ToggleDragging")}
+    {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
 
   </div>
 );

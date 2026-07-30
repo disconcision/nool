@@ -254,6 +254,33 @@ Per drag (or per click-animation):
      demo, whose triggers always survive. This also fixed a real bug: the
      old fallback anchored such candidates to the candidate ROOT box, whose
      rel-mapped position swung wildly with the within-node click position.
+   - **Dragology placement of the rail mechanic**: not orthogonal — a new
+     dispatch combinator, sibling of `closest` (call it `d.rails([...])`).
+     Dragology's dispatch is memoryless classification patched by stateful
+     band-aids (closest's hysteresis, withBranchTransition's pixel
+     smoothing); the rails mechanic moves state INTO dispatch: (branch, t)
+     integrated at bounded speed with topology-gated switching. Needs zero
+     new substrate primitives (per-branch anchors + pointer frames) and is
+     implementable today as a custom DragBehavior. It is the strong-form
+     answer to dragology's own TODO "hysteresis / status-quo bias".
+     A mechanic toggle (8th corner icon) switches Rails ⇄ Closest (the
+     original memoryless dispatch, kept for comparison; stickiness deleted).
+   - **The mover filter is stricter than the demo's annotations in one
+     telling case**: "drag the shared factor A to factor" is excluded
+     because A rides rigidly inside its product while everything reshuffles
+     around it — factoring is instead draggable via the non-rigid movers
+     (the B/C operands, or the sum in reverse). The demo explicitly
+     annotates `#A` as a factor trigger — i.e. this is exactly where
+     hand-annotations encode an ergonomic CHOICE that pure geometry
+     wouldn't offer. If that gesture is wanted, triggers must be able to
+     override the geometric filter (annotation ∪ geometry, not geometry
+     alone).
+   - **Merge rules and id survival**: when a rewrite merges structurally
+     equal subtrees (factor's two A copies), the matcher arbitrarily keeps
+     one copy's ids, so which die "survives" (and thus affords the drag)
+     is an id-plumbing accident. The demo solves this with "prefer the
+     triggered copy so the dragged node's id survives" — nool's hydration
+     needs the same grab-aware preference eventually.
    - Still open: chain; emerge provenance for identity/distribute
      enters-exits; drag-rule loadout UI (DRAG_TOOL_IDXS is a stopgap);
      near-collinear rail acquisition tie-breaks (first capture is by

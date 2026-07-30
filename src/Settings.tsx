@@ -6,6 +6,10 @@ export type symbols = "Emoji" | "SingleChar";
 
 export type theme = "Light" | "Dark";
 
+/* drag dispatch mechanic: knob-on-rails vs per-frame nearest-candidate
+ * (experimental comparison toggle; see design/captured-geometry.md) */
+export type dragMechanic = "Rails" | "Closest";
+
 export type t = {
   sound: boolean;
   motion: motion;
@@ -16,6 +20,7 @@ export type t = {
   /* drag mode: stage pointerdown grabs nodes for drag-rewrites instead of
    * selecting for the noolbox */
   dragging: boolean;
+  dragMechanic: dragMechanic;
 };
 
 export type Action =
@@ -25,7 +30,8 @@ export type Action =
   | "ToggleProjection"
   | "ToggleSymbols"
   | "ToggleDark"
-  | "ToggleDragging";
+  | "ToggleDragging"
+  | "ToggleDragMechanic";
 
 export const init: t = {
   sound: true,
@@ -35,6 +41,7 @@ export const init: t = {
   symbols: "Emoji",
   theme: "Light",
   dragging: false,
+  dragMechanic: "Rails",
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -80,5 +87,10 @@ export const update = (settings: t, action: Action): t => {
       }
     case "ToggleDragging":
       return { ...settings, dragging: !settings.dragging };
+    case "ToggleDragMechanic":
+      return {
+        ...settings,
+        dragMechanic: settings.dragMechanic === "Rails" ? "Closest" : "Rails",
+      };
   }
 };
