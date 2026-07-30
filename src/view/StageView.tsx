@@ -29,7 +29,7 @@ export const StageView: Component<{
           symbols={props.model.settings.symbols}
           grab={
             props.model.settings.dragging
-              ? (id, e) => Drag.grab(props.model, id, e)
+              ? (id, e) => Drag.grab(props.model, props.inject, id, e)
               : undefined
           }
         />

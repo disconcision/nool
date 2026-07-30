@@ -6,6 +6,13 @@
  * hidden. The origin of an in-flight animation is whatever is currently
  * displayed, so retargeting mid-flight never jumps.
  *
+ * Two drivers share all of the machinery:
+ *  - animate(apply): clock-driven, wraps a model update (button clicks).
+ *  - manual_start/set/release: pointer-driven (drags). The target boxes
+ *    come from a hidden probe (see src/drag/Drag.tsx) instead of the live
+ *    DOM. Committing mid-drag just calls animate(): it captures the manual
+ *    blend as its origin, so the handoff is seamless.
+ *
  * Layer granularity: subtrees that move RIGIDLY (uniform scale + translate,
  * no internal enter/exit) stay whole — one layer, full clone — so filters,
  * blend effects, shadows and descendant selectors apply to the composite
@@ -18,7 +25,7 @@
 
 export type Box = { x: number; y: number; w: number; h: number; font: number };
 
-type Measured = {
+export type Measured = {
   el: HTMLElement;
   box: Box;
   depth: number;
@@ -57,6 +64,8 @@ type Tween = {
   start: number;
   duration: number;
   raf: number;
+  /* present while a drag drives t directly; no clock runs */
+  manual?: { t: number };
 };
 
 let overlay: HTMLElement | null = null;
@@ -111,10 +120,14 @@ const anim_factor = (): number => {
 const stage_container = (): HTMLElement | null =>
   document.querySelector("#stage .node-container");
 
-const measure = (): Map<string, Measured> => {
+/* Measure per-id boxes under a root; dx/dy shift the recorded coordinates
+ * (used to align hidden probes with the live scene). */
+export const measure_root = (
+  root: HTMLElement,
+  dx = 0,
+  dy = 0
+): Map<string, Measured> => {
   const out = new Map<string, Measured>();
-  const root = stage_container();
-  if (!root) return out;
   /* Freeze pulse/hover animations so boxes are measured at rest. */
   root.classList.add("motion-measuring");
   const els = root.querySelectorAll<HTMLElement>('[id^="node-"], [id^="sym-"]');
@@ -131,13 +144,18 @@ const measure = (): Map<string, Measured> => {
     const font = parseFloat(getComputedStyle(el).fontSize);
     out.set(el.id, {
       el,
-      box: { x: r.x, y: r.y, w: r.width, h: r.height, font },
+      box: { x: r.x + dx, y: r.y + dy, w: r.width, h: r.height, font },
       depth,
       parentId,
     });
   }
   root.classList.remove("motion-measuring");
   return out;
+};
+
+const measure = (): Map<string, Measured> => {
+  const root = stage_container();
+  return root ? measure_root(root) : new Map();
 };
 
 const strip_ids = (c: HTMLElement): void => {
@@ -228,7 +246,9 @@ const layer_mode = (from: Box, to: Box): "translate" | "box" =>
     : "box";
 
 const eased_now = (tw: Tween): number =>
-  easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
+  tw.manual
+    ? tw.manual.t
+    : easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
 
 const ensure_overlay = (): HTMLElement | null => {
   /* The overlay lives INSIDE the (hidden) stage container so clones keep
@@ -266,59 +286,14 @@ const finish = (): void => {
   stage_container()?.classList.remove("selection-morphing");
 };
 
-const run_tween = (
-  layers: Map<string, Layer>,
-  duration: number,
-  dim: boolean
-): void => {
-  const ov = ensure_overlay();
-  if (!ov) return;
-  const ordered = [...layers.values()].sort((a, b) => a.depth - b.depth);
-  ov.replaceChildren(...ordered.map((l) => l.mount));
-  if (dim) set_stage_dimmed(true);
-  for (const l of layers.values()) set_base_box(l);
-  tween = { layers, start: performance.now(), duration, raf: 0 };
-  apply_frame(layers, 0);
-  const step = (): void => {
-    if (!tween) return;
-    const x = (performance.now() - tween.start) / tween.duration;
-    if (x >= 1) {
-      apply_frame(tween.layers, 1);
-      finish();
-      return;
-    }
-    apply_frame(tween.layers, easeInOutBack(clamp01(x)));
-    tween.raf = requestAnimationFrame(step);
-  };
-  /* The first painted frame pays the layer rasterization cost (tens of ms).
-   * Start the clock only after it has presented — otherwise the first
-   * visible frame lands mid-curve and the animation's opening is skipped. */
-  tween.raf = requestAnimationFrame(() => {
-    if (!tween) return;
-    tween.raf = requestAnimationFrame(() => {
-      if (!tween) return;
-      tween.start = performance.now();
-      step();
-    });
-  });
-};
-
-/* Run a model update, animating stage nodes from where they are displayed
- * now to where the update puts them. `apply` must update the DOM
- * synchronously (solid store writes do). */
-export const animate = (apply: () => void, enabled: boolean): void => {
-  if (!enabled || typeof document === "undefined") {
-    apply();
-    finish();
-    return;
-  }
-
-  const pre_selected =
-    stage_container()?.querySelector(".node.selected")?.id ?? null;
-
-  /* Before: what is currently displayed — the mid-flight blend if a tween
-   * is active, else the live DOM. Group members are reconstructed from
-   * their stored group-relative boxes. */
+/* What is currently displayed — the mid-flight blend if a tween is active,
+ * else the live DOM. Group members are reconstructed from their stored
+ * group-relative boxes. Consumes (cancels) any active tween. */
+const capture_before = (): {
+  before: Map<string, BeforeInfo>;
+  exit_sources: Map<string, HTMLElement>;
+  prev: Tween | null;
+} => {
   const before = new Map<string, BeforeInfo>();
   const exit_sources = new Map<string, HTMLElement>();
   const prev = tween;
@@ -347,84 +322,17 @@ export const animate = (apply: () => void, enabled: boolean): void => {
       exit_sources.set(id, m.el);
     }
   }
+  return { before, exit_sources, prev };
+};
 
-  apply();
-
-  const after = measure();
-
-  /* Keep the selection glow styling cached while a selected node exists. */
-  const post_selected_el =
-    stage_container()?.querySelector<HTMLElement>(".node.selected") ?? null;
-  const post_selected = post_selected_el?.id ?? null;
-  if (post_selected_el) {
-    const cs = getComputedStyle(post_selected_el);
-    sel_style = {
-      outline: cs.outline,
-      boxShadow: cs.boxShadow,
-      radius: cs.borderRadius,
-    };
-  }
-
-  /* No-change guard: skip the overlay when geometry is undisturbed. A pure
-   * selection change still gets a morph: a synthetic glow layer travels
-   * from the old selected node's box to the new one's (the live glow is
-   * suppressed meanwhile), recreating the old view-transition effect. */
-  if (!prev) {
-    let changed = after.size !== before.size;
-    if (!changed) {
-      /* 1.5px: selection border/outline changes jiggle boxes by ~1px; a
-       * full morph for that is invisible-but-costly, and it would shadow
-       * the selection-glow morph below. */
-      for (const [id, m] of after) {
-        const b = before.get(id);
-        if (
-          !b ||
-          Math.abs(b.box.x - m.box.x) > 1.5 ||
-          Math.abs(b.box.y - m.box.y) > 1.5 ||
-          Math.abs(b.box.w - m.box.w) > 1.5 ||
-          Math.abs(b.box.h - m.box.h) > 1.5
-        ) {
-          changed = true;
-          break;
-        }
-      }
-    }
-    if (!changed) {
-      if (pre_selected !== post_selected && sel_style) {
-        const from_box = pre_selected ? before.get(pre_selected)?.box : undefined;
-        const to_box = post_selected ? after.get(post_selected)?.box : undefined;
-        if (from_box || to_box) {
-          const el = document.createElement("div");
-          el.className = "motion-layer motion-selection";
-          el.style.outline = sel_style.outline;
-          el.style.boxShadow = sel_style.boxShadow;
-          el.style.borderRadius = sel_style.radius;
-          el.dataset.motionId = "@selection";
-          const from = from_box ?? to_box!;
-          const to = to_box ?? from_box!;
-          const layer: Layer = {
-            el,
-            mount: el,
-            from,
-            to,
-            fromOpacity: from_box ? 1 : 0,
-            toOpacity: to_box ? 1 : 0,
-            depth: 999,
-            parentId: null,
-            members: null,
-            mode: layer_mode(from, to),
-          };
-          stage_container()?.classList.add("selection-morphing");
-          run_tween(new Map([["@selection", layer]]), 200 * anim_factor(), false);
-        }
-      }
-      return;
-    }
-  }
-
-  const ov = ensure_overlay();
-  if (!ov) return;
-
+/* Build the flat layer set morphing `before` (blend/live boxes) into
+ * `after` (measured target: live DOM or a hidden probe). */
+const build_layers = (
+  before: Map<string, BeforeInfo>,
+  after: Map<string, Measured>,
+  exit_sources: Map<string, HTMLElement>,
+  reuse_exit_els: boolean
+): Map<string, Layer> => {
   /* Adjacency for the after and before structures. */
   const after_kids = new Map<string | null, string[]>();
   for (const [id, m] of after) {
@@ -520,10 +428,6 @@ export const animate = (apply: () => void, enabled: boolean): void => {
 
   const layers = new Map<string, Layer>();
 
-  const add_layer = (id: string, l: Layer): void => {
-    layers.set(id, l);
-  };
-
   const walk = (id: string): void => {
     const a = after.get(id)!;
     const b = before.get(id);
@@ -541,7 +445,7 @@ export const animate = (apply: () => void, enabled: boolean): void => {
           parentId: m.parentId,
         });
       }
-      add_layer(id, {
+      layers.set(id, {
         el,
         mount: mount_with_shells(el, a.parentId),
         from: b!.box,
@@ -558,7 +462,7 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     const el = shallow_clone(a.el);
     with_ancestor_filters(el, a.el, a.parentId);
     const from = b ? b.box : shrink(a.box, 0.5);
-    add_layer(id, {
+    layers.set(id, {
       el,
       mount: mount_with_shells(el, a.parentId),
       from,
@@ -581,9 +485,9 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     if (b.parentId && before.has(b.parentId) && !after.has(b.parentId)) continue;
     const src = exit_sources.get(id);
     if (!src) continue;
-    const el = prev ? src : exit_clone(src, (did) => after.has(did));
+    const el = reuse_exit_els ? src : exit_clone(src, (did) => after.has(did));
     with_ancestor_filters(el, null, b.parentId);
-    add_layer(id, {
+    layers.set(id, {
       el,
       mount: mount_with_shells(el, b.parentId),
       from: b.box,
@@ -600,5 +504,198 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     });
   }
 
+  return layers;
+};
+
+const mount_layers = (layers: Map<string, Layer>, dim: boolean): boolean => {
+  const ov = ensure_overlay();
+  if (!ov) return false;
+  const ordered = [...layers.values()].sort((a, b) => a.depth - b.depth);
+  ov.replaceChildren(...ordered.map((l) => l.mount));
+  if (dim) set_stage_dimmed(true);
+  for (const l of layers.values()) set_base_box(l);
+  return true;
+};
+
+const start_clock = (duration: number): void => {
+  if (!tween) return;
+  tween.duration = duration;
+  const step = (): void => {
+    if (!tween) return;
+    const x = (performance.now() - tween.start) / tween.duration;
+    if (x >= 1) {
+      apply_frame(tween.layers, 1);
+      finish();
+      return;
+    }
+    apply_frame(tween.layers, easeInOutBack(clamp01(x)));
+    tween.raf = requestAnimationFrame(step);
+  };
+  /* The first painted frame pays the layer rasterization cost (tens of ms).
+   * Start the clock only after it has presented — otherwise the first
+   * visible frame lands mid-curve and the animation's opening is skipped. */
+  tween.raf = requestAnimationFrame(() => {
+    if (!tween) return;
+    tween.raf = requestAnimationFrame(() => {
+      if (!tween) return;
+      tween.start = performance.now();
+      step();
+    });
+  });
+};
+
+const run_tween = (
+  layers: Map<string, Layer>,
+  duration: number,
+  dim: boolean
+): void => {
+  if (!mount_layers(layers, dim)) return;
+  tween = { layers, start: performance.now(), duration, raf: 0 };
+  apply_frame(layers, 0);
+  start_clock(duration);
+};
+
+/* Run a model update, animating stage nodes from where they are displayed
+ * now to where the update puts them. `apply` must update the DOM
+ * synchronously (solid store writes do). */
+export const animate = (apply: () => void, enabled: boolean): void => {
+  if (!enabled || typeof document === "undefined") {
+    apply();
+    finish();
+    return;
+  }
+
+  const pre_selected =
+    stage_container()?.querySelector(".node.selected")?.id ?? null;
+
+  const { before, exit_sources, prev } = capture_before();
+
+  apply();
+
+  const after = measure();
+
+  /* Keep the selection glow styling cached while a selected node exists. */
+  const post_selected_el =
+    stage_container()?.querySelector<HTMLElement>(".node.selected") ?? null;
+  const post_selected = post_selected_el?.id ?? null;
+  if (post_selected_el) {
+    const cs = getComputedStyle(post_selected_el);
+    sel_style = {
+      outline: cs.outline,
+      boxShadow: cs.boxShadow,
+      radius: cs.borderRadius,
+    };
+  }
+
+  /* No-change guard: skip the overlay when geometry is undisturbed. A pure
+   * selection change still gets a morph: a synthetic glow layer travels
+   * from the old selected node's box to the new one's (the live glow is
+   * suppressed meanwhile), recreating the old view-transition effect. */
+  if (!prev) {
+    let changed = after.size !== before.size;
+    if (!changed) {
+      /* 1.5px: selection border/outline changes jiggle boxes by ~1px; a
+       * full morph for that is invisible-but-costly, and it would shadow
+       * the selection-glow morph below. */
+      for (const [id, m] of after) {
+        const b = before.get(id);
+        if (
+          !b ||
+          Math.abs(b.box.x - m.box.x) > 1.5 ||
+          Math.abs(b.box.y - m.box.y) > 1.5 ||
+          Math.abs(b.box.w - m.box.w) > 1.5 ||
+          Math.abs(b.box.h - m.box.h) > 1.5
+        ) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) {
+      if (pre_selected !== post_selected && sel_style) {
+        const from_box = pre_selected ? before.get(pre_selected)?.box : undefined;
+        const to_box = post_selected ? after.get(post_selected)?.box : undefined;
+        if (from_box || to_box) {
+          const el = document.createElement("div");
+          el.className = "motion-layer motion-selection";
+          el.style.outline = sel_style.outline;
+          el.style.boxShadow = sel_style.boxShadow;
+          el.style.borderRadius = sel_style.radius;
+          el.dataset.motionId = "@selection";
+          const from = from_box ?? to_box!;
+          const to = to_box ?? from_box!;
+          const layer: Layer = {
+            el,
+            mount: el,
+            from,
+            to,
+            fromOpacity: from_box ? 1 : 0,
+            toOpacity: to_box ? 1 : 0,
+            depth: 999,
+            parentId: null,
+            members: null,
+            mode: layer_mode(from, to),
+          };
+          stage_container()?.classList.add("selection-morphing");
+          run_tween(new Map([["@selection", layer]]), 200 * anim_factor(), false);
+        }
+      }
+      return;
+    }
+  }
+
+  const layers = build_layers(before, after, exit_sources, !!prev);
   run_tween(layers, 250 * anim_factor(), true);
+};
+
+// # Manual (pointer-driven) mode — drags
+
+/* Begin a pointer-driven morph from the current display toward `after`
+ * (typically a hidden-probe measurement of a candidate state). Retargeting
+ * to a different candidate mid-drag: just call again — the current blend
+ * becomes the new origin. */
+export const manual_start = (after: Map<string, Measured>): boolean => {
+  const { before, exit_sources, prev } = capture_before();
+  if (before.size === 0) return false;
+  const layers = build_layers(before, after, exit_sources, !!prev);
+  if (!mount_layers(layers, true)) return false;
+  tween = {
+    layers,
+    start: performance.now(),
+    duration: 1,
+    raf: 0,
+    manual: { t: 0 },
+  };
+  apply_frame(layers, 0);
+  return true;
+};
+
+export const manual_set = (t: number): void => {
+  if (!tween?.manual) return;
+  tween.manual.t = clamp01(t);
+  apply_frame(tween.layers, tween.manual.t);
+};
+
+export const manual_t = (): number => tween?.manual?.t ?? 0;
+
+/* Release without committing: clock-tween from the current blend back to
+ * where things were. (To commit, just inject the action — animate() picks
+ * the blend up as its origin.) */
+export const manual_release = (): void => {
+  if (!tween?.manual) return;
+  const t = tween.manual.t;
+  for (const l of tween.layers.values()) {
+    const blend = lerpBox(l.from, l.to, t);
+    const blendOp = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
+    l.to = l.from;
+    l.toOpacity = l.fromOpacity;
+    l.from = blend;
+    l.fromOpacity = blendOp;
+    l.mode = layer_mode(l.from, l.to);
+    set_base_box(l);
+  }
+  tween.manual = undefined;
+  tween.start = performance.now();
+  apply_frame(tween.layers, 0);
+  start_clock(200 * anim_factor());
 };

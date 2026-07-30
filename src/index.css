@@ -1024,6 +1024,11 @@ v .transform-view .label {
   top: 0.75em;
 }
 
+/* In drag mode, grabbing shouldn't shake the tree (the :active wobble). */
+#seed.dragging #stage .node:active {
+  animation: none !important;
+}
+
 /* Drag probe: hidden mount for measuring candidate states. */
 #stage .drag-probe {
   position: absolute;

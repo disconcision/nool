@@ -188,8 +188,36 @@ Per drag (or per click-animation):
    observable geometry. Enumeration is root-anchored for now (rules that
    rewrite the grabbed subtree itself); trigger-annotation ergonomics
    deferred to step 4.
-3. Overlay + `between` over one id-pure rule (commute) to validate feel.
-4. closest-of-betweens + snap + chain; then emerge for identity/distribute.
+3. ~~Overlay + `between` over one id-pure rule (commute) to validate feel.~~
+   **Done 2026-07-29** — and went further: closest-of-betweens over ALL
+   candidates is live. Motion gained a manual (pointer-driven) mode sharing
+   every layer mechanism with the clock driver: `manual_start(after)` builds
+   layers from the current display toward a probe-measured candidate,
+   `manual_set(t)` drives the blend, `manual_release()` springs back, and
+   committing is just `inject(action)` — animate() captures the manual blend
+   as its origin, so drag→commit handoff is seamless by construction.
+   Dragging = project the pointer onto each grab→anchor segment
+   (rel-offset-mapped boxes as the poor man's local-frame anchor), nearest
+   segment wins, its parameter is t; release past t=0.5 commits. Wobble
+   (:active shake) suppressed in drag mode.
+   **The load-bearing design discovery: root-anchored enumeration produces
+   zero anchor travel for the most iconic drags.** Commuting a node's own
+   children doesn't move the node — the grab point IS the anchor, so the
+   candidate is unreachable (commute measured 0px travel when grabbing the
+   parent). Fix: enumerate at the grabbed node AND all ancestor sites — the
+   grab is then a *moving subterm* of the rewrite (grab the operand, drag it
+   to its sibling's place → the parent commutes; 141px travel, verified
+   end-to-end commit). MIN_TRAVEL=12px filters self-static candidates, which
+   is the right default: you drag the thing that moves. This empirically
+   grounds the demo's `#`-trigger design — triggers are which-moving-subterm
+   annotations — and largely answers the step-4 trigger question from the
+   geometry side. ~14 candidates over ancestor sites measure in ~18ms.
+4. closest-of-betweens refinement: snap radius, stickiness/hysteresis
+   (observed: a short segment nearly collinear with a longer drag direction
+   reaches t>0.5 quickly and can steal the commit — dragology's
+   withSnapRadius/stickiness exist precisely for this), branch-transition
+   smoothing on candidate switches, chain; then emerge provenance for
+   identity/distribute enters-exits.
 
 ## Status
 

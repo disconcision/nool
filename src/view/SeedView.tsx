@@ -15,6 +15,7 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
       notransition: props.model.settings.motion === "Off",
       noanimation: props.model.settings.motion === "Off",
       notransformation: props.model.settings.motion === "Off",
+      dragging: props.model.settings.dragging,
     }}
     onmousedown={(e) => {
       e.preventDefault();
