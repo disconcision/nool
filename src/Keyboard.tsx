@@ -1,17 +1,26 @@
 import * as Action from "./Action";
+import * as Model from "./Model";
+import * as Navigate from "./Navigate";
+
+const arrow_of = (key: string): Navigate.Direction | null => {
+  switch (key) {
+    case "ArrowLeft":
+      return "left";
+    case "ArrowRight":
+      return "right";
+    case "ArrowUp":
+      return "up";
+    case "ArrowDown":
+      return "down";
+    default:
+      return null;
+  }
+};
 
 const action_of = (key: string): Action.t | "NoBinding" => {
   switch (key) {
     case "Escape":
       return { t: "restart" };
-    case "ArrowLeft":
-      return { t: "moveStage", direction: "left" };
-    case "ArrowRight":
-      return { t: "moveStage", direction: "right" };
-    case "ArrowUp":
-      return { t: "moveStage", direction: "up" };
-    case "ArrowDown":
-      return { t: "moveStage", direction: "down" };
     case "1":
       return { t: "applyTransform", idx: 0, direction: "forward" };
     case "2":
@@ -35,13 +44,22 @@ const action_of = (key: string): Action.t | "NoBinding" => {
   }
 };
 
-export const keydown = (inject: Action.Inject) => (event: KeyboardEvent) => {
-  //console.log("keydown:" + keyName);
-  let action = action_of(event.key);
-  if (action == "NoBinding") return;
-  event.preventDefault();
-  inject(action);
-};
+export const keydown =
+  (inject: Action.Inject, model: Model.t) => (event: KeyboardEvent) => {
+    const dir = arrow_of(event.key);
+    if (dir) {
+      event.preventDefault();
+      /* Screen-space movement, measured off the rendered stage at press
+       * time; no candidate in that direction means no move (and no sound) */
+      const path = Navigate.next(model.stage, dir);
+      if (path) inject({ t: "setSelect", path });
+      return;
+    }
+    let action = action_of(event.key);
+    if (action == "NoBinding") return;
+    event.preventDefault();
+    inject(action);
+  };
 
 export const keyup = (_inject: Action.Inject) => (event: KeyboardEvent) => {
   //console.log("keyup:" + keyName);

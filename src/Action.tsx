@@ -14,7 +14,6 @@ export type Action =
   | { t: "setSetting"; action: Settings.Action }
   | { t: "setHover"; target: Hover.t }
   | { t: "setSelect"; path: Path.t }
-  | { t: "moveStage"; direction: Direction }
   | { t: "moveTool"; direction: Direction }
   | { t: "wheelTools"; offset: number}
   | { t: "wheelNumTools"; offset: number}

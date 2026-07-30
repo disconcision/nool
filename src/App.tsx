@@ -24,7 +24,7 @@ const App: Component = () => {
       model.settings.motion !== "Off"
     );
   };
-  document.addEventListener("keydown", Keyboard.keydown(inject), false);
+  document.addEventListener("keydown", Keyboard.keydown(inject, model), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
   // Debug toggles: Shift+S all shadows off; Shift+D cheap toolbox shadows
   document.addEventListener("keydown", (e) => {

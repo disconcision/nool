@@ -45,7 +45,6 @@ export const sound = (model: Model.t, action: Action.t): void => {
       Sound.unselect("D2", 0.6);
       break;
     case "moveTool":
-    case "moveStage":
       Sound.select(model.stage.selection.length, pitch, volume);
       break;
     case "setSetting":
@@ -67,12 +66,6 @@ const update_stage = (model: Model.t, result: Pat.TransformResult): result =>
   result == "NoMatch"
     ? "NoChange"
     : { ...model, stage: Stage.put_exp(model.stage, freshen(result)) };
-
-type ModelField =
-  | { t: "stage"; path: Path.t; updater: any }
-  | { t: "tools"; path: Path.t; updater: any }
-  | { t: "hover"; hover: Hover.t }
-  | { t: "settings"; settings: Settings.t };
 
 /*export const imperative_update = (
   setModel: SetStoreFunction<Model.t>,
@@ -121,8 +114,6 @@ export const update = (model: Model.t, action: Action.t): result => {
     case "setHover":
       if (Hover.eq(model.hover, action.target)) return "NoChange";
       return { ...model, hover: action.target };
-    case "moveStage":
-      return { ...model, stage: Stage.move(model.stage, action.direction) };
     case "moveTool":
       let tools = ToolBox.move(model.tools, action.direction);
       const hover: Hover.t = {
