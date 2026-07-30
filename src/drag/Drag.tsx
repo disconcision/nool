@@ -391,8 +391,25 @@ const clear_vis = (): void => {
   vis_state = null;
 };
 
-const hue_of = (i: number, n: number): number =>
-  Math.round((i * 360) / Math.max(1, n));
+/* Track color is keyed to the RULE (toolbox index, golden-angle spread),
+ * not the candidate's position in this grab's list — the same transform
+ * is the same color across grabs and projections. Reversed applications
+ * share the rule's hue, lightened. */
+const track_color = (c: { idx: number; reversed: boolean }): string =>
+  `hsl(${Math.round(c.idx * 137.508) % 360} 70% ${c.reversed ? 62 : 45}%)`;
+
+/* 1–2 glyph code from the transform's name: first-word initial (inverse
+ * takes V, leaving I to identity) plus the first operator glyph. Unnamed
+ * transforms fall back to their toolbox index. */
+const OP_GLYPH: Record<string, string> = { plus: "+", times: "×", neg: "−" };
+const code_of = (c: Candidate): string => {
+  const name = c.transform.name;
+  if (!name) return `${c.idx}`;
+  const [head, ...rest] = name.split("_");
+  const initial = head === "inverse" ? "V" : head[0].toUpperCase();
+  const op = rest.map((w) => OP_GLYPH[w]).find(Boolean) ?? "";
+  return `${initial}${op}${c.reversed ? "ʳ" : ""}`;
+};
 
 const show_vis = (
   grabbedId: ID.t,
@@ -419,14 +436,14 @@ const show_vis = (
   const dots: (HTMLElement | null)[] = [];
   cands.forEach((c, i) => {
     const tg = targets[i];
-    const hue = hue_of(i, cands.length);
+    const color = track_color(c);
     const reachable = Math.hypot(tg.ax - a0.x, tg.ay - a0.y) >= MIN_TRAVEL;
     const line = document.createElementNS(SVGNS, "line");
     line.setAttribute("x1", `${a0.x}`);
     line.setAttribute("y1", `${a0.y}`);
     line.setAttribute("x2", `${tg.ax}`);
     line.setAttribute("y2", `${tg.ay}`);
-    line.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+    line.setAttribute("stroke", color);
     line.classList.add("track");
     if (!reachable) line.classList.add("unreachable");
     svg.appendChild(line);
@@ -443,7 +460,7 @@ const show_vis = (
       tick.setAttribute("y1", `${my - py}`);
       tick.setAttribute("x2", `${mx + px}`);
       tick.setAttribute("y2", `${my + py}`);
-      tick.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+      tick.setAttribute("stroke", color);
       tick.classList.add("track-tick");
       svg.appendChild(tick);
     }
@@ -451,9 +468,9 @@ const show_vis = (
     dot.className = "anchor-dot";
     dot.style.left = `${tg.ax}px`;
     dot.style.top = `${tg.ay}px`;
-    dot.style.background = `hsl(${hue} 70% 45%)`;
-    dot.style.borderColor = `hsl(${hue} 70% 45%)`;
-    dot.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
+    dot.style.background = color;
+    dot.style.borderColor = color;
+    dot.textContent = code_of(c);
     v.appendChild(dot);
     dots.push(dot);
   });
@@ -482,20 +499,19 @@ const update_vis = (cands: Candidate[], active: number, t: number): void => {
   }
   const fx = s.a0.x + (tg.ax - s.a0.x) * t;
   const fy = s.a0.y + (tg.ay - s.a0.y) * t;
-  const hue = hue_of(active, cands.length);
+  const c = cands[active];
   s.foot.style.display = "";
   s.foot.style.left = `${fx}px`;
   s.foot.style.top = `${fy}px`;
-  s.foot.style.borderColor = `hsl(${hue} 70% 45%)`;
+  s.foot.style.borderColor = track_color(c);
   s.foot.classList.toggle("committing", t > COMMIT_T);
-  const c = cands[active];
   s.tlabel.style.display = "";
   s.tlabel.style.left = `${fx}px`;
   s.tlabel.style.top = `${fy}px`;
-  s.tlabel.textContent = `${c.idx}${c.reversed ? "ʳ" : ""} t=${t.toFixed(2)}${
+  s.tlabel.textContent = `${code_of(c)} t=${t.toFixed(2)}${
     t > COMMIT_T ? " ✓" : ""
   }`;
-  s.tlabel.style.background = `hsl(${hue} 70% 35%)`;
+  s.tlabel.style.background = `hsl(${Math.round(c.idx * 137.508) % 360} 70% 35%)`;
 };
 
 // # The drag itself

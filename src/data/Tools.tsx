@@ -137,8 +137,8 @@ const makers = [
   //zap,
 ];
 
-const mk = ({ source, result, sound }: Base): Transform.t => ({
-  name: "",
+const mk = (name: string, { source, result, sound }: Base): Transform.t => ({
+  name,
   source,
   result,
   sound: Sound.sfx(sound),
@@ -146,7 +146,9 @@ const mk = ({ source, result, sound }: Base): Transform.t => ({
   reversed: false,
 });
 
-export const init = [
+/* Entry keys become the transforms' names (drag-debug codes derive from
+ * them); object literal order is the toolbox order. */
+export const init = Object.entries({
   associate_plus,
   commute_plus,
   identity_plus,
@@ -156,6 +158,6 @@ export const init = [
   identity_times,
   distribute_times_plus,
   double_neg,
-].map(mk);
+}).map(([name, base]) => mk(name, base));
 
-export const _init =makers.map(mk);
+export const _init = makers.map((base) => mk("", base));
