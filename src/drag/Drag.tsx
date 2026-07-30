@@ -44,6 +44,12 @@ const stage_scale = (d: number) => (d == 0 ? 1 : 4 / (d + 1));
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
+/* Which tools generate drag candidates. Temporarily narrowed to
+ * commutativity and distributivity while the interaction is tuned; null
+ * means all tools. (The eventual mechanism is the enabled-rules loadout —
+ * see design/captured-geometry.md, "Rule gating".) */
+const DRAG_TOOL_IDXS: number[] | null = [1, 5, 7];
+
 /* All states reachable by applying an enabled transform (either direction)
  * at the grabbed node OR any of its ancestors, ids preserved, structurally
  * deduplicated. Ancestor sites are what make dragging feel right: commuting
@@ -72,6 +78,7 @@ export const enumerate = (
   }[] = [];
   for (const site of sites) {
     model.tools.transforms.forEach((t, idx) => {
+      if (DRAG_TOOL_IDXS && !DRAG_TOOL_IDXS.includes(idx)) return;
       for (const [transform, reversed] of [
         [t, false],
         [flip(t), true],
@@ -144,9 +151,22 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
   return out;
 };
 
-// # Debug visualization: anchor dots while grabbing
+// # Debug visualization: tracks (grab→anchor segments) + anchor dots
 
 let vis: HTMLElement | null = null;
+
+type VisState = {
+  lines: SVGLineElement[];
+  dots: (HTMLElement | null)[];
+  foot: HTMLElement;
+  tlabel: HTMLElement;
+  a0: { x: number; y: number };
+  targets: ({ ax: number; ay: number } | null)[];
+};
+
+let vis_state: VisState | null = null;
+
+const SVGNS = "http://www.w3.org/2000/svg";
 
 const ensure_vis = (): HTMLElement => {
   if (vis && vis.isConnected) return vis;
@@ -158,12 +178,17 @@ const ensure_vis = (): HTMLElement => {
 
 const clear_vis = (): void => {
   vis?.replaceChildren();
+  vis_state = null;
 };
+
+const hue_of = (i: number, n: number): number =>
+  Math.round((i * 360) / Math.max(1, n));
 
 const show_vis = (
   grabbedId: ID.t,
   cands: Candidate[],
-  targets: ({ ax: number; ay: number } | null)[]
+  targets: ({ ax: number; ay: number } | null)[],
+  a0: { x: number; y: number }
 ): void => {
   const v = ensure_vis();
   v.replaceChildren();
@@ -177,19 +202,99 @@ const show_vis = (
     box.style.height = `${cur.height}px`;
     v.appendChild(box);
   }
+  /* tracks: one segment per reachable candidate, tick at the commit point */
+  const svg = document.createElementNS(SVGNS, "svg");
+  v.appendChild(svg);
+  const lines: SVGLineElement[] = [];
+  const dots: (HTMLElement | null)[] = [];
   cands.forEach((c, i) => {
     const tg = targets[i];
-    if (!tg) return;
-    const hue = Math.round((i * 360) / Math.max(1, cands.length));
-    const dot = document.createElement("div");
-    dot.className = "anchor-dot" + (c.anchor ? "" : " vanishing");
-    dot.style.left = `${tg.ax}px`;
-    dot.style.top = `${tg.ay}px`;
-    dot.style.background = c.anchor ? `hsl(${hue} 70% 45%)` : "transparent";
-    dot.style.borderColor = `hsl(${hue} 70% 45%)`;
-    dot.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
-    v.appendChild(dot);
+    const hue = hue_of(i, cands.length);
+    if (tg) {
+      const reachable =
+        Math.hypot(tg.ax - a0.x, tg.ay - a0.y) >= MIN_TRAVEL;
+      const line = document.createElementNS(SVGNS, "line");
+      line.setAttribute("x1", `${a0.x}`);
+      line.setAttribute("y1", `${a0.y}`);
+      line.setAttribute("x2", `${tg.ax}`);
+      line.setAttribute("y2", `${tg.ay}`);
+      line.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+      line.classList.add("track");
+      if (!reachable) line.classList.add("unreachable");
+      svg.appendChild(line);
+      lines.push(line);
+      if (reachable) {
+        /* commit-threshold tick, perpendicular at t = COMMIT_T */
+        const mx = a0.x + (tg.ax - a0.x) * COMMIT_T;
+        const my = a0.y + (tg.ay - a0.y) * COMMIT_T;
+        const len = Math.hypot(tg.ax - a0.x, tg.ay - a0.y);
+        const px = (-(tg.ay - a0.y) / len) * 5;
+        const py = ((tg.ax - a0.x) / len) * 5;
+        const tick = document.createElementNS(SVGNS, "line");
+        tick.setAttribute("x1", `${mx - px}`);
+        tick.setAttribute("y1", `${my - py}`);
+        tick.setAttribute("x2", `${mx + px}`);
+        tick.setAttribute("y2", `${my + py}`);
+        tick.setAttribute("stroke", `hsl(${hue} 70% 45%)`);
+        tick.classList.add("track-tick");
+        svg.appendChild(tick);
+      }
+    } else {
+      lines.push(document.createElementNS(SVGNS, "line")); // placeholder
+    }
+    if (tg) {
+      const dot = document.createElement("div");
+      dot.className = "anchor-dot" + (c.anchor ? "" : " vanishing");
+      dot.style.left = `${tg.ax}px`;
+      dot.style.top = `${tg.ay}px`;
+      dot.style.background = c.anchor ? `hsl(${hue} 70% 45%)` : "transparent";
+      dot.style.borderColor = `hsl(${hue} 70% 45%)`;
+      dot.textContent = `${c.idx}${c.reversed ? "ʳ" : ""}`;
+      v.appendChild(dot);
+      dots.push(dot);
+    } else {
+      dots.push(null);
+    }
   });
+  /* projection foot + live t readout, shown while a candidate is active */
+  const foot = document.createElement("div");
+  foot.className = "track-foot";
+  foot.style.display = "none";
+  v.appendChild(foot);
+  const tlabel = document.createElement("div");
+  tlabel.className = "t-label";
+  tlabel.style.display = "none";
+  v.appendChild(tlabel);
+  vis_state = { lines, dots, foot, tlabel, a0, targets };
+};
+
+const update_vis = (cands: Candidate[], active: number, t: number): void => {
+  const s = vis_state;
+  if (!s) return;
+  s.lines.forEach((ln, i) => ln.classList.toggle("active", i === active));
+  s.dots.forEach((d, i) => d?.classList.toggle("active", i === active));
+  const tg = active >= 0 ? s.targets[active] : null;
+  if (!tg) {
+    s.foot.style.display = "none";
+    s.tlabel.style.display = "none";
+    return;
+  }
+  const fx = s.a0.x + (tg.ax - s.a0.x) * t;
+  const fy = s.a0.y + (tg.ay - s.a0.y) * t;
+  const hue = hue_of(active, cands.length);
+  s.foot.style.display = "";
+  s.foot.style.left = `${fx}px`;
+  s.foot.style.top = `${fy}px`;
+  s.foot.style.borderColor = `hsl(${hue} 70% 45%)`;
+  s.foot.classList.toggle("committing", t > COMMIT_T);
+  const c = cands[active];
+  s.tlabel.style.display = "";
+  s.tlabel.style.left = `${fx}px`;
+  s.tlabel.style.top = `${fy}px`;
+  s.tlabel.textContent = `${c.idx}${c.reversed ? "ʳ" : ""} t=${t.toFixed(2)}${
+    t > COMMIT_T ? " ✓" : ""
+  }`;
+  s.tlabel.style.background = `hsl(${hue} 70% 35%)`;
 };
 
 // # The drag itself
@@ -222,7 +327,7 @@ export const grab = (
     if (!box) return null;
     return { ax: box.x + rel.x * box.w, ay: box.y + rel.y * box.h };
   });
-  show_vis(grabbedId, cands, targets);
+  show_vis(grabbedId, cands, targets, a0);
   console.table(
     cands.map((c, i) => ({
       tool: c.idx,
@@ -271,6 +376,7 @@ export const grab = (
     }
     lastT = bestT;
     Motion.manual_set(bestT);
+    update_vis(cands, active, bestT);
   };
 
   const onUp = (): void => {

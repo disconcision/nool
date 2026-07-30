@@ -1069,6 +1069,57 @@ v .transform-view .label {
 #drag-vis .anchor-dot.vanishing {
   color: inherit;
 }
+#drag-vis .anchor-dot.active {
+  scale: 1.35;
+  box-shadow: 0 0 8px #000a;
+}
+#drag-vis svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+#drag-vis .track {
+  stroke-width: 2;
+  opacity: 0.35;
+  stroke-dasharray: 4 4;
+}
+#drag-vis .track.active {
+  stroke-width: 4;
+  opacity: 0.9;
+  stroke-dasharray: none;
+}
+#drag-vis .track.unreachable {
+  opacity: 0.12;
+}
+#drag-vis .track-tick {
+  stroke-width: 2;
+  opacity: 0.6;
+}
+#drag-vis .track-foot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: white;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px #0008;
+}
+#drag-vis .track-foot.committing {
+  background: #2eeb76;
+}
+#drag-vis .t-label {
+  position: absolute;
+  transform: translate(14px, -140%);
+  font-family: monospace;
+  font-size: 11px;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
 
 .toolbar2 {
 }
