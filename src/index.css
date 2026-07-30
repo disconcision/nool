@@ -12,6 +12,30 @@
   transform: none !important;
 }
 
+/* Motion overlay: flat box-tween layer replacing view transitions.
+   Layers are absolutely positioned shallow clones driven per-frame by
+   src/motion/Motion.tsx; see design/captured-geometry.md. */
+#motion-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 40;
+}
+#motion-overlay .motion-layer {
+  position: absolute;
+  margin: 0;
+  box-sizing: border-box;
+}
+#motion-overlay .motion-layer,
+#motion-overlay .motion-layer * {
+  transition: none !important;
+  animation: none !important;
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -222,14 +246,6 @@ code {
   /* mix-blend-mode: color-dodge; */
   outline: 0.1em solid white;
 }
-#main.setSelect.selected,
-#main.unsetSelections.selected {
-  box-shadow: inset 0px 0px 0.6em #ffffff;
-  /* mix-blend-mode: color-dodge; */
-  border-radius: 5em;
-  outline: 0.1em solid white;
-}
-
 .logo {
   position: absolute;
   width: 5em;
@@ -719,9 +735,6 @@ v .transform-view .label {
 .previews .id-view {
   display: none;
 }
-#main.setSelect.selected #seed .previews {
-  mix-blend-mode: color-burn !important;
-}
 
 #toolbar {
   grid-row: 2 / span 1;
@@ -1114,33 +1127,6 @@ body:has(#main.Dark) {
   color: black !important;
 }
 
-::view-transition-group(flip-node-selected) {
-  animation-timing-function: easeInBack;
-  animation-duration: calc(var(--anim-factor) * 0.2s);
-}
-
-::view-transition-group(*) {
-  animation-duration: calc(var(--anim-factor) * 0.25s);
-  animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
-}
-
-::view-transition-new(*) {
-  height: 100%;
-  width: 100%;
-}
-::view-transition-old(*) {
-  height: 100%;
-  width: 100%;
-}
-
-.selected-transition * {
-  visibility: hidden;
-}
-.selected-transition {
-  background-color: red !important;
-  outline: 0.2em solid red;
-}
 
 .Light .transform-view .pat.node {
   box-shadow: 0.05em 0.05em 0.1em #196c5344, 0.1em 0.1em 0.2em #196c5344,

@@ -167,13 +167,72 @@ Per drag (or per click-animation):
 
 ## Plan
 
-1. Stability + VT removal + box-snapshot tween layer, proven on existing
-   *button* clicks (a win even if drag stalls).
+1. ~~Stability + VT removal + box-snapshot tween layer, proven on existing
+   *button* clicks (a win even if drag stalls).~~ **Done 2026-07-29**, see
+   status below.
 2. Hidden-mount candidate measurement: pointerdown → enumerate (via existing
    `PreView.do_transforms` / `Pat.matches_at_id`) → measure → visualize
    anchors.
 3. Overlay + `between` over one id-pure rule (commute) to validate feel.
 4. closest-of-betweens + snap + chain; then emerge for identity/distribute.
+
+## Status
+
+**Step 1 landed (2026-07-29).** What exists now:
+
+- `src/motion/Motion.tsx` — the box-snapshot tween layer. `Motion.animate(
+  apply, enabled)` measures per-id boxes (`node-*`/`sym-*` under
+  `#stage .node-container`, viewport coords + computed font-size + tree
+  depth), runs the update, re-measures, and if geometry changed builds a flat
+  overlay of shallow clones (id'd descendants stripped, ids removed,
+  `data-motion-id` retained for debugging) that tween left/top/width/height/
+  font-size/opacity under `easeInOutBack`, stacked by tree depth. Real stage
+  is `visibility:hidden` during flight. Retarget = blend-at-now becomes the
+  new origin. Enter = fade+grow from 50%; exit = fade+shrink to 80% in place.
+  Duration = `--anim-factor` × 250ms; `motion: Off` skips entirely.
+- View transitions fully removed: `Animate.tsx` deleted, `inject` is now
+  two lines, hover-deferral gone (hover updates land instantly mid-tween),
+  `::view-transition-*` CSS and the action-name-class rules deleted.
+- Views componentized: `Seed`/`StageView`/`ToolsView`/`TransformView`/
+  `PatView`/`ExpViewGo`/`AdjacentPossible` are real JSX components;
+  expression kids use id-preserving `<For>` (keyed by subtree object
+  identity, which `Pat.hydrate` preserves); toolbox rows keyed by stable
+  transform index and read their transform reactively (survives flips);
+  `AdjacentPossible`'s non-reactive early returns fixed with `<Show keyed>`;
+  `StageView` memoizes the hover mask. Dead `animate`-class threading
+  removed from ExpView.
+
+Verified in-browser (vite + CDP): transform click → 28-layer morph → clean
+teardown; mid-flight retarget continuity is exact (0.00px jump measured on a
+layer across a second transform fired at t≈150ms); tool hover updates mask
+classes with **zero** stage DOM replacement (same element references before/
+after); selection changes skip the overlay via the no-change guard;
+projection toggles (CSS grid relayouts) animate through the same layer.
+
+## Step-1 findings for the report
+
+- **The overlay doubles as the VT replacement with no extra machinery** —
+  clicks and (future) drags share every line of Motion.tsx; only the driver
+  differs (clock now, pointer weights later).
+- **Retargetability came out simpler than dragology's scheme**: blending
+  boxes (5 numbers/layer) instead of whole rendered trees makes
+  origin-resnapshotting trivial, and the measured `to` boxes are exact by
+  construction so there is no end-of-tween pop.
+- **Clone fidelity tax was lower than budgeted** for nool's DOM: since comp
+  heads and atom glyphs are their own id'd elements, shallow clones are
+  mostly bare rounded-rect boxes; class-carried styling (theme, depth,
+  shadows, mask tints) survives because the overlay lives inside `#main`,
+  and explicit px font-size defeats the em cascade. No computed-style
+  snapshotting was needed yet (may change under drag, where clones live
+  longer and themes can flip mid-flight).
+- **Costs paid**: `transition/animation: none !important` needed on clones
+  (the live nodes' own CSS transitions would fight per-frame style writes);
+  glyph *content* swaps instantly when a surviving node changes appearance
+  (VT crossfaded this — acceptable so far); the toolbox is out of scope for
+  the motion layer, so tool flips snap (VT used to crossfade them).
+- **Solid's synchronous rendering pulled its weight**: measure → `go()` →
+  measure again all inside one event task, no scheduling ceremony, paint
+  never sees the intermediate state.
 
 ## Open questions
 

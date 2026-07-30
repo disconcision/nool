@@ -1,5 +1,4 @@
 import { at_path } from "./Transform";
-import Flipping from "flipping/lib/adapters/web";
 import * as Model from "./Model";
 import * as Sound from "./Sound";
 import * as Settings from "./Settings";
@@ -9,11 +8,9 @@ import * as Transform from "./Transform";
 import * as ToolBox from "./ToolBox";
 import * as Hover from "./Hover";
 import { freshen } from "./syntax/Node";
-import * as Exp from "./syntax/Exp";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
-import * as Animate from "./Animate";
 import * as Util from "./Util";
 
 
@@ -230,12 +227,6 @@ export const go = (
   action: Action.t
 ): void => {
   if (model.settings.sound) sound(model, action);
-  /* Catching because problem on build server */
-  try {
-    //Animate.read(model, action);
-  } catch (e) {
-    console.error(e);
-  }
   const result = update(model, action);
   if (result == "NoChange") {
     //Sound.noop();
@@ -257,10 +248,4 @@ export const go = (
         stage: Stage.put_exp(model.stage, freshened),
       });
   }, 250);*/
-  /* Catching because problem on build server */
-  try {
-    //Animate.flip(model, action);
-  } catch (e) {
-    console.error(e);
-  }
 };
