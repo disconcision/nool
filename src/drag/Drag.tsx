@@ -22,7 +22,7 @@ import * as Exp from "./../syntax/Exp";
 import * as ID from "./../syntax/ID";
 import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
-import { depth, freshen, id_at } from "./../syntax/Node";
+import { depth, freshen, id_at, subtree_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
 
 export type Candidate = {
@@ -36,11 +36,107 @@ export type Candidate = {
   /* grabbed node's box in this candidate (always present: candidates where
    * the grab vanishes are not offered — like the demo, triggers survive) */
   anchor: Motion.Box;
-  /* provenance geometry: created nodes emerge from the grab; consumed
-   * nodes converge into the site's replacement (v1 stand-ins for real
-   * rewrite-level emergeFrom provenance — see design doc) */
-  emerge: Map<string, string>;
-  converge: Map<string, string>;
+  /* provenance geometry: which box each created node emerges from (clone
+   * vs grow) and which box each consumed node converges into (merge vs
+   * absorb). Derived by structural equality against the pre-state —
+   * provenance-lite until rewrites record it themselves (see design doc). */
+  emerge: Map<string, Motion.EmergeSpec>;
+  converge: Map<string, Motion.ConvergeSpec>;
+};
+
+/* # Provenance-lite: structural diffing of live vs candidate expressions.
+ * A created node that structurally equals an existing (site-scoped) node
+ * is a CLONE of it; otherwise it is genuinely new and GROWs from the grab.
+ * A removed subtree that structurally equals a surviving candidate subtree
+ * MERGEs into it; otherwise it is ABSORBed into the site's replacement. */
+
+const all_subtrees = (e: Exp.t, out: Exp.t[] = []): Exp.t[] => {
+  out.push(e);
+  if (e.t === "Comp") e.kids.forEach((k) => all_subtrees(k, out));
+  return out;
+};
+
+const index_by_id = (e: Exp.t, m: Map<number, Exp.t> = new Map()): Map<number, Exp.t> => {
+  m.set(e.id, e);
+  if (e.t === "Comp") e.kids.forEach((k) => index_by_id(k, m));
+  return m;
+};
+
+const head_sym = (e: Exp.t): string | null =>
+  e.t === "Comp" && e.kids[0]?.t === "Atom" ? e.kids[0].sym : null;
+
+const provenance = (
+  liveExp: Exp.t,
+  live: Map<string, Motion.Measured>,
+  candExp: Exp.t,
+  cand: Map<string, Motion.Measured>,
+  site: number[],
+  grabbedKey: string
+): { emerge: Map<string, Motion.EmergeSpec>; converge: Map<string, Motion.ConvergeSpec> } => {
+  const emerge = new Map<string, Motion.EmergeSpec>();
+  const converge = new Map<string, Motion.ConvergeSpec>();
+  const candIdx = index_by_id(candExp);
+  const liveIdx = index_by_id(liveExp);
+  const siteLive = subtree_at(site, liveExp);
+  const siteSubs = siteLive ? all_subtrees(siteLive) : [];
+  /* enters (node layers) */
+  for (const key of cand.keys()) {
+    if (live.has(key) || !key.startsWith("node-")) continue;
+    const n = candIdx.get(+key.slice(5));
+    if (!n) continue;
+    let spec: Motion.EmergeSpec = { source: grabbedKey, mode: "grow" };
+    if (n.t === "Atom") {
+      const m = siteSubs.find((s) => s.t === "Atom" && Exp.equals(s, n));
+      if (m && live.has(`node-${m.id}`))
+        spec = { source: `node-${m.id}`, mode: "clone" };
+    } else {
+      const hs = head_sym(n);
+      const m = hs
+        ? siteSubs.find((s) => head_sym(s) === hs && live.has(`node-${s.id}`))
+        : undefined;
+      if (m) {
+        spec = { source: `node-${m.id}`, mode: "clone" };
+        /* the clone's head separates from the source's head */
+        const nh = n.kids[0];
+        const mh = (m as Exp.t & { t: "Comp" }).kids[0];
+        if (nh && mh && !live.has(`node-${nh.id}`) && live.has(`node-${mh.id}`))
+          emerge.set(`node-${nh.id}`, { source: `node-${mh.id}`, mode: "clone" });
+      }
+    }
+    if (!emerge.has(key)) emerge.set(key, spec);
+  }
+  /* sym layers follow their node's source (sym→sym when possible) */
+  for (const key of cand.keys()) {
+    if (live.has(key) || !key.startsWith("sym-")) continue;
+    const nodeSpec = emerge.get(`node-${key.slice(4)}`);
+    if (!nodeSpec) continue;
+    const symSrc = `sym-${nodeSpec.source.slice(5)}`;
+    emerge.set(key, {
+      source: live.has(symSrc) ? symSrc : nodeSpec.source,
+      mode: nodeSpec.mode,
+    });
+  }
+  /* exits: topmost removed subtrees */
+  const siteRoot = id_at(site, candExp);
+  const siteKey = siteRoot !== undefined ? `node-${siteRoot}` : null;
+  const candSubs = all_subtrees(candExp);
+  for (const [key, m] of live) {
+    if (cand.has(key) || !key.startsWith("node-")) continue;
+    const p = m.parentId;
+    if (p && live.has(p) && !cand.has(p)) continue; // inside a bigger exit
+    const g = liveIdx.get(+key.slice(5));
+    let spec: Motion.ConvergeSpec | null = null;
+    if (g) {
+      const twin = candSubs.find(
+        (s) => Exp.equals(s, g) && cand.has(`node-${s.id}`)
+      );
+      if (twin) spec = { target: `node-${twin.id}`, mode: "merge" };
+    }
+    if (!spec && siteKey && cand.has(siteKey))
+      spec = { target: siteKey, mode: "absorb" };
+    if (spec) converge.set(key, spec);
+  }
+  return { emerge, converge };
 };
 
 /* Must mirror StageView's depth-derived scale. */
@@ -184,20 +280,14 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
       probe.dispose();
       continue;
     }
-    /* Provenance geometry (v1): entering nodes emerge from the grab (the
-     * demo's expanding-rewrite rule, trigger-relative); exiting nodes
-     * converge into whatever now occupies the rewrite site. */
-    const emerge = new Map<string, string>();
-    for (const id of probe.measured.keys())
-      if (!live.has(id)) emerge.set(id, key);
-    const converge = new Map<string, string>();
-    const siteRoot = id_at(c.site, c.exp);
-    if (siteRoot !== undefined) {
-      const siteKey = `node-${siteRoot}`;
-      if (probe.measured.has(siteKey))
-        for (const id of live.keys())
-          if (!probe.measured.has(id)) converge.set(id, siteKey);
-    }
+    const { emerge, converge } = provenance(
+      model.stage.exp,
+      live,
+      c.exp,
+      probe.measured,
+      c.site,
+      key
+    );
     out.push({
       ...c,
       measured: probe.measured,

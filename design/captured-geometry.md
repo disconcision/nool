@@ -300,6 +300,26 @@ Per drag (or per click-animation):
      ORIGINAL die rather than the grab, and merge convergence would target
      the surviving copy rather than the site root. Identity plumbing is
      animation semantics.
+   - **Provenance-lite landed: structural equality as the clone/new
+     discriminator.** The inconsistency cluster Andrew found (displaced
+     clone dice, fading merges, wrong emerge sources) had one genesis:
+     provenance was being GUESSED at the animation boundary instead of
+     recorded at the rewrite. Interim principled fix: a created node that
+     structurally equals an existing site-scoped node is a CLONE (emerges
+     full-size AT its original — sym→sym and head→head mapped, so clones
+     are pixel-coincident at t=0); no counterpart = genuinely NEW (grows
+     from 15% at its source, opacity 1 throughout — no fades anywhere).
+     Converge mirrors: an exiting subtree with a surviving structural twin
+     MERGEs (travels to coincide, no fade); otherwise ABSORBs (shrinks
+     into the site's replacement while fading). Labels were considered and
+     rejected as the discriminator (a + wrapped in a + lies); structure is
+     the sharper proxy, and true rewrite-recorded provenance remains the
+     endgame (fixes the die-lottery, distribute-clone source preference,
+     and removes the guessing entirely).
+   - Exit-layer granularity limitation: ghosts are per-topmost-removed-
+     subtree, so factor's losing die rides inside the ×2 ghost rather than
+     merging independently onto the surviving die. Per-member exit
+     splitting by provenance is the fix (with Pat-level provenance).
    - Still open: chain; click-path emerge (needs the rewrite site plumbed
      into noolbox actions); Pat-level provenance (above);
      near-collinear rail acquisition tie-breaks (first capture is by

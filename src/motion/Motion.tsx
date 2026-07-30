@@ -325,15 +325,18 @@ const capture_before = (): {
   return { before, exit_sources, prev };
 };
 
-/* Provenance-driven enter/exit geometry (the demo's emergeFrom, adapted):
- * an entering node can GROW OUT of a source node's current box instead of
- * fading in; an exiting node can CONVERGE INTO a target node's destination
- * box instead of fading in place. */
+/* Provenance-driven enter/exit geometry (the demo's emergeFrom/emergeMode,
+ * adapted). Two enter modes: "clone" (a duplicate of an existing node —
+ * appears full-size AT its original and separates) and "grow" (genuinely
+ * new — scales up from almost nothing at its source). Two exit modes:
+ * "merge" (an identical twin survives — travels to coincide with it, no
+ * fade) and "absorb" (genuinely deleted — shrinks into its target while
+ * fading). */
+export type EmergeSpec = { source: string; mode: "clone" | "grow" };
+export type ConvergeSpec = { target: string; mode: "merge" | "absorb" };
 export type EmergeOpts = {
-  /* enter id → before id whose box it emerges from */
-  emerge?: Map<string, string>;
-  /* exit id → after id whose box it converges into */
-  converge?: Map<string, string>;
+  emerge?: Map<string, EmergeSpec>;
+  converge?: Map<string, ConvergeSpec>;
 };
 
 /* Build the flat layer set morphing `before` (blend/live boxes) into
@@ -473,11 +476,18 @@ const build_layers = (
     }
     const el = shallow_clone(a.el);
     with_ancestor_filters(el, a.el, a.parentId);
-    /* enters with an emerge source start AT the source's box, fully
-     * visible — creation reads as pulling out, not fading in */
-    const src = b ? undefined : opts?.emerge?.get(id);
-    const srcBox = src ? before.get(src)?.box : undefined;
-    const from = b ? b.box : srcBox ?? shrink(a.box, 0.5);
+    /* enters with an emerge source start at (clone) or grow out of (grow)
+     * the source's box, fully visible — creation reads as pulling out or
+     * scaling up, not fading in */
+    const spec = b ? undefined : opts?.emerge?.get(id);
+    const srcBox = spec ? before.get(spec.source)?.box : undefined;
+    const from = b
+      ? b.box
+      : srcBox
+      ? spec!.mode === "grow"
+        ? shrink(srcBox, 0.15)
+        : srcBox
+      : shrink(a.box, 0.5);
     layers.set(id, {
       el,
       mount: mount_with_shells(el, a.parentId),
@@ -503,18 +513,22 @@ const build_layers = (
     if (!src) continue;
     const el = reuse_exit_els ? src : exit_clone(src, (did) => after.has(did));
     with_ancestor_filters(el, null, b.parentId);
-    /* exits with a converge target are absorbed into it (they travel to
-     * its destination box while fading) instead of dissolving in place */
-    const tgtBox = opts?.converge?.get(id)
-      ? after.get(opts.converge!.get(id)!)?.box
-      : undefined;
+    /* exits with a converge target travel to it: merges coincide with the
+     * surviving twin at full opacity; absorptions shrink into the target
+     * while fading */
+    const cv = opts?.converge?.get(id);
+    const tgtBox = cv ? after.get(cv.target)?.box : undefined;
     layers.set(id, {
       el,
       mount: mount_with_shells(el, b.parentId),
       from: b.box,
-      to: tgtBox ?? shrink(b.box, 0.8),
+      to: tgtBox
+        ? cv!.mode === "absorb"
+          ? shrink(tgtBox, 0.2)
+          : tgtBox
+        : shrink(b.box, 0.8),
       fromOpacity: b.opacity,
-      toOpacity: 0,
+      toOpacity: tgtBox && cv!.mode === "merge" ? 1 : 0,
       /* Nudge below same-depth survivors: when a wrapper is eliminated its
        * child takes its old depth, and the receding ghost (often a large
        * tinted box) must paint UNDER the arriving content, not over it. */
