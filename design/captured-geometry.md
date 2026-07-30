@@ -321,6 +321,17 @@ projection toggles (CSS grid relayouts) animate through the same layer.
   manage *texture lifetime*, not just boxes — "keep everything painted;
   reveal by opacity; move by transform" is the VT playbook, reconstructible
   by hand.
+- **A/B verdict: stacked blurred box-shadows are 100% of the remaining
+  press-time hitch.** Shift+S toggles `body.noshadows`; measured stalls per
+  morph: ~170ms with shadows, zero frames >20ms without. The ten-layer
+  soft-shadow stacks (blur radii up to ~1.6em at 2.2×dpr) re-rasterize for
+  every clone at every morph. Options if it matters later: fewer shadow
+  layers globally, a cheaper shadow while morphing, or accept the hitch.
+  Related fixes: the tween clock starts after the first painted frame (so
+  raster cost delays the start instead of swallowing the animation's
+  opening), and exit ghosts sort at (old depth − 0.25) so eliminated
+  wrappers recede under the survivors that replace them (the identity-elim
+  blue-flash bug).
 - **Clone animations are kept, only transitions are killed.** The blanket
   `animation:none` on clones had disabled the selected-head glow
   (`pulse-scale` animates filter brightness) — glow vanished for the morph's
