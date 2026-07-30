@@ -352,6 +352,7 @@ export const grab = (
   e: PointerEvent
 ): void => {
   end_current?.();
+  const exp_at_grab = model.stage.exp;
   const cands = candidates(model, grabbedId);
   const live = document.getElementById(`node-${grabbedId}`)?.getBoundingClientRect();
   /* grab offset within the node, mapped proportionally into each candidate's
@@ -520,12 +521,17 @@ export const grab = (
     if (engaged && active >= 0) {
       if (activeT > COMMIT_T) {
         const c = cands[active];
-        /* animate() captures the manual blend as its origin: seamless */
+        /* animate() captures the manual blend as its origin. Commit the
+         * EXACT candidate exp: re-deriving the rewrite would mint different
+         * fresh ids for created nodes, and the handoff would see the
+         * almost-faded-in nodes as exits plus identical enters — a double
+         * pop. (Fallback re-derives if the exp changed mid-drag.) */
         inject({
           t: "transformNode",
           idx: -1,
           transform: c.transform,
-          f: at_path(c.transform, c.site),
+          f: (cur) =>
+            cur === exp_at_grab ? c.exp : at_path(c.transform, c.site)(cur),
         });
       } else {
         Motion.manual_release();
