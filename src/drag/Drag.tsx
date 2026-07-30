@@ -304,6 +304,10 @@ const update_vis = (cands: Candidate[], active: number, t: number): void => {
 const MIN_TRAVEL = 12;
 const ENGAGE_PX = 4;
 const COMMIT_T = 0.5;
+/* Stickiness: a challenger track must be this many px closer than the
+ * active one to steal the drag (status-quo bias; prevents mid-drag track
+ * theft by nearly-collinear segments). */
+const STICKINESS = 24;
 
 export const grab = (
   model: Model.t,
@@ -351,10 +355,13 @@ export const grab = (
       engaged = true;
     }
     /* closest-of-betweens: project the pointer onto each grab→anchor
-     * segment; nearest segment wins, its parameter is the blend t */
+     * segment; nearest segment wins its parameter as the blend t. The
+     * active track is sticky: challengers must beat it by STICKINESS px. */
     let best = -1;
     let bestD = Infinity;
     let bestT = 0;
+    let activeD = Infinity;
+    let activeT = 0;
     targets.forEach((tg, i) => {
       if (!tg) return;
       const vx = tg.ax - a0.x;
@@ -363,6 +370,10 @@ export const grab = (
       if (len2 < MIN_TRAVEL * MIN_TRAVEL) return;
       const t = clamp01(((p.x - a0.x) * vx + (p.y - a0.y) * vy) / len2);
       const d = Math.hypot(p.x - (a0.x + t * vx), p.y - (a0.y + t * vy));
+      if (i === active) {
+        activeD = d;
+        activeT = t;
+      }
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -370,6 +381,12 @@ export const grab = (
       }
     });
     if (best < 0) return;
+    if (active >= 0 && best !== active && activeD < Infinity) {
+      if (bestD >= activeD - STICKINESS) {
+        best = active;
+        bestT = activeT;
+      }
+    }
     if (best !== active) {
       active = best;
       Motion.manual_start(cands[best].measured);
