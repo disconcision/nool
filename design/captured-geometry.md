@@ -237,6 +237,43 @@ projection toggles (CSS grid relayouts) animate through the same layer.
   pseudo-classes (`:nth-child`, `:first-child`) over a node's *children*
   can't match shallow clones (children are separate layers); none of nool's
   current node styling depends on these in a way that shows.
+- **Flattening breaks intra-tree cascade and compositing — three mechanisms,
+  three fixes (the second fidelity round, also user-visible).** Symptoms:
+  operators went black mid-morph, mask tints vanished from glyphs, head
+  glyphs jumped up-left and popped back. Causes: (1) descendant selectors
+  keyed on *node* ancestors (`.node.comp .head { background-clip:text;
+  padding }`, `.node.mask .node`) don't match clones whose ancestors were
+  flattened away — the "jump" was literally the head's missing 0.15em
+  padding; (2) `filter:` on a masked node applies to its painted *subtree*
+  in the live DOM but only to the fragment in a per-node layer, so glyph
+  layers escaped the tint; (3) infinite pulse/hover animations perturb
+  measurement. Fixes, in order of importance:
+  1. **Rigid-subtree grouping** — a subtree whose members all map through
+     one uniform scale+translate (and with no internal enter/exit) stays a
+     single layer with a FULL clone. Filters, shadows, blends, and
+     descendant selectors then compose exactly as live. Root-commute went
+     from 28 layers to 7. This recovers what the old VT scheme did
+     implicitly (untagged nodes rode inside their parent's snapshot), but
+     derived from measured geometry instead of hand-maintained classes.
+     Nool's em-based layout makes uniformly-scaling groups exact: interpolate
+     the group's box + font-size and the internal layout scales with it.
+  2. **Context shells** — split layers are wrapped in `display:contents`
+     divs carrying their real ancestor classes. Boxless, so geometry is
+     untouched, but selector matching AND CSS inheritance flow through.
+  3. **Ancestor-filter copy** — shells can't host filters (no box), so
+     split layers inherit ancestor `filter` values inline; pixel-wise color
+     filters (sepia/hue-rotate/saturate) approximately commute with alpha
+     compositing, so per-fragment filtering reads correctly.
+  Plus a `motion-measuring` class that freezes animations/`scale` during
+  measurement. Retarget-through-groups works by storing member boxes
+  relative to the group's target box and reconstructing them against the
+  blended box when a group must split mid-flight (measured: 0.001px jump).
+  Report lesson: the substrate contract needs more than "per-id boxes" —
+  paint effects (filter/blend/opacity) compose over the *tree*, so the
+  flattener must either keep composing subtrees intact (grouping) or
+  replicate the compositing context per fragment (shells + filter copy).
+  Grouping is also a big perf and z-order win; deformation-only splitting
+  is the right default.
 - **Costs paid**: `transition/animation: none !important` needed on clones
   (the live nodes' own CSS transitions would fight per-frame style writes);
   glyph *content* swaps instantly when a surviving node changes appearance

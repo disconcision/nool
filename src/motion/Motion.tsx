@@ -1,24 +1,49 @@
 /* Motion: retargetable box-snapshot animation layer.
  *
  * Replaces the View Transitions API. Around each model update we measure
- * per-id boxes of the stage nodes before and after, then animate flat
- * overlay clones from the before-boxes to the after-boxes while the real
- * scene is hidden. The origin of an in-flight animation is whatever is
- * currently displayed, so retargeting mid-flight never jumps. Layers are
- * flat (never nested) — see design/captured-geometry.md for why.
+ * per-id boxes of the stage nodes before and after, then animate overlay
+ * clones from the before-boxes to the after-boxes while the real scene is
+ * hidden. The origin of an in-flight animation is whatever is currently
+ * displayed, so retargeting mid-flight never jumps.
+ *
+ * Layer granularity: subtrees that move RIGIDLY (uniform scale + translate,
+ * no internal enter/exit) stay whole — one layer, full clone — so filters,
+ * blend effects, shadows and descendant selectors apply to the composite
+ * exactly as in the live DOM. Only genuinely deforming regions split into
+ * per-node shallow layers; those are wrapped in display:contents "context
+ * shells" carrying their real ancestor classes so descendant selectors and
+ * CSS inheritance keep working, and ancestor filters are copied onto them.
+ * See design/captured-geometry.md.
  */
 
 export type Box = { x: number; y: number; w: number; h: number; font: number };
 
-type Measured = { el: HTMLElement; box: Box; depth: number };
+type Measured = {
+  el: HTMLElement;
+  box: Box;
+  depth: number;
+  parentId: string | null;
+};
+
+type BeforeInfo = {
+  box: Box;
+  opacity: number;
+  depth: number;
+  parentId: string | null;
+};
+
+type Member = { rel: Box; depth: number; parentId: string | null };
 
 type Layer = {
-  el: HTMLElement;
+  el: HTMLElement; // the positioned clone (styles driven per frame)
+  mount: HTMLElement; // outermost context shell (what goes in the overlay)
   from: Box;
   to: Box;
   fromOpacity: number;
   toOpacity: number;
   depth: number;
+  parentId: string | null;
+  members: Map<string, Member> | null; // group layers: contained ids
 };
 
 type Tween = {
@@ -43,6 +68,24 @@ const lerpBox = (a: Box, b: Box, t: number): Box => ({
   font: lerp(a.font, b.font, t),
 });
 
+/* Member boxes are stored relative to their group's to-box so they can be
+ * reconstructed against any blended box on retarget. */
+const rel_of = (m: Box, root: Box): Box => ({
+  x: (m.x - root.x) / root.w,
+  y: (m.y - root.y) / root.h,
+  w: m.w / root.w,
+  h: m.h / root.h,
+  font: root.font > 0 ? m.font / root.font : 1,
+});
+
+const from_rel = (root: Box, r: Box): Box => ({
+  x: root.x + r.x * root.w,
+  y: root.y + r.y * root.h,
+  w: r.w * root.w,
+  h: r.h * root.h,
+  font: r.font * root.font,
+});
+
 /* Analytic stand-in for the old cubic-bezier(0.68, -0.6, 0.32, 1.6) */
 const easeInOutBack = (x: number): number => {
   const c1 = 1.70158;
@@ -62,38 +105,70 @@ const anim_factor = (): number => {
 const stage_container = (): HTMLElement | null =>
   document.querySelector("#stage .node-container");
 
-const node_depth = (el: HTMLElement, root: HTMLElement): number => {
-  let d = 0;
-  for (let p = el.parentElement; p && p !== root; p = p.parentElement)
-    if (p.id.startsWith("node-")) d++;
-  return d;
-};
-
 const measure = (): Map<string, Measured> => {
   const out = new Map<string, Measured>();
   const root = stage_container();
   if (!root) return out;
+  /* Freeze pulse/hover animations so boxes are measured at rest. */
+  root.classList.add("motion-measuring");
   const els = root.querySelectorAll<HTMLElement>('[id^="node-"], [id^="sym-"]');
   for (const el of Array.from(els)) {
+    let depth = 0;
+    let parentId: string | null = null;
+    for (let p = el.parentElement; p && p !== root; p = p.parentElement) {
+      if (p.id.startsWith("node-")) {
+        depth++;
+        if (parentId === null) parentId = p.id;
+      }
+    }
     const r = el.getBoundingClientRect();
     const font = parseFloat(getComputedStyle(el).fontSize);
     out.set(el.id, {
       el,
       box: { x: r.x, y: r.y, w: r.width, h: r.height, font },
-      depth: node_depth(el, root),
+      depth,
+      parentId,
     });
   }
+  root.classList.remove("motion-measuring");
   return out;
 };
 
-/* A layer shows a node's own visuals only; id'd descendants are their own
- * layers, so they are stripped from the clone. Ids are stripped so clones
- * never shadow the real elements. */
+const strip_ids = (c: HTMLElement): void => {
+  c.removeAttribute("id");
+  c.querySelectorAll("[id]").forEach((d) => d.removeAttribute("id"));
+};
+
+/* Shallow: the node's own visuals only; layered descendants are stripped. */
 const shallow_clone = (el: HTMLElement): HTMLElement => {
   const c = el.cloneNode(true) as HTMLElement;
   c.querySelectorAll('[id^="node-"], [id^="sym-"]').forEach((d) => d.remove());
-  c.removeAttribute("id");
-  c.querySelectorAll("[id]").forEach((d) => d.removeAttribute("id"));
+  strip_ids(c);
+  c.classList.add("motion-layer");
+  c.dataset.motionId = el.id;
+  return c;
+};
+
+/* Full: the whole subtree, for rigidly-moving groups. */
+const full_clone = (el: HTMLElement): HTMLElement => {
+  const c = el.cloneNode(true) as HTMLElement;
+  strip_ids(c);
+  c.classList.add("motion-layer");
+  c.dataset.motionId = el.id;
+  return c;
+};
+
+/* Exit ghost: the removed subtree, minus descendants that survive (those
+ * travel as their own layers). */
+const exit_clone = (
+  el: HTMLElement,
+  survives: (id: string) => boolean
+): HTMLElement => {
+  const c = el.cloneNode(true) as HTMLElement;
+  c.querySelectorAll<HTMLElement>('[id^="node-"], [id^="sym-"]').forEach((d) => {
+    if (survives(d.id)) d.remove();
+  });
+  strip_ids(c);
   c.classList.add("motion-layer");
   c.dataset.motionId = el.id;
   return c;
@@ -123,11 +198,10 @@ const apply_frame = (layers: Map<string, Layer>, t: number): void => {
 const eased_now = (tw: Tween): number =>
   easeInOutBack(clamp01((performance.now() - tw.start) / tw.duration));
 
-/* The overlay lives INSIDE the (hidden) stage container so clones keep the
- * full cascade context — #seed.<projection>.<symbols>, #stage, theme classes,
- * .node-container.<mode> — and context-scoped rules still match. Layers
- * override the container's visibility:hidden with visibility:visible. */
 const ensure_overlay = (): HTMLElement | null => {
+  /* The overlay lives INSIDE the (hidden) stage container so clones keep
+   * the full cascade context; layers punch back through with
+   * visibility:visible. */
   const container = stage_container();
   if (!container) return null;
   if (!overlay || !overlay.isConnected) {
@@ -163,13 +237,9 @@ export const animate = (apply: () => void, enabled: boolean): void => {
   }
 
   /* Before: what is currently displayed — the mid-flight blend if a tween
-   * is active, else the live DOM. Exit layers need a visual source that
-   * outlives the update: the previous clone, or a live element reference
-   * (still cloneable after solid detaches it). */
-  const before = new Map<
-    string,
-    { box: Box; opacity: number; depth: number }
-  >();
+   * is active, else the live DOM. Group members are reconstructed from
+   * their stored group-relative boxes. */
+  const before = new Map<string, BeforeInfo>();
   const exit_sources = new Map<string, HTMLElement>();
   const prev = tween;
   if (prev) {
@@ -177,14 +247,23 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     for (const [id, l] of prev.layers) {
       const op = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
       if (op < 0.01 && l.toOpacity === 0) continue; // fully-faded exit: drop
-      before.set(id, { box: lerpBox(l.from, l.to, t), opacity: op, depth: l.depth });
+      const blend = lerpBox(l.from, l.to, t);
+      before.set(id, { box: blend, opacity: op, depth: l.depth, parentId: l.parentId });
       exit_sources.set(id, l.el);
+      if (l.members)
+        for (const [mid, m] of l.members)
+          before.set(mid, {
+            box: from_rel(blend, m.rel),
+            opacity: op,
+            depth: m.depth,
+            parentId: m.parentId,
+          });
     }
     cancelAnimationFrame(prev.raf);
     tween = null;
   } else {
     for (const [id, m] of measure()) {
-      before.set(id, { box: m.box, opacity: 1, depth: m.depth });
+      before.set(id, { box: m.box, opacity: 1, depth: m.depth, parentId: m.parentId });
       exit_sources.set(id, m.el);
     }
   }
@@ -217,35 +296,177 @@ export const animate = (apply: () => void, enabled: boolean): void => {
   const ov = ensure_overlay();
   if (!ov) return;
 
-  const layers = new Map<string, Layer>();
+  /* Adjacency for the after and before structures. */
+  const after_kids = new Map<string | null, string[]>();
   for (const [id, m] of after) {
+    const arr = after_kids.get(m.parentId) ?? [];
+    arr.push(id);
+    after_kids.set(m.parentId, arr);
+  }
+  const before_kids = new Map<string | null, string[]>();
+  for (const [id, b] of before) {
+    const arr = before_kids.get(b.parentId) ?? [];
+    arr.push(id);
+    before_kids.set(b.parentId, arr);
+  }
+  const descendants = (id: string, kids: Map<string | null, string[]>): string[] => {
+    const out = [id];
+    for (const k of kids.get(id) ?? []) out.push(...descendants(k, kids));
+    return out;
+  };
+
+  /* A subtree is rigid when every before-descendant survives in place and
+   * every member's box maps through the root's (uniform) scale+translate. */
+  const subtree_rigid = (rootId: string): string[] | null => {
+    const rb = before.get(rootId);
+    const ra = after.get(rootId);
+    if (!rb || !ra || rb.box.w <= 0 || rb.box.h <= 0) return null;
+    const sw = ra.box.w / rb.box.w;
+    const sh = ra.box.h / rb.box.h;
+    if (Math.abs(sw - sh) > 0.02) return null;
+    const members = descendants(rootId, after_kids);
+    if (descendants(rootId, before_kids).length !== members.length) return null;
+    for (const id of members) {
+      const b = before.get(id);
+      const a = after.get(id);
+      if (!b || !a || b.opacity < 0.999) return null;
+      if (
+        Math.abs(ra.box.x + (b.box.x - rb.box.x) * sw - a.box.x) > 1 ||
+        Math.abs(ra.box.y + (b.box.y - rb.box.y) * sh - a.box.y) > 1 ||
+        Math.abs(b.box.w * sw - a.box.w) > 1 ||
+        Math.abs(b.box.h * sh - a.box.h) > 1 ||
+        Math.abs(b.box.font * sw - a.box.font) > 1
+      )
+        return null;
+    }
+    return members;
+  };
+
+  /* Context shells: display:contents wrappers carrying the real ancestor
+   * classes, so descendant selectors and inheritance work on clones. */
+  const parent_chain = (parentId: string | null): string[] => {
+    const chain: string[] = [];
+    for (let p = parentId; p; ) {
+      chain.push(p);
+      p = after.get(p)?.parentId ?? before.get(p)?.parentId ?? null;
+    }
+    return chain; // innermost first
+  };
+  const mount_with_shells = (
+    layerEl: HTMLElement,
+    parentId: string | null
+  ): HTMLElement => {
+    let mount = layerEl;
+    for (const p of parent_chain(parentId)) {
+      const src = after.get(p)?.el;
+      const shell = document.createElement("div");
+      shell.className = (src ? src.className + " " : "") + "motion-shell";
+      shell.appendChild(mount);
+      mount = shell;
+    }
+    return mount;
+  };
+
+  /* Ancestor filters don't reach clones through display:contents shells;
+   * copy them onto the layer (pixel-wise color filters compose well). */
+  const with_ancestor_filters = (
+    layerEl: HTMLElement,
+    sourceEl: HTMLElement | null,
+    parentId: string | null
+  ): void => {
+    const ancestor_fs: string[] = [];
+    for (const p of parent_chain(parentId)) {
+      const el = after.get(p)?.el;
+      if (!el) continue;
+      const f = getComputedStyle(el).filter;
+      if (f && f !== "none") ancestor_fs.push(f);
+    }
+    if (ancestor_fs.length === 0) return; // own class filter already applies
+    const own =
+      sourceEl && sourceEl.isConnected ? getComputedStyle(sourceEl).filter : "";
+    layerEl.style.filter = [own !== "none" ? own : "", ...ancestor_fs]
+      .filter(Boolean)
+      .join(" ");
+  };
+
+  const layers = new Map<string, Layer>();
+
+  const add_layer = (id: string, l: Layer): void => {
+    layers.set(id, l);
+  };
+
+  const walk = (id: string): void => {
+    const a = after.get(id)!;
     const b = before.get(id);
-    layers.set(id, {
-      el: shallow_clone(m.el),
-      from: b ? b.box : shrink(m.box, 0.5),
-      to: m.box,
+    const group = b ? subtree_rigid(id) : null;
+    if (group && group.length > 1) {
+      const el = full_clone(a.el);
+      with_ancestor_filters(el, a.el, a.parentId);
+      const members = new Map<string, Member>();
+      for (const mid of group) {
+        if (mid === id) continue;
+        const m = after.get(mid)!;
+        members.set(mid, {
+          rel: rel_of(m.box, a.box),
+          depth: m.depth,
+          parentId: m.parentId,
+        });
+      }
+      add_layer(id, {
+        el,
+        mount: mount_with_shells(el, a.parentId),
+        from: b!.box,
+        to: a.box,
+        fromOpacity: b!.opacity,
+        toOpacity: 1,
+        depth: a.depth,
+        parentId: a.parentId,
+        members,
+      });
+      return;
+    }
+    const el = shallow_clone(a.el);
+    with_ancestor_filters(el, a.el, a.parentId);
+    add_layer(id, {
+      el,
+      mount: mount_with_shells(el, a.parentId),
+      from: b ? b.box : shrink(a.box, 0.5),
+      to: a.box,
       fromOpacity: b ? b.opacity : 0,
       toOpacity: 1,
-      depth: m.depth,
+      depth: a.depth,
+      parentId: a.parentId,
+      members: null,
     });
-  }
+    for (const k of after_kids.get(id) ?? []) walk(k);
+  };
+  for (const r of after_kids.get(null) ?? []) walk(r);
+
+  /* Exits: topmost removed subtrees fade as one ghost (survivors stripped —
+   * they travel as their own layers). */
   for (const [id, b] of before) {
     if (after.has(id)) continue;
+    if (b.parentId && before.has(b.parentId) && !after.has(b.parentId)) continue;
     const src = exit_sources.get(id);
     if (!src) continue;
-    layers.set(id, {
-      el: prev ? src : shallow_clone(src), // prev layers are already clones
+    const el = prev ? src : exit_clone(src, (did) => after.has(did));
+    with_ancestor_filters(el, null, b.parentId);
+    add_layer(id, {
+      el,
+      mount: mount_with_shells(el, b.parentId),
       from: b.box,
       to: shrink(b.box, 0.8),
       fromOpacity: b.opacity,
       toOpacity: 0,
       depth: b.depth,
+      parentId: b.parentId,
+      members: null,
     });
   }
 
   /* Flat stacking: parents (shallower) paint below children (deeper). */
   const ordered = [...layers.values()].sort((a, b) => a.depth - b.depth);
-  ov.replaceChildren(...ordered.map((l) => l.el));
+  ov.replaceChildren(...ordered.map((l) => l.mount));
   set_stage_hidden(true);
 
   tween = {

@@ -37,6 +37,17 @@
   transition: none !important;
   animation: none !important;
 }
+/* Context shells: boxless wrappers replicating a clone's real ancestor
+   classes so descendant selectors and inheritance apply to layers. */
+#motion-overlay .motion-shell {
+  display: contents !important;
+}
+/* Freeze pulse/hover animations while measuring boxes. */
+#stage .node-container.motion-measuring * {
+  animation: none !important;
+  transition: none !important;
+  scale: none !important;
+}
 
 @keyframes spin {
   0% {
