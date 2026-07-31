@@ -12,6 +12,106 @@
   transform: none !important;
 }
 
+/* Motion overlay: flat box-tween layer replacing view transitions.
+   Layers are absolutely positioned shallow clones driven per-frame by
+   src/motion/Motion.tsx; see design/captured-geometry.md. */
+#motion-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 40;
+}
+#motion-overlay .motion-layer {
+  position: absolute;
+  margin: 0;
+  box-sizing: border-box;
+  /* punch through the hidden stage container the overlay lives inside */
+  visibility: visible;
+}
+/* Transitions would fight the per-frame style writes; animations (pulse
+   glows etc.) are kept — they're part of node appearance and don't touch
+   driven properties. */
+#motion-overlay .motion-layer,
+#motion-overlay .motion-layer * {
+  transition: none !important;
+}
+/* While morphing, the real content stays painted but invisible (dimmed, not
+   visibility-hidden) so revealing it at teardown is compositor-only work.
+   The overlay itself must not be dimmed — it is a sibling of the content. */
+#stage .node-container.motion-dimmed > :not(#motion-overlay) {
+  opacity: 0.001 !important;
+  pointer-events: none !important;
+}
+/* While a morph carries the glow as a synthetic overlay layer, suppress
+   the in-scene selection decoration so it doesn't double — on the live
+   node AND on clones (which bake in the post-state's classes). The
+   head's white pulse is part of the decoration. */
+#stage .node-container.selection-morphing .node.selected {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+#stage .node-container.selection-morphing .node.selected > .head {
+  animation: none !important;
+}
+/* Context shells: boxless wrappers replicating a clone's real ancestor
+   classes so descendant selectors and inheritance apply to layers. */
+#motion-overlay .motion-shell {
+  display: contents !important;
+}
+/* Freeze pulse/hover animations while measuring boxes. */
+#stage .node-container.motion-measuring * {
+  animation: none !important;
+  transition: none !important;
+  scale: none !important;
+}
+/* Debug (Shift+S): kill shadows to compare morph rasterization cost. */
+body.noshadows #seed,
+body.noshadows #seed * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+/* Toolbox rows repaint when their match status flips; promoting the sides
+   makes the container-opacity part of that flip compositor-only (halves the
+   repaint stall, zero visual change). */
+#noolbox .source,
+#noolbox .result {
+  will-change: opacity;
+}
+/* Debug (Shift+D): 4-layer approximation of the 10-layer toolbox pat shadow.
+   Eliminates the remaining toolbox repaint stall (~33ms) at the cost of a
+   subtle softness difference (max pixel delta 26/255 measured). */
+body.cheapshadows.noshadows #seed * {
+  box-shadow: none !important; /* Shift+S still wins when both are on */
+}
+.Light body.cheapshadows .transform-view .pat.node,
+body.cheapshadows .Light .transform-view .pat.node {
+  box-shadow:
+    0.1em 0.1em 0.25em #90c2b366,
+    0.4em 0.4em 1.2em #90c2b34e,
+    -0.1em -0.1em 0.25em #e4ffe966,
+    -0.4em -0.4em 1.2em #d6fff04e !important;
+}
+/* EXPERIMENT (step 1 of shadow-strategy ladder): clone shadow strip
+   disabled to re-measure post-rigid-grouping. A/B on the 6-projection-
+   toggle workload showed identical mount stalls (~85ms, DOM-bound) and
+   frame times (8.2ms mean @120Hz) either way — the ~170ms shadow-raster
+   cost from the drag-dev era is gone on desktop. Re-feel on mobile and
+   worst-case drags before deleting this block for good.
+#motion-overlay .motion-layer:not(.motion-selection),
+#motion-overlay .motion-layer:not(.motion-selection) * {
+  box-shadow: none !important;
+}
+*/
+/* Keep the stage content permanently on its own compositor layer so dimming
+   it for a morph is an opacity flip on an existing texture, not a re-raster. */
+#stage .node-container > .node {
+  will-change: opacity;
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -188,9 +288,9 @@ body {
   height: 100vh;
   overflow: hidden;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /*background-color: #9cffcc !important;*/
@@ -207,8 +307,8 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 #main {
@@ -222,14 +322,15 @@ code {
   /* mix-blend-mode: color-dodge; */
   outline: 0.1em solid white;
 }
-#main.setSelect.selected,
-#main.unsetSelections.selected {
-  box-shadow: inset 0px 0px 0.6em #ffffff;
-  /* mix-blend-mode: color-dodge; */
+/* Root-selection press feedback: #main carries .selected when the stage
+   selection is "unselected" (the root — the window itself — is what's
+   selected). Holding the pointer down on the background creeps the window
+   corners in (the border-radius transition above), relaxing on release.
+   Pressing a node removes .selected in the same tick, so this only bites
+   on background presses. */
+#main.selected:active {
   border-radius: 5em;
-  outline: 0.1em solid white;
 }
-
 .logo {
   position: absolute;
   width: 5em;
@@ -261,6 +362,8 @@ code {
   border-radius: 1em; /*0.5em  1.3em 0.9em 0.9em;*/
   padding: 0 0.25em;
   justify-content: center;
+  box-shadow: none;
+  border: none;
 }
 #stage .node.atom:hover,
 .transform .result.match:hover,
@@ -493,8 +596,11 @@ code {
   box-shadow: #0000;
 }
 
-.node-container.LinearInfix .node.selected:has(> *),
-.node-container.LinearInfix .node.selected:has(> *):hover {
+/* Selected comps only (their kids get dotted outlines below): atoms also
+   have a child (the sym wrapper), so :has(> *) would suppress their
+   selection glow while giving them no dotted replacement. */
+.node-container.LinearInfix .node.selected:has(> .node),
+.node-container.LinearInfix .node.selected:has(> .node):hover {
   border: 0;
   outline: 0.03em solid #ffffff;
   box-shadow: 0px 0px 0.6em #ffffff;
@@ -581,8 +687,11 @@ code {
 }*/
 
 #noolbox {
-  box-shadow: inset -8px 0px 8px #3ca38211, inset -4px 0px 4px #3ca38211,
-    inset -2px 0px 2px #3ca38211, inset -1px 0px 1px #3ca38211,
+  box-shadow:
+    inset -8px 0px 8px #3ca38211,
+    inset -4px 0px 4px #3ca38211,
+    inset -2px 0px 2px #3ca38211,
+    inset -1px 0px 1px #3ca38211,
     inset -0.5px 0px 0.5px #3ca38211;
   position: relative;
   display: grid;
@@ -594,7 +703,24 @@ code {
   border-bottom: 0.04em solid #53f5ff66;
   /* border-top: 0.02em solid #f8a7ff66; */
   width: fit-content;
-  padding: 0.3em 0.4em 0.3em 0;
+  /* left padding: becoming a scroll container forced horizontal clipping
+     (overflow-y non-visible drags overflow-x along), so rule shadows need
+     room to fall off before the clip edge */
+  padding: 0.3em 0.4em 0.3em 0.7em;
+  /* native continuous scrolling; MANDATORY snap = smooth mid-gesture but
+     every rest position is row-aligned at the top (max-height comes
+     inline from tools.size — shift+wheel resizes) */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 0.3em;
+  scrollbar-width: none;
+}
+#noolbox::-webkit-scrollbar {
+  display: none;
+}
+#noolbox .transform-view {
+  scroll-snap-align: start;
 }
 .TreeLeft #noolbox {
   height: 9.2em;
@@ -605,6 +731,38 @@ code {
   flex-direction: row-reverse;
 }*/
 
+/* Drag-to-rule feedback: while a drag rides a rail, the rule it would
+   enact lights up with the rule-press flashbang (.transform-view:active
+   below), intensity driven per frame from Drag.tsx as an inline filter —
+   continuous in the rail t, soft bump at the commit threshold. A
+   committed drag flashes the full effect. */
+/* The flashbang blowout is the row itself compositing plus-lighter (the
+   rule-press :active look). Deliberate tradeoff, Andrew's call: the
+   blend mode can't fade — removing the class at the end snaps the row
+   back to normal compositing — but this is the real blowout. The filter
+   fades on the rapid-falloff-into-shallow-tail curve (linear timing;
+   the curve is encoded in the keyframes). */
+.transform-view.drag-glow-flash {
+  mix-blend-mode: plus-lighter;
+  animation: drag-glow-flash 0.28s linear both;
+}
+@keyframes drag-glow-flash {
+  0% {
+    filter: drop-shadow(0 0 1.3em rgb(255 153 153 / 1)) brightness(1.5);
+  }
+  20% {
+    filter: drop-shadow(0 0 0.55em rgb(255 153 153 / 0.45)) brightness(1.22);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.28em rgb(255 153 153 / 0.16)) brightness(1.08);
+  }
+  80% {
+    filter: drop-shadow(0 0 0.15em rgb(255 153 153 / 0.05)) brightness(1.025);
+  }
+  100% {
+    filter: drop-shadow(0 0 0.1em rgb(255 153 153 / 0)) brightness(1);
+  }
+}
 .transform-view {
   position: relative;
   z-index: 10;
@@ -704,8 +862,10 @@ v .transform-view .label {
   filter: saturate(1) opacity(0.5) hue-rotate(277deg) blur(0.2em) !important;
 }
 .previews .node-container:hover {
-  filter: saturate(1) brightness(0.1) invert(1) opacity(1) hue-rotate(210deg);
-  mix-blend-mode: exclusion;
+  /* !important: must outrank the rest-state blur above, which carries
+     !important — without this the previews were permanently blurred */
+  filter: saturate(1) brightness(0.1) invert(1) opacity(1) hue-rotate(210deg) !important;
+  mix-blend-mode: exclusion !important;
 }
 .previews .node.comp {
   background-color: #005bff26;
@@ -718,9 +878,6 @@ v .transform-view .label {
 }
 .previews .id-view {
   display: none;
-}
-#main.setSelect.selected #seed .previews {
-  mix-blend-mode: color-burn !important;
 }
 
 #toolbar {
@@ -909,34 +1066,184 @@ v .transform-view .label {
   scale: 0.8;
 }
 
+/* Corner L-clusters (matching SettingsView order):
+   top-left: 1 sound · 2 preview · 3 reset
+   top-right: 4 theme · 5 projection · 6 symbols
+   bottom-left: 7 drag mode · 8 drag mechanic · 9 drag debug */
 #settings-panel .icon:nth-child(1) {
   left: 0;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(2) {
-  right: 0;
-  bottom: 0;
+  left: 0.75em;
+  top: 0;
 }
-
 #settings-panel .icon:nth-child(3) {
   left: 0;
-  bottom: 0;
+  top: 0.75em;
 }
-
 #settings-panel .icon:nth-child(4) {
   right: 0;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(5) {
   right: 0.75em;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(6) {
-  right: 0em;
+  right: 0;
   top: 0.75em;
+}
+#settings-panel .icon:nth-child(7) {
+  left: 0;
+  bottom: 0;
+}
+#settings-panel .icon:nth-child(8) {
+  left: 0.75em;
+  bottom: 0;
+}
+#settings-panel .icon:nth-child(9) {
+  left: 0;
+  bottom: 0.75em;
+}
+
+/* In drag mode, grabbing shouldn't shake the tree (the :active wobble). */
+#seed.dragging #stage .node:active {
+  animation: none !important;
+}
+
+/* Drag-loadout toggles: small circles left of each rule, centered on the
+   row (in line with the arrow); drag mode only. */
+.transform-view {
+  position: relative;
+}
+/* Drag-mode loadout: the whole rule row is the toggle; the equals sign
+   carries the on/off state (white glow when the rule generates drag
+   candidates). */
+#seed.dragging .transform-view {
+  cursor: pointer;
+}
+#seed.dragging .transform-arrow.drag-on {
+  /* solid-white glyph (emoji can't be colored; black-then-invert can)
+     with a tight halo, the retired dot's look */
+  filter: brightness(0) invert(1) drop-shadow(0 0 1.5px #ffffff)
+    drop-shadow(0 0 5px #ffffffaa);
+}
+/* Drag probe: hidden mount for measuring candidate states. */
+#stage .drag-probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Drag debug overlay: candidate anchor dots while grabbing (plan step 2). */
+#drag-vis {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+}
+#drag-vis .grab-box {
+  position: absolute;
+  border: 2px dashed #fffc;
+  border-radius: 10px;
+  box-shadow: 0 0 8px #0004;
+}
+#drag-vis .anchor-dot {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid;
+  box-shadow: 0 0 4px #0008;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-family: monospace;
+  color: white;
+}
+#drag-vis .anchor-dot.vanishing {
+  color: inherit;
+}
+/* Rule codes: letter + one compact column (reversal r superscript over
+   the operator subscript). The empty sup slot keeps operators sitting
+   subscript-low on unreversed codes. */
+#drag-vis .rule-code {
+  display: inline-flex;
+  align-items: center;
+}
+#drag-vis .code-stack {
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 0.62em;
+  line-height: 1.05;
+  text-align: left;
+  margin-left: 0.1em;
+}
+#drag-vis .code-stack > span {
+  min-height: 1em;
+}
+#drag-vis .anchor-dot.active {
+  scale: 1.35;
+  box-shadow: 0 0 8px #000a;
+}
+/* Rails layer: fixed full-viewport like #drag-vis but BEHIND the stage
+   (negative z-index paints above the page background, under in-flow
+   content); the translucent node pills let the rails show through. */
+#drag-vis-rails {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+#drag-vis-rails svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+#drag-vis-rails .track {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+#drag-vis-rails .track.active {
+  stroke-width: 3;
+  opacity: 0.95;
+}
+#drag-vis-rails .track.unreachable {
+  opacity: 0.15;
+}
+#drag-vis-rails .track-tick {
+  stroke-width: 2;
+  opacity: 0.6;
+}
+#drag-vis .track-foot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: white;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px #0008;
+}
+#drag-vis .track-foot.committing {
+  background: #2eeb76;
+}
+#drag-vis .t-label {
+  position: absolute;
+  transform: translate(14px, -140%);
+  font-family: monospace;
+  font-size: 11px;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .toolbar2 {
@@ -976,8 +1283,7 @@ v .transform-view .label {
   height: calc(1em * 0.5);
   position: relative;
   margin: 0.5em;
-  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
-    margin 0.1s linear;
+  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
 
 /* Actual image container */
@@ -1002,9 +1308,31 @@ v .transform-view .label {
 }
 #seed .icon2:active {
   /* animation: spin 0.4s infinite linear; */
-  margin: 1em;
   opacity: 1;
   transform: rotate(-359deg);
+}
+
+/* Pressing the seed displaces both flanks — by compositor transform, not
+   margin: the old margin bump re-laid-out and repainted the shadow-heavy
+   neighbors every frame of the transition. #stage itself must stay
+   transform-free (it would become the containing block for the
+   fixed-position, viewport-addressed #motion-overlay), so the stage's
+   side rides its root node, already on its own layer via will-change. */
+#noolbox {
+  transition: transform 0.1s linear;
+}
+#stage .node-container > .node {
+  /* restate .node's scale transition — this higher-specificity rule
+     replaces it wholesale */
+  transition:
+    scale 0.1s linear,
+    transform 0.1s linear;
+}
+#seed:has(.icon2:active) #noolbox {
+  transform: translateX(-0.5em);
+}
+#seed:has(.icon2:active) #stage .node-container > .node {
+  transform: translateX(0.5em);
 }
 #seed .icon2:active .inner {
   /* animation: spin 0.4s infinite linear; */
@@ -1085,9 +1413,13 @@ body:has(#main.Dark) {
   mix-blend-mode: screen;
 }
 .Dark .transform-view .node:hover {
-  box-shadow: inset 0px -1px 1px #fde8ff, inset 0px -1px 1px #9d80ff33,
-    inset 0px -2px 2px #a000ff, inset 0px -4px 4px #9d80ff33,
-    inset 0px -8px 8px #9d80ff33, inset 0px -16px 16px #9d80ff33;
+  box-shadow:
+    inset 0px -1px 1px #fde8ff,
+    inset 0px -1px 1px #9d80ff33,
+    inset 0px -2px 2px #a000ff,
+    inset 0px -4px 4px #9d80ff33,
+    inset 0px -8px 8px #9d80ff33,
+    inset 0px -16px 16px #9d80ff33;
 }
 
 /* HACKY INTERACTIONS */
@@ -1114,91 +1446,92 @@ body:has(#main.Dark) {
   color: black !important;
 }
 
-::view-transition-old(flip-node-selected),
-::view-transition-new(flip-node-selected) {
-  /*transition: none;
-  transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;*/
-  /*animation-duration: 200ms !important;
-    transition: transform 250ms cubic-bezier(0.68, -0.6, 0.32, 1.6) !important;
-  height: auto;
-  right: 0;
-  left: auto;
-  transform-origin: right center;*/
-}
-.selected {
-  /* needs some tlc. dont want internals to show during transition
-  */
-  view-transition-name: flip-node-selected;
-}
-#main.setSelect .selected,
-#main.unsetSelections .selected {
-  /* needs some tlc. dont want internals to show during transition
-  */
-  view-transition-name: flip-node-selected !important;
-}
-
-#seed .icon {
-  view-transition-name: flip-seed-icon;
-}
-#seed #noolbox {
-  view-transition-name: flip-noolbox;
-}
-#seed .previews {
-  /* view-transition-name: flip-previews; */
-}
-
-::view-transition-group(flip-node-selected) {
-  view-transition-name: selected;
-  animation-timing-function: easeInBack; /*easeInBack; easeOutBounce;*/
-  animation-duration: calc(var(--anim-factor) * 0.2s);
-}
-::view-transition-old(flip-node-selected) {
-}
-::view-transition-new(flip-node-selected) {
-}
-
-::view-transition-group(*) {
-  /*pointer-events: none;*/
-  animation-duration: calc(var(--anim-factor) * 0.25s);
-  animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.68, -0.6, 0.32, 1.6);
-}
-
-::view-transition-new(*) {
-  height: 100%;
-  width: 100%;
-  /*animation-name: none !important;*/
-  /*animation-name: none !important;
-  animation-fill-mode: forwards;
-  opacity: 0;*/
-  /*animation-name: none;*/
-}
-::view-transition-old(*) {
-  height: 100%;
-  width: 100%;
-  /*animation-name: none !important;*/
-  /*animation-name: none !important;*/
-
-  /*pointer-events: none;*/
-  /*animation-name: none;*/
-}
-
-::view-transition {
-  /*pointer-events: none;*/
-}
-
-.selected-transition * {
-  visibility: hidden;
-}
-.selected-transition {
-  background-color: red !important;
-  outline: 0.2em solid red;
-}
-
 .Light .transform-view .pat.node {
-  box-shadow: 0.05em 0.05em 0.1em #90c2b344, 0.1em 0.1em 0.2em #90c2b344,
-    0.2em 0.2em 0.4em #90c2b344, 0.4em 0.4em 0.8em #90c2b344,
-    0.8em 0.8em 1.6em #90c2b344, -0.05em -0.05em 0.1em #e0ffe544,
-    -0.1em -0.1em 0.2em #ebfff744, -0.2em -0.2em 0.4em #d2fff044,
-    -0.4em -0.4em 0.8em #cff2e644, -0.8em -0.8em 1.6em #d2fff044;
+  box-shadow:
+    0.05em 0.05em 0.1em #90c2b344,
+    0.1em 0.1em 0.2em #90c2b344,
+    0.2em 0.2em 0.4em #90c2b344,
+    0.4em 0.4em 0.8em #90c2b344,
+    0.8em 0.8em 1.6em #90c2b344,
+    -0.05em -0.05em 0.1em #e0ffe544,
+    -0.1em -0.1em 0.2em #ebfff744,
+    -0.2em -0.2em 0.4em #d2fff044,
+    -0.4em -0.4em 0.8em #cff2e644,
+    -0.8em -0.8em 1.6em #d2fff044;
+}
+
+/* ============ Mobile / touch ============ */
+
+/* Kill the tap-highlight rectangle (the "weird misshapen focus box" on
+   mobile) and long-press callout/selection on the play surface; pointer
+   interactions provide their own feedback. */
+#seed,
+#seed *,
+#settings-panel .icon,
+#drag-vis,
+#drag-vis * {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Touch drags must own the gesture: no scroll/pull-to-refresh stealing
+   pointermoves mid-drag. Inert on mouse devices. */
+#seed {
+  touch-action: none;
+}
+
+/* Keep the app inside the VISIBLE viewport despite mobile URL bars. */
+@supports (height: 100dvh) {
+  body,
+  #seed {
+    height: 100dvh;
+  }
+}
+
+/* Small screens (narrow OR short — landscape phones are short): scale the
+   whole scene with the viewport (em-based layout makes this a single knob).
+   Desktop is untouched. */
+@media (max-width: 820px), (max-height: 520px) {
+  #main {
+    font-size: clamp(1.05rem, min(6vw, 8.5vh), 3rem);
+  }
+}
+
+/* Portrait: stack — stage on top, noolbox below (thumb-reachable).
+   Projection-specific #seed directions (TreeTop/Linear) still win. */
+@media (max-width: 820px) and (orientation: portrait) {
+  #seed {
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: 1em;
+  }
+}
+
+/* Coarse pointers: keep tap targets finger-sized even at small em, and
+   spread the corner clusters so the bigger targets don't overlap. */
+@media (pointer: coarse) {
+  #settings-panel .icon {
+    width: max(0.5em, 30px);
+    padding: max(0.15em, 8px);
+  }
+  #settings-panel .icon:nth-child(2) {
+    left: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(3) {
+    top: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(5) {
+    right: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(6) {
+    top: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(8) {
+    left: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(9) {
+    bottom: max(0.75em, 52px);
+  }
 }

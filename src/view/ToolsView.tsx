@@ -1,17 +1,14 @@
-import { Component } from "solid-js";
-import { For, Index, Switch, Match } from "solid-js";
+import { Component, createMemo } from "solid-js";
+import { For, Switch, Match } from "solid-js";
 import toolbarbkg from "../assets/ps-toolbar.png";
 import * as Pat from "../syntax/Pat";
 import { Model } from "../Model";
-import * as Hover from "../Hover";
 import * as Action from "../Action";
 import { Transform, flip, at_path } from "../Transform";
 import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
-import * as Sound from "../Sound";
 import { map_ids } from "../syntax/Node";
-import * as Util from "../Util";
 import * as Stage from "../Stage";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
@@ -28,62 +25,71 @@ const PatView: Component<{
   p: Pat.t;
   is_head: boolean;
   symbols: Settings.symbols;
-}> = (props) => {
-  switch (props.p.t) {
-    case "Atom": {
-      return (
-        <div
-          id={`pat-${props.p.id}`}
-          class={`pat ${props.p.sym.name} ${
-            props.is_head ? "head pat" : "node atom pat"
-          }`}
-        >
-          {Names.get(props.symbols, props.p.sym.name)}
-        </div>
-      );
-    }
-    case "Comp":
-      return (
-        <div id={`pat-${props.p.id}`} class="node comp pat">
-          <For each={props.p.kids}>
-            {(kid, i) =>
-              PatView({ p: kid, is_head: i() === 0, symbols: props.symbols })
-            }
-          </For>
-        </div>
-      );
-  }
-};
+}> = (props) => (
+  <Switch>
+    <Match when={props.p.t === "Atom"}>
+      <div
+        id={`pat-${props.p.id}`}
+        class={`pat ${props.p.t === "Atom" ? props.p.sym.name : ""} ${
+          props.is_head ? "head pat" : "node atom pat"
+        }`}
+      >
+        {Names.get(
+          props.symbols,
+          props.p.t === "Atom" ? props.p.sym.name : ""
+        )}
+      </div>
+    </Match>
+    <Match when={props.p.t === "Comp"}>
+      <div id={`pat-${props.p.id}`} class="node comp pat">
+        <For each={props.p.t === "Comp" ? props.p.kids : []}>
+          {(kid, i) => (
+            <PatView p={kid} is_head={i() === 0} symbols={props.symbols} />
+          )}
+        </For>
+      </div>
+    </Match>
+  </Switch>
+);
 
 const matches_at = (stage: Stage.t, pat: Pat.t): Pat.MatchResult =>
   stage.selection == "unselected"
     ? "NoMatch"
     : Pat.matches_at_path(stage.exp, pat, stage.selection);
 
-const filter_transforms = (stage: Stage.t, ts: Transform[]): Transform[] =>
+/* Kept for future use (drag candidate gating): transforms applicable in
+ * both directions at the current selection. */
+export const filter_transforms = (
+  stage: Stage.t,
+  ts: Transform[]
+): Transform[] =>
   ts.filter(
     (t) =>
       matches_at(stage, t.source) !== "NoMatch" &&
       matches_at(stage, t.result) !== "NoMatch"
   );
 
-const source_matches_cls = (props: { model: Model; t: Transform }) =>
-  matches_at(props.model.stage, props.t.source) === "NoMatch"
-    ? "NoMatch"
-    : "match";
-
-const result_matches_cls = (props: { model: Model; t: Transform }) =>
-  matches_at(props.model.stage, props.t.result) === "NoMatch"
-    ? "NoMatch"
-    : "match";
-
 const TransformView: Component<{
   idx: number;
-  t: Transform;
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
+  /* Memo (reference equality): the transforms array is replaced wholesale
+   * on every flip, but untouched rows keep their Transform references —
+   * without this every row rebuilds its pat DOM (and re-rasters its shadow
+   * stack) on every tool use, which measured ~160ms per press. */
+  const t = createMemo((): Transform => props.model.tools.transforms[props.idx]);
+  const source_cls = () =>
+    matches_at(props.model.stage, t().source) === "NoMatch"
+      ? "NoMatch"
+      : "match";
+  const result_cls = () =>
+    matches_at(props.model.stage, t().result) === "NoMatch"
+      ? "NoMatch"
+      : "match";
   const transformNode = (e: Event) => {
+    /* drag mode: let the press bubble to the row (loadout toggle) */
+    if (props.model.settings.dragging) return;
     e.preventDefault();
     e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
@@ -91,12 +97,14 @@ const TransformView: Component<{
         t: "transformNodeAndFlipTransform",
         target: "Source",
         idx: props.idx,
-        transform: props.t,
-        f: at_path(props.t, props.model.stage.selection),
+        transform: t(),
+        f: at_path(t(), props.model.stage.selection),
       });
     }
   };
   const transformNodeReverse = (e: Event) => {
+    /* drag mode: let the press bubble to the row (loadout toggle) */
+    if (props.model.settings.dragging) return;
     e.preventDefault();
     e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
@@ -104,30 +112,25 @@ const TransformView: Component<{
         t: "transformNodeAndFlipTransform",
         target: "Result",
         idx: props.idx,
-        transform: props.t,
-        f: at_path(flip(props.t), props.model.stage.selection),
+        transform: t(),
+        f: at_path(flip(t()), props.model.stage.selection),
       });
     }
   };
-  const setHover = (fn: any, target: Hover.t) => (e: Event) => {
-    if (fn(props) === "match")
+  const setHover = (cls: () => string, target: () => Hover_t) => (_e: Event) => {
+    if (cls() === "match")
       props.inject({
         t: "setHover",
-        target,
+        target: target(),
       });
   };
-  const flipTransform = (e: Event) => {
+  const row_pointerdown = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
-    props.inject({
-      t: "flipTransform",
-      idx: props.idx,
-    });
-  };
-  const do_nothing = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    props.inject({ t: "Noop" });
+    /* drag mode: the whole row is the loadout toggle */
+    if (props.model.settings.dragging)
+      props.inject({ t: "toggleDragTool", idx: props.idx });
+    else props.inject({ t: "Noop" });
   };
   const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
@@ -137,33 +140,42 @@ const TransformView: Component<{
     <div
       id={`transform-${props.idx}`}
       class={`transform-view`}
-      onpointerdown={do_nothing}
+      title={
+        props.model.settings.dragging
+          ? `Draggable: ${
+              props.model.tools.dragActive[props.idx] ? "on" : "off"
+            } (click to toggle)`
+          : undefined
+      }
+      onpointerdown={row_pointerdown}
     >
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
           props.model.settings.projection
-        } ${selected_src(props.model.tools, props.idx)} ${source_matches_cls(
-          props
-        )}`}
-        onmouseenter={setHover(source_matches_cls, {
+        } ${selected_src(props.model.tools, props.idx)} ${source_cls()}`}
+        onmouseenter={setHover(source_cls, () => ({
           t: "TransformSource",
-          pat: props.t.source,
+          pat: t().source,
           idx: props.idx,
-        })}
-        onpointerleave={setHover(source_matches_cls, { t: "NoHover" })}
+        }))}
+        onpointerleave={setHover(source_cls, () => ({ t: "NoHover" }))}
         onpointerdown={transformNode}
       >
         <PatView
-          p={map_ids((id) => id + 100000 + 100 * props.idx, props.t.source)}
+          p={map_ids((id) => id + 100000 + 100 * props.idx, t().source)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
       </div>
-      <div class="transform-arrow">
+      <div
+        class={`transform-arrow ${
+          props.model.tools.dragActive[props.idx] ? "drag-on" : ""
+        }`}
+      >
         <Switch fallback="🟰">
           {/*  arrows:
-                ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬ 
+                ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬
                 → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
                 ⇐ ⇒ ⟸ ⟹ ⟺ ⟷ ⬄
                 ↔ ⬌ ⟵ ⟶ ← → ⬅ ⇦
@@ -189,19 +201,17 @@ const TransformView: Component<{
       <div
         class={`result node-container ${
           props.model.settings.projection
-        } ${selected_res(props.model.tools, props.idx)} ${result_matches_cls(
-          props
-        )}`}
-        onmouseenter={setHover(result_matches_cls, {
+        } ${selected_res(props.model.tools, props.idx)} ${result_cls()}`}
+        onmouseenter={setHover(result_cls, () => ({
           t: "TransformResult",
-          pat: props.t.result,
+          pat: t().result,
           idx: props.idx,
-        })}
-        onpointerleave={setHover(result_matches_cls, { t: "NoHover" })}
+        }))}
+        onpointerleave={setHover(result_cls, () => ({ t: "NoHover" }))}
         onpointerdown={transformNodeReverse}
       >
         <PatView
-          p={map_ids((id) => id + 200000 + 100 * props.idx, props.t.result)}
+          p={map_ids((id) => id + 200000 + 100 * props.idx, t().result)}
           is_head={false}
           symbols={props.model.settings.symbols}
         />
@@ -210,73 +220,34 @@ const TransformView: Component<{
   );
 };
 
-const select_transforms = (stage:Stage.t,tools: ToolBox.t): [number, Transform][] => {
-  //const filtered_transforms = filter_transforms(stage, tools.transforms);
-  const filtered_transforms = tools.transforms;
-  /* want to take tools.size tools starting at tools.offset (index into tools)
-    and treat the list as a ring buffer */
-  
-  const len = filtered_transforms.length;
-  const offset = tools.offset % len;
-  const size = tools.size;
-  const idxs = [...Array(size).keys()].map((i) => (i + offset) % len);
-  return idxs.map((i) => [i, filtered_transforms[i]]);
-};
-
-function throttle(
-  func: (...args: any[]) => void,
-  limit: number
-): (...args: any[]) => void {
-  let inThrottle: boolean;
-  return function (this: any, ...args: any[]) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-}
+type Hover_t = import("../Hover").t;
 
 export const ToolsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
+  /* All rules render; plain wheel scrolls NATIVELY (CSS scroll-snap
+   * gives continuous scroll that settles on a rule when the gesture
+   * ends — the old ring-buffer window stepped whole rules per event).
+   * Shift+wheel resizes the box CONTINUOUSLY (size is fractional; the
+   * max-height tracks it smoothly); on macOS shift turns trackpad
+   * deltas horizontal, hence deltaX. */
   return (
     <div
       id="noolbox"
+      style={{ "max-height": `${props.model.tools.size * 2.4}em` }}
       onWheel={(e) => {
-        //console.log("wheel deltay:", e.deltaY);
-        if (Math.abs(e.deltaY) < 1.5) return;
-        if (e.shiftKey) {
-          throttle(() => {
-            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
-            //console.log("SHIFT GYOOOO", offset);
-            props.inject({
-              t: "wheelNumTools",
-              offset,
-            });
-          }, 1000)();
-        } else {
-          throttle(() => {
-            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
-            //console.log("GYOOOO", offset);
-            props.inject({
-              t: "wheelTools",
-              offset: offset,
-            });
-          }, 1000)();
-        }
+        if (!e.shiftKey) return; // native scroll + snap
+        e.preventDefault();
+        const d = e.deltaY || e.deltaX;
+        if (d === 0) return;
+        props.inject({ t: "wheelNumTools", offset: d / 90 });
       }}
     >
-      <For each={select_transforms(props.model.stage, props.model.tools)}>
-        {([idx, t]) =>
-          TransformView({
-            idx,
-            t,
-            model: props.model,
-            inject: props.inject,
-          })
-        }
+      <For each={[...Array(props.model.tools.transforms.length).keys()]}>
+        {(idx) => (
+          <TransformView idx={idx} model={props.model} inject={props.inject} />
+        )}
       </For>
     </div>
   );

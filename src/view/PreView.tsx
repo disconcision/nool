@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import { For, Show, Switch, Match } from "solid-js";
+import { For, Show } from "solid-js";
 import { Transform, at_path, flip } from "../Transform";
 import { subtree_at } from "../syntax/Node";
 import { ViewOnly } from "./ExpView";
@@ -26,7 +26,7 @@ const transformer =
 const directed = (transforms: Transform[]): Transform[] =>
   transforms.flatMap((t) => [t, flip(t)]);
 
-const do_transforms = (
+export const do_transforms = (
   exp: Exp.t,
   transforms: Transform[]
 ): [Transform, Exp.t][] =>
@@ -41,40 +41,40 @@ const do_transforms = (
     // unduplicate ids to avoid messing with transition animations
     .map(([t, e]): [Transform, Exp.t] => [t, map_ids(() => Id.mk(), e)]);
 
-const preview = (
-  node: Exp.t,
-  settings: Settings.t,
-  transformer: (_e: Event) => void
-) => (
-  <div
-    class={`node-container ${settings.projection}`}
-    onmousedown={transformer}
-  >
-    {ViewOnly({ node: node, symbols: settings.symbols })}
-  </div>
-);
-
 export const AdjacentPossible: Component<{
   stage: Stage.t;
   tools: Transform[];
   inject: Action.Inject;
   settings: Settings.t;
 }> = (props) => {
-  if (props.stage.selection === "unselected") return <div></div>;
-  const selection = subtree_at(props.stage.selection, props.stage.exp);
-  if (selection === undefined) return <div></div>;
+  const selected = () =>
+    props.stage.selection === "unselected"
+      ? undefined
+      : subtree_at(props.stage.selection, props.stage.exp);
   return (
-    <div class="previews" style={"display: flex;"}>
-      <For each={do_transforms(selection, props.tools)}>
-        {([transform, node]) => {
-          if (props.stage.selection === "unselected") return <div></div>;
-          return preview(
-            node,
-            props.settings,
-            transformer(props.inject, transform, props.stage.selection)
-          );
-        }}
-      </For>
-    </div>
+    <Show when={selected()} keyed fallback={<div></div>}>
+      {(sel) => (
+        <div class="previews" style={"display: flex;"}>
+          <For each={do_transforms(sel, props.tools)}>
+            {([transform, node]) => (
+              <div
+                class={`node-container ${props.settings.projection}`}
+                onmousedown={
+                  props.stage.selection === "unselected"
+                    ? (_) => {}
+                    : transformer(
+                        props.inject,
+                        transform,
+                        props.stage.selection
+                      )
+                }
+              >
+                <ViewOnly node={node} symbols={props.settings.symbols} />
+              </div>
+            )}
+          </For>
+        </div>
+      )}
+    </Show>
   );
 };

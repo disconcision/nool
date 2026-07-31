@@ -6,6 +6,10 @@ export type symbols = "Emoji" | "SingleChar";
 
 export type theme = "Light" | "Dark";
 
+/* drag dispatch mechanic: knob-on-rails vs per-frame nearest-candidate
+ * (experimental comparison toggle; see design/captured-geometry.md) */
+export type dragMechanic = "Rails" | "Closest";
+
 export type t = {
   sound: boolean;
   motion: motion;
@@ -13,6 +17,12 @@ export type t = {
   projection: projection;
   symbols: symbols;
   theme: theme;
+  /* drag mode: stage pointerdown grabs nodes for drag-rewrites instead of
+   * selecting for the noolbox */
+  dragging: boolean;
+  dragMechanic: dragMechanic;
+  /* drag debug overlay: rails, anchor dots, live t readout */
+  dragDebug: boolean;
 };
 
 export type Action =
@@ -21,7 +31,16 @@ export type Action =
   | "TogglePreview"
   | "ToggleProjection"
   | "ToggleSymbols"
-  | "ToggleDark";
+  | "ToggleDark"
+  | "ToggleDragging"
+  | "ToggleDragMechanic"
+  | "ToggleDragDebug";
+
+/* Touch devices default to drag mode (their natural interaction). */
+const coarse_pointer =
+  typeof window !== "undefined" &&
+  !!window.matchMedia &&
+  window.matchMedia("(pointer: coarse)").matches;
 
 export const init: t = {
   sound: true,
@@ -30,6 +49,9 @@ export const init: t = {
   projection: "TreeLeft",
   symbols: "Emoji",
   theme: "Light",
+  dragging: coarse_pointer,
+  dragMechanic: "Rails",
+  dragDebug: true,
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -73,5 +95,14 @@ export const update = (settings: t, action: Action): t => {
         case "Dark":
           return { ...settings, theme: "Light" };
       }
+    case "ToggleDragging":
+      return { ...settings, dragging: !settings.dragging };
+    case "ToggleDragMechanic":
+      return {
+        ...settings,
+        dragMechanic: settings.dragMechanic === "Rails" ? "Closest" : "Rails",
+      };
+    case "ToggleDragDebug":
+      return { ...settings, dragDebug: !settings.dragDebug };
   }
 };

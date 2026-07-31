@@ -1,0 +1,176 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; background: #f6f7fb; font-family: -apple-system, sans-serif; }
+  .wrap { width: 1150px; padding: 12px; }
+  .intro { background: white; border-radius: 10px; padding: 12px 16px; font-size: 13.5px; color: #334; margin-bottom: 8px; line-height: 1.45; }
+  .row { background: white; border-radius: 10px; padding: 10px 14px 8px; margin-bottom: 8px; }
+  .row h3 { margin: 2px 0 8px; font-size: 15px; color: #223; }
+  .row h3 b { color: #8636c9; }
+  .cells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+  .cell h4 { margin: 0 0 4px; font-size: 13px; color: #445; }
+  .cell p { margin: 4px 0 8px; font-size: 12px; color: #556; line-height: 1.4; }
+  .cell svg { display: block; border: 1px solid #e3e6ef; border-radius: 8px; background: #fbfcfe; }
+  .step { font-size: 11.5px; font-weight: 700; color: #778; margin: 5px 0 3px; letter-spacing: 0.02em; }
+</style>
+<div class="wrap">
+  <div class="intro">
+    <b>Same gesture, three definitions of the rail — now with outcomes.</b> Each row is one
+    concrete drag ("grab X to perform T"); each column is one option. Top scene: the drag —
+    the arrow is the direction you pull, from the grab point (⬤, dead-center on the icon).
+    Below it: what the stage shows after release. Options 1 and 2 morph the whole scene toward
+    the result <i>while</i> you pull and differ only in rail direction; option 3 moves only the
+    grabbed thing during the pull (frozen world), then reflows on release — so it gets three
+    stages. Zoomed to the lower subtree.
+  </div>
+  <div class="row">
+    <h3><b>Gesture 1 — factor by dragging the shared 🎲</b> &nbsp; (🎲✖️🦠) ➕ (🎲✖️🐝) → 🎲 ✖️ (🦠➕🐝)</h3>
+    <div class="cells">
+      <div class="cell"><h4>1 · current (today)</h4>
+        <div class="step">DRAG — pull ↙ down-left (the "down" is layout drift, not the die's move)</div>
+        <svg id="g1a" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">AFTER RELEASE — the factored layout; the die now leads the promoted ✖️</div>
+        <svg id="g1a2" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"><h4>2 · site-frame rails (cheap fix)</h4>
+        <div class="step">DRAG — pull ← straight left: the clean "extract" motion; visuals identical to 1</div>
+        <svg id="g1b" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">AFTER RELEASE — identical outcome; only the pull direction differed</div>
+        <svg id="g1b2" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"><h4>3 · staged choreography</h4>
+        <div class="step">NO DRAG EXISTS — in a frozen world the die's new seat is the seat it already occupies (zero rail)</div>
+        <svg id="g1c" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <p>This grip only exists under options 1 and 2 — a real conflict between staged rail
+        geometry and the pattern-level mover rule that offers the die.</p></div>
+    </div>
+  </div>
+  <div class="row">
+    <h3><b>Gesture 2 — factor by dragging the sum ➕</b> &nbsp; same rewrite, different grip</h3>
+    <div class="cells">
+      <div class="cell"><h4>1 · current (today)</h4>
+        <div class="step">DRAG — pull ↘ toward the ➕'s final resting spot; whole scene morphs as you pull</div>
+        <svg id="g2a" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">AFTER RELEASE — the ➕ sits inside the promoted ✖️</div>
+        <svg id="g2a2" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"><h4>2 · site-frame rails (cheap fix)</h4>
+        <div class="step">DRAG — pull ↘, nearly identical here (~10px correction; the fix matters for gesture 1, not this one)</div>
+        <svg id="g2b" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">AFTER RELEASE — identical outcome</div>
+        <svg id="g2b2" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"><h4>3 · staged choreography — three stages</h4>
+        <div class="step">DRAG — pull → right; ONLY the ➕ travels toward 🦠's seat, rest frozen</div>
+        <svg id="g2c" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">END OF PULL — the ➕ overlaps 🦠's spot; its old seat sits vacated; nothing else has moved</div>
+        <svg id="g2c2" width="330" height="350" viewBox="748 338 276 292"></svg>
+        <div class="step">AFTER RELEASE — the world reflows to the same factored layout as 1 and 2</div>
+        <svg id="g2c3" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+    </div>
+  </div>
+  <div class="row">
+    <h3><b>Gesture 3 — commute by dragging a ✖️ product</b> &nbsp; (🎲✖️🦠) ➕ (🎲✖️🐝) → products swap
+      &nbsp;·&nbsp; <span style="font-weight:400; font-size:13px; color:#667">all three options are identical here (equal-size swap, no layout reaction)</span></h3>
+    <div class="cells">
+      <div class="cell"><h4>1 = 2 = 3</h4>
+        <div class="step">DRAG — pull ↓ straight down onto the other product's seat</div>
+        <svg id="g3a" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"><h4>&nbsp;</h4>
+        <div class="step">AFTER RELEASE — the products have traded places (🦠-product below, 🐝-product above)</div>
+        <svg id="g3a2" width="330" height="350" viewBox="748 338 276 292"></svg></div>
+      <div class="cell"></div>
+    </div>
+  </div>
+</div>
+<script>
+const LIVE = {
+  19:[766.1,353.9,178.9,255.6,"➕",[768.8,450.7]],
+  14:[821.4,359.6,118.3,119.3,"✖️",[824.1,388.4]], 12:[876.7,365.4,57.6,51.2,"🎲",null],
+  13:[876.7,422,57.6,51.2,"🦠",null], 18:[821.4,484.3,118.3,119.3,"✖️",[824.1,513]],
+  16:[876.7,490.1,57.6,51.2,"🎲",null], 17:[876.7,546.7,57.6,51.2,"🐝",null],
+};
+const FACT = {
+  14:[766.1,387.9,178.9,187.4,"✖️",[768.8,450.7]],
+  12:[821.4,393.7,57.6,51.2,"🎲",null], 19:[821.4,450.3,118.3,119.3,"➕",[824.1,479]],
+  13:[876.7,456.1,57.6,51.2,"🦠",null], 17:[876.7,512.6,57.6,51.2,"🐝",null],
+};
+// commute after: the two product subtrees trade places (pure ±124.7px shift)
+const SWAP = {};
+{
+  const dy = 124.7;
+  const shift = (row, d) => [row[0], row[1] + d, row[2], row[3], row[4],
+                             row[5] ? [row[5][0], row[5][1] + d] : null];
+  SWAP[19] = LIVE[19];
+  for (const id of [14, 12, 13]) SWAP[id] = shift(LIVE[id], dy);
+  for (const id of [18, 16, 17]) SWAP[id] = shift(LIVE[id], -dy);
+}
+const NS = "http://www.w3.org/2000/svg";
+const el = (svg, tag, at, text) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in at) e.setAttribute(k, at[k]);
+  if (text) e.textContent = text;
+  svg.appendChild(e); return e;
+};
+const iconOf = (data, id) => {
+  const [x,y,w,h,,head] = data[id];
+  return head ? [head[0] + 25, head[1] + 31] : [x + w/2, y + h/2];
+};
+function scene(svg, data, {grabbed = null, vacate = null} = {}) {
+  for (const id in data) {
+    const [x,y,w,h,label] = data[id];
+    const isGrab = +id === grabbed;
+    el(svg, "rect", {x, y, width: w, height: h, rx: Math.min(18, h/3), fill: "none",
+      stroke: isGrab ? "#223" : "#9aa3b8", "stroke-width": isGrab ? 2.6 : 1.3});
+    const [cx, cy] = iconOf(data, id);
+    const vac = +id === vacate;
+    if (isGrab)
+      el(svg, "circle", {cx, cy, r: 27, fill: "#ffe9a8", stroke: "#e0a800", "stroke-width": 2});
+    if (vac)
+      el(svg, "circle", {cx, cy, r: 25, fill: "none", stroke: "#9aa3b8",
+        "stroke-width": 1.6, "stroke-dasharray": "4 4"});
+    el(svg, "text", {x: cx, y: cy + 9, "text-anchor": "middle", "font-size": 27,
+      opacity: vac ? 0.22 : 1}, label);
+    if (isGrab)
+      el(svg, "text", {x: cx, y: cy - 33, "text-anchor": "middle", "font-size": 13,
+        "font-weight": 700, fill: "#b8860b"}, "grab");
+  }
+}
+let mid = 0;
+function rail(svg, from, to, color) {
+  const id = "m" + (mid++);
+  const mk = el(svg, "marker", {id, viewBox: "0 0 10 10", refX: 9, refY: 5,
+    markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse"});
+  el(mk, "path", {d: "M 0 0 L 10 5 L 0 10 z", fill: color});
+  el(svg, "line", {x1: from[0], y1: from[1], x2: to[0], y2: to[1], stroke: color,
+    "stroke-width": 4, "marker-end": `url(#${id})`});
+  el(svg, "circle", {cx: from[0], cy: from[1], r: 5.5, fill: "#223", stroke: "white", "stroke-width": 1.6});
+}
+const S = (id) => document.getElementById(id);
+const die = [905.5, 391.0], sum = [793.8, 481.7], x14 = [849.1, 419.4];
+// Gesture 1
+scene(S("g1a"), LIVE, {grabbed: 12}); rail(S("g1a"), die, [850.2, 419.3], "#d1342f");
+scene(S("g1a2"), FACT, {grabbed: 12});
+scene(S("g1b"), LIVE, {grabbed: 12}); rail(S("g1b"), die, [850.2, 396.7], "#2b6fd6");
+scene(S("g1b2"), FACT, {grabbed: 12});
+scene(S("g1c"), LIVE, {grabbed: 12});
+el(S("g1c"), "circle", {cx: die[0], cy: die[1], r: 5.5, fill: "#223", stroke: "white", "stroke-width": 1.6});
+el(S("g1c"), "text", {x: die[0] + 46, y: die[1] + 8, "text-anchor": "middle", "font-size": 22,
+  "font-weight": 700, fill: "#1e9e57"}, "∅");
+// Gesture 2
+scene(S("g2a"), LIVE, {grabbed: 19}); rail(S("g2a"), sum, [849.1, 510.0], "#d1342f");
+scene(S("g2a2"), FACT, {grabbed: 19});
+scene(S("g2b"), LIVE, {grabbed: 19}); rail(S("g2b"), sum, [849.1, 520.4], "#2b6fd6");
+scene(S("g2b2"), FACT, {grabbed: 19});
+scene(S("g2c"), LIVE, {grabbed: 19}); rail(S("g2c"), sum, [897, 450], "#1e9e57");
+{ // end-of-pull keyframe: ➕ landed on 🦠's seat, old seat vacated, world frozen
+  const s = S("g2c2");
+  scene(s, LIVE, {vacate: 19});
+  el(s, "rect", {x: 876.7, y: 422, width: 57.6, height: 51.2, rx: 12, fill: "#e8f7ee",
+    "fill-opacity": 0.85, stroke: "#1e9e57", "stroke-width": 2.6});
+  el(s, "text", {x: 876.7 + 28.8, y: 422 + 34, "text-anchor": "middle", "font-size": 24,
+    fill: "#1e9e57"}, "➕");
+  el(s, "text", {x: 876.7 + 28.8, y: 422 - 8, "text-anchor": "middle", "font-size": 11,
+    "font-weight": 700, fill: "#1e9e57"}, "landed on 🦠");
+}
+scene(S("g2c3"), FACT, {grabbed: 19});
+// Gesture 3
+scene(S("g3a"), LIVE, {grabbed: 14}); rail(S("g3a"), x14, [849.1, 528], "#6a4bd8");
+scene(S("g3a2"), SWAP, {grabbed: 14});
+</script>

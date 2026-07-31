@@ -11,14 +11,16 @@ export type Direction = "up" | "down" | "left" | "right";
 
 export type Action =
   | { t: "restart" }
+  | { t: "hardReset" }
   | { t: "setSetting"; action: Settings.Action }
   | { t: "setHover"; target: Hover.t }
   | { t: "setSelect"; path: Path.t }
-  | { t: "moveStage"; direction: Direction }
   | { t: "moveTool"; direction: Direction }
-  | { t: "wheelTools"; offset: number}
   | { t: "wheelNumTools"; offset: number}
   | { t: "unsetSelections" }
+  | { t: "strikeSeed" }
+  | { t: "undo" }
+  | { t: "redo" }
   | {
       t: "transformNode";
       idx: number;
@@ -35,6 +37,7 @@ export type Action =
   | { t: "applyTransform"; idx: number; direction: "forward" | "reverse" }
   | { t: "applyTransformSelected" }
   | { t: "flipTransform"; idx: number }
+  | { t: "toggleDragTool"; idx: number }
   | { t: "Noop" };
 
 export type t = Action;

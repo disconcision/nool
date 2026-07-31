@@ -20,6 +20,12 @@ import palette_1 from "../assets/icons/noun-palette-1918496.svg";
 import alphabet from "../assets/icons/noun-alphabet-3591519.svg"
 import ded from "../assets/icons/noun-dead-5130035.svg"
 import prims from "../assets/icons/noun-geometry-4695832.svg"
+import drag_off from "../assets/icons/noun-tool-3376727.svg"
+import drag_on from "../assets/icons/noun-transformation-6040368.svg"
+import mech_rails from "../assets/icons/noun-cycle-4446.svg"
+import mech_closest from "../assets/icons/noun-cycle-1793611.svg"
+import debug_on from "../assets/icons/noun-1831710.svg"
+import debug_off from "../assets/icons/noun-1831712.svg"
 
 //TODO: qr code to disable id display
 
@@ -81,6 +87,14 @@ const theme_icon = (theme: Settings.theme): string => {
   }
 };
 
+const dragging_icon = (dragging: boolean): string =>
+  dragging ? drag_on : drag_off;
+
+const drag_mechanic_icon = (m: Settings.dragMechanic): string =>
+  m === "Rails" ? mech_rails : mech_closest;
+
+const drag_debug_icon = (on: boolean): string => (on ? debug_on : debug_off);
+
 let action_icon = (action: Settings.Action, settings: Settings.t): string => {
   switch (action) {
     case "ToggleSound":
@@ -95,6 +109,44 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return symbols_icon(settings.symbols);
     case "ToggleDark":
       return theme_icon(settings.theme);
+    case "ToggleDragging":
+      return dragging_icon(settings.dragging);
+    case "ToggleDragMechanic":
+      return drag_mechanic_icon(settings.dragMechanic);
+    case "ToggleDragDebug":
+      return drag_debug_icon(settings.dragDebug);
+  }
+};
+
+/* Hover tooltips: what the toggle does + its current state. */
+const action_title = (action: Settings.Action, settings: Settings.t): string => {
+  switch (action) {
+    case "ToggleSound":
+      return `Sound: ${settings.sound ? "on" : "off"}`;
+    case "ToggleMotion":
+      return `Motion: ${settings.motion}`;
+    case "TogglePreview":
+      return `Adjacent-possible preview: ${settings.preview ? "on" : "off"}`;
+    case "ToggleProjection":
+      return `Projection: ${settings.projection}`;
+    case "ToggleSymbols":
+      return `Symbols: ${settings.symbols}`;
+    case "ToggleDark":
+      return `Theme: ${settings.theme}`;
+    case "ToggleDragging":
+      return `Drag mode (drag nodes to rewrite): ${
+        settings.dragging ? "on" : "off"
+      }`;
+    case "ToggleDragMechanic":
+      return `Drag mechanic: ${
+        settings.dragMechanic === "Rails"
+          ? "Rails (knob rides rails; change rules at the hub)"
+          : "Closest (nearest track wins each frame)"
+      }`;
+    case "ToggleDragDebug":
+      return `Drag debug overlay (rails, anchors, t readout): ${
+        settings.dragDebug ? "on" : "off"
+      }`;
   }
 };
 
@@ -106,21 +158,38 @@ let icon = (
   <img
     class="icon"
     src={action_icon(action, settings)}
+    title={action_title(action, settings)}
     onmousedown={setSetting(inject, action)}
   />
 );
 
+/* Corner clusters, three icons each (an L per corner, no 2x2 squares):
+ * top-left sound·preview·reset, top-right theme·projection·symbols,
+ * bottom-left the drag trio, bottom-right empty. Order here must match
+ * the nth-child positioning in index.css. */
 export const SettingsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => (
   <div id="settings-panel">
     {icon(props.inject, props.model.settings, "ToggleSound")}
-    {icon(props.inject, props.model.settings, "ToggleMotion")}
     {icon(props.inject, props.model.settings, "TogglePreview")}
+    <img
+      class="icon"
+      src={ded}
+      title="Reset everything (world, settings, history)"
+      onmousedown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.confirm("Reset everything to default?"))
+          props.inject({ t: "hardReset" });
+      }}
+    />
     {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
-    
+    {icon(props.inject, props.model.settings, "ToggleDragging")}
+    {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
+    {icon(props.inject, props.model.settings, "ToggleDragDebug")}
   </div>
 );
