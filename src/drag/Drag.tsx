@@ -67,11 +67,14 @@ const index_by_id = (e: Exp.t, m: Map<number, Exp.t> = new Map()): Map<number, E
 const head_sym = (e: Exp.t): string | null =>
   e.t === "Comp" && e.kids[0]?.t === "Atom" ? e.kids[0].sym : null;
 
-const provenance = (
+/* Exported: the button path (App.inject) uses the same provenance for
+ * click-applied transforms — the site is the selection, the trigger the
+ * selected node. Only key-membership is read from the box maps. */
+export const provenance = (
   liveExp: Exp.t,
-  live: Map<string, Motion.Measured>,
+  live: ReadonlyMap<string, unknown>,
   candExp: Exp.t,
-  cand: Map<string, Motion.Measured>,
+  cand: ReadonlyMap<string, unknown>,
   site: number[],
   grabbedKey: string
 ): { emerge: Map<string, Motion.EmergeSpec>; converge: Map<string, Motion.ConvergeSpec> } => {
@@ -87,7 +90,7 @@ const provenance = (
    * amid its children (identity-intro on a large operand was the tell). */
   const head_key_in = (
     idx: Map<number, Exp.t>,
-    boxes: Map<string, Motion.Measured>,
+    boxes: ReadonlyMap<string, unknown>,
     key: string
   ): string => {
     const n = idx.get(+key.slice(5));

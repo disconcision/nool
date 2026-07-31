@@ -10,6 +10,8 @@ import * as ExpToPat from "./syntax/ExpToPat";
 import * as Motion from "./motion/Motion";
 import * as Sound from "./Sound";
 import * as Persist from "./Persist";
+import * as Drag from "./drag/Drag";
+import { id_at } from "./syntax/Node";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
@@ -21,9 +23,38 @@ const App: Component = () => {
       go(model, setModel, a);
       return;
     }
+    /* Click-path emerge/converge: transforms applied at the selection get
+     * the same provenance geometry as drags (clone/grow, merge/absorb;
+     * the selected node plays the grab's trigger role). Drag commits pass
+     * through untouched: in drag mode the selection is always unselected,
+     * and their provenance already resolved during the manual morph. */
+    const at_selection =
+      (a.t === "transformNode" ||
+        a.t === "transformNodeAndFlipTransform" ||
+        a.t === "applyTransform" ||
+        a.t === "applyTransformSelected") &&
+      model.stage.selection !== "unselected"
+        ? [...(model.stage.selection as number[])]
+        : null;
+    const exp_before = model.stage.exp;
+    const mk_opts = at_selection
+      ? (
+          before: ReadonlyMap<string, unknown>,
+          after: ReadonlyMap<string, unknown>
+        ) =>
+          Drag.provenance(
+            exp_before,
+            before,
+            model.stage.exp,
+            after,
+            at_selection,
+            `node-${id_at(at_selection, exp_before)}`
+          )
+      : undefined;
     Motion.animate(
       () => go(model, setModel, a),
-      model.settings.motion !== "Off"
+      model.settings.motion !== "Off",
+      mk_opts
     );
   };
   document.addEventListener("keydown", Keyboard.keydown(inject, model), false);

@@ -6,8 +6,7 @@ items listed in full here are NOT recorded elsewhere.
 ## Recorded elsewhere (see those files for detail)
 
 - **design/captured-geometry.md** — plan step 4 "Still open": chaining
-  (multi-rewrite drags); click-path emerge (plumb the rewrite site into
-  noolbox actions); Pat-level provenance, execution half (rewrites record
+  (multi-rewrite drags); Pat-level provenance, execution half (rewrites record
   correspondence — subsumes comp-match ambiguity and clone-source edge
   cases; the affordance half — pattern-level moverhood — landed
   2026-07-30, restoring the factor-via-shared-die gesture symmetrically);

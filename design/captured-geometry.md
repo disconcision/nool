@@ -368,8 +368,17 @@ Per drag (or per click-animation):
      ergonomic OVERRIDE (grips the pattern calls parked, or suppressing
      offered ones), not as the default mechanism. This is the affordance
      half of Pat-level provenance; the execution half stays open below.
-   - Still open: chain; click-path emerge (needs the rewrite site plumbed
-     into noolbox actions); Pat-level provenance, execution half (the
+   - **Click-path emerge/converge landed (2026-07-31).** Button-applied
+     transforms now get the same provenance geometry as drags: App.inject
+     passes animate() a provenance closure for transform actions at the
+     selection — the site is the selection, and the selected node plays
+     the grab's trigger role (grow-from-head origin included). Identity,
+     inverse, double-neg, and distribute finally look the same whether
+     clicked or dragged; commute/associate always did (pure moves). Drag
+     commits pass through untouched (selection is unselected in drag
+     mode, and their provenance already resolved during the manual
+     morph).
+   - Still open: chain; Pat-level provenance, execution half (the
      affordance half landed above): rewrites recording correspondence so
      emerge/converge sources and the merge-copy choice come from the
      rule application instead of structural guessing;

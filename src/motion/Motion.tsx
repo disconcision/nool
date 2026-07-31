@@ -612,8 +612,17 @@ const run_tween = (
 
 /* Run a model update, animating stage nodes from where they are displayed
  * now to where the update puts them. `apply` must update the DOM
- * synchronously (solid store writes do). */
-export const animate = (apply: () => void, enabled: boolean): void => {
+ * synchronously (solid store writes do). `mk_opts`, when given, supplies
+ * emerge/converge provenance for the morph from the before/after box
+ * maps — the click-path twin of the drag path's candidate provenance. */
+export const animate = (
+  apply: () => void,
+  enabled: boolean,
+  mk_opts?: (
+    before: ReadonlyMap<string, unknown>,
+    after: ReadonlyMap<string, unknown>
+  ) => EmergeOpts
+): void => {
   if (!enabled || typeof document === "undefined") {
     apply();
     finish();
@@ -751,7 +760,13 @@ export const animate = (apply: () => void, enabled: boolean): void => {
     }
   }
 
-  const layers = build_layers(before, after, exit_sources, reuse_exits);
+  const layers = build_layers(
+    before,
+    after,
+    exit_sources,
+    reuse_exits,
+    mk_opts?.(before, after)
+  );
   run_tween(layers, 250 * anim_factor(), true);
 };
 
