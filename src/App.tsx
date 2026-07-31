@@ -9,11 +9,12 @@ import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Motion from "./motion/Motion";
 import * as Sound from "./Sound";
+import * as Persist from "./Persist";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
 const App: Component = () => {
-  const [model, setModel] = createStore({ ...Model.init });
+  const [model, setModel] = createStore(Persist.load() ?? { ...Model.init });
 
   const inject = (a: Action.t) => {
     if (a.t === "setHover") {

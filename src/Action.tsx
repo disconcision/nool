@@ -11,6 +11,7 @@ export type Direction = "up" | "down" | "left" | "right";
 
 export type Action =
   | { t: "restart" }
+  | { t: "hardReset" }
   | { t: "setSetting"; action: Settings.Action }
   | { t: "setHover"; target: Hover.t }
   | { t: "setSelect"; path: Path.t }

@@ -7,6 +7,7 @@ import * as Action from "./Action";
 import * as Transform from "./Transform";
 import * as ToolBox from "./ToolBox";
 import * as Hover from "./Hover";
+import * as Persist from "./Persist";
 import { freshen } from "./syntax/Node";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
@@ -113,6 +114,11 @@ export const update = (model: Model.t, action: Action.t): result => {
           future: [],
         },
       };
+    case "hardReset":
+      /* everything back to factory: world, settings, loadout, history,
+       * and the persisted session */
+      Persist.clear();
+      return { ...Model.init };
     case "undo": {
       const { past, future } = model.history;
       if (past.length === 0) return "NoChange";
@@ -276,6 +282,7 @@ export const go = (
   } else {
     console.log("Action Success: " + action.t);
     setModel(result);
+    Persist.save_soon(result);
   }
   /* HACK: We want transforms the duplicate subtrees e.g. distributivity to
    * retain their duplicate ids for animations, but then we need to freshen
