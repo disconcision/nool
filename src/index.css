@@ -706,21 +706,26 @@ code {
    below), intensity driven per frame from Drag.tsx as an inline filter —
    continuous in the rail t, soft bump at the commit threshold. A
    committed drag flashes the full effect. */
+/* No blend mode here: plus-lighter changes the row's compositing for as
+   long as the class is on and SNAPS back to normal when it's removed — a
+   hard cutoff at the flash's end. The blown-out peak comes from
+   brightness instead. Linear timing: the rapid-falloff-into-shallow-tail
+   curve is encoded in the keyframes themselves. */
 .transform-view.drag-glow-flash {
-  mix-blend-mode: plus-lighter;
-  /* linear timing: the rapid-falloff-into-shallow-tail curve is encoded
-     in the keyframes themselves */
-  animation: drag-glow-flash 0.75s linear both;
+  animation: drag-glow-flash 0.9s linear both;
 }
 @keyframes drag-glow-flash {
   0% {
-    filter: drop-shadow(0 0 1.2em rgb(255 153 153 / 1)) brightness(1.5);
+    filter: drop-shadow(0 0 1.3em rgb(255 153 153 / 1)) brightness(1.9);
   }
-  25% {
-    filter: drop-shadow(0 0 0.55em rgb(255 153 153 / 0.45)) brightness(1.18);
+  20% {
+    filter: drop-shadow(0 0 0.55em rgb(255 153 153 / 0.45)) brightness(1.22);
   }
-  60% {
-    filter: drop-shadow(0 0 0.25em rgb(255 153 153 / 0.15)) brightness(1.06);
+  50% {
+    filter: drop-shadow(0 0 0.28em rgb(255 153 153 / 0.16)) brightness(1.08);
+  }
+  80% {
+    filter: drop-shadow(0 0 0.15em rgb(255 153 153 / 0.05)) brightness(1.025);
   }
   100% {
     filter: drop-shadow(0 0 0.1em rgb(255 153 153 / 0)) brightness(1);

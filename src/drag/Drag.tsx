@@ -461,8 +461,7 @@ const clear_vis = (): void => {
  * and filter values can't ride a CSS custom property. */
 let glow_el: HTMLElement | null = null;
 let glow_g = 0;
-let fading_el: HTMLElement | null = null;
-let fade_raf = 0;
+const fades = new Map<HTMLElement, number>(); // fading row -> raf id
 const glow_strength = (t: number): number => {
   const s = Math.max(0, Math.min(1, (t - (COMMIT_T - 0.08)) / 0.16));
   return Math.min(1, Math.max(0, t) + 0.3 * s * s * (3 - 2 * s));
@@ -471,42 +470,49 @@ const glow_filter = (g: number): string =>
   `drop-shadow(0 0 ${(1.2 * g).toFixed(2)}em ` +
   `rgb(255 153 153 / ${g.toFixed(3)})) ` +
   `brightness(${(1 + 0.45 * g).toFixed(3)})`;
-const end_fade = (): void => {
-  if (fading_el) {
-    fading_el.classList.remove("drag-glow");
-    fading_el.style.removeProperty("filter");
+const cancel_fade = (el: HTMLElement): void => {
+  const raf = fades.get(el);
+  if (raf !== undefined) {
+    cancelAnimationFrame(raf);
+    fades.delete(el);
   }
-  cancelAnimationFrame(fade_raf);
-  fading_el = null;
 };
-/* Exit: exponential decay (fixed half-life so it feels the same at any
- * refresh rate) — a rapid falloff that levels off into a shallow tail
- * instead of vanishing on release / rail change. */
-const FADE_HALF_LIFE_MS = 50;
+const finish_fade = (el: HTMLElement): void => {
+  cancel_fade(el);
+  el.classList.remove("drag-glow");
+  el.style.removeProperty("filter");
+};
+/* Exit: exponential decay whose half-life GROWS as it runs — a rapid
+ * falloff that genuinely levels off (a constant half-life reads as a
+ * uniform wipe: brightness perception is roughly logarithmic). Fades are
+ * per-row, so a rail change never hard-clears the previous rule. */
 const fade_glow = (el: HTMLElement, from: number): void => {
-  end_fade();
-  fading_el = el;
+  cancel_fade(el);
   let g = from;
-  let last = performance.now();
+  const start = performance.now();
+  let last = start;
   const step = (): void => {
-    if (fading_el !== el) return;
+    if (!fades.has(el)) return;
     const now = performance.now();
-    g *= Math.pow(2, -(now - last) / FADE_HALF_LIFE_MS);
+    /* growing half-life: rapid at first, easing into an afterglow tail
+     * that fully clears in about a second */
+    const half_life = Math.min(40 + 0.5 * (now - start), 200);
+    g *= Math.pow(2, -(now - last) / half_life);
     last = now;
-    if (g < 0.02) return end_fade();
+    if (g < 0.005) return finish_fade(el);
     el.style.filter = glow_filter(g);
-    fade_raf = requestAnimationFrame(step);
+    fades.set(el, requestAnimationFrame(step));
   };
-  fade_raf = requestAnimationFrame(step);
+  fades.set(el, requestAnimationFrame(step));
 };
 const tool_glow = (idx: number | null, t: number): void => {
   const el =
     idx === null ? null : document.getElementById(`transform-${idx}`);
   if (glow_el && glow_el !== el) fade_glow(glow_el, glow_g);
-  if (el && fading_el === el) end_fade(); // reacquired mid-fade
   glow_el = el;
   glow_g = el ? glow_strength(t) : 0;
   if (!el) return;
+  cancel_fade(el); // reacquired mid-fade: live glow takes over
   el.classList.add("drag-glow");
   el.style.filter = glow_filter(glow_g);
 };
@@ -516,7 +522,7 @@ const flash_tool = (idx: number): void => {
   el.classList.remove("drag-glow-flash");
   void el.offsetWidth; // restart the animation if re-flashed
   el.classList.add("drag-glow-flash");
-  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 800);
+  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 950);
 };
 
 /* Track color is keyed to the RULE (toolbox index, golden-angle spread),
