@@ -39,7 +39,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
       }
       break;
     case "transformNode":
-      /* drag commits: the transform's own sfx at the moment of release */
+      /* drag commits: the transform's own sfx at the moment of release
+       * (unless the drag-sound mode already played the whole gesture) */
+      if (Sound.suppress_commit_sample()) return;
       return action.transform.reversed
         ? action.transform.sound_rev()
         : action.transform.sound();

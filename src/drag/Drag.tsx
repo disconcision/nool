@@ -790,15 +790,18 @@ export const grab = (
         emerge: cands[i].emerge,
         converge: cands[i].converge,
       });
-      /* scrub the rewrite's own commit sample along the rail */
+      /* drag sound (mode-dependent, Shift+A cycles — see Sound.tsx) */
       if (model.settings.sound)
-        Sound.scrub_start(cands[i].transform.sfx, cands[i].transform.reversed);
+        Sound.drag_sound_start(
+          cands[i].transform.sfx,
+          cands[i].transform.reversed
+        );
     }
     activeT = t;
     Motion.manual_set(t);
     update_vis(cands, active, t);
     tool_glow(active >= 0 ? cands[active].idx : null, t);
-    Sound.scrub_set(t);
+    Sound.drag_sound_set(t);
   };
 
   /* Rails: the knob chases the pointer along its current rail at bounded
@@ -874,7 +877,7 @@ export const grab = (
     window.removeEventListener("pointercancel", onUp);
     cancelAnimationFrame(raf);
     clear_vis();
-    Sound.scrub_stop();
+    Sound.drag_sound_stop();
     if (engaged && active >= 0) {
       if (activeT > COMMIT_T) {
         const c = cands[active];
