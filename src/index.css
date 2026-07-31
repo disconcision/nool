@@ -708,14 +708,22 @@ code {
    committed drag flashes the full effect. */
 .transform-view.drag-glow-flash {
   mix-blend-mode: plus-lighter;
-  animation: drag-glow-flash 0.6s ease-out both;
+  /* linear timing: the rapid-falloff-into-shallow-tail curve is encoded
+     in the keyframes themselves */
+  animation: drag-glow-flash 0.75s linear both;
 }
 @keyframes drag-glow-flash {
-  from {
-    filter: drop-shadow(0 0 1.2em #f99f) brightness(1.5);
+  0% {
+    filter: drop-shadow(0 0 1.2em rgb(255 153 153 / 1)) brightness(1.5);
   }
-  to {
-    filter: none;
+  25% {
+    filter: drop-shadow(0 0 0.55em rgb(255 153 153 / 0.45)) brightness(1.18);
+  }
+  60% {
+    filter: drop-shadow(0 0 0.25em rgb(255 153 153 / 0.15)) brightness(1.06);
+  }
+  100% {
+    filter: drop-shadow(0 0 0.1em rgb(255 153 153 / 0)) brightness(1);
   }
 }
 .transform-view {

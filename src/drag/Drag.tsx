@@ -460,25 +460,55 @@ const clear_vis = (): void => {
  * overlay): per-frame model round-trips for a decoration would be waste,
  * and filter values can't ride a CSS custom property. */
 let glow_el: HTMLElement | null = null;
+let glow_g = 0;
+let fading_el: HTMLElement | null = null;
+let fade_raf = 0;
 const glow_strength = (t: number): number => {
   const s = Math.max(0, Math.min(1, (t - (COMMIT_T - 0.08)) / 0.16));
   return Math.min(1, Math.max(0, t) + 0.3 * s * s * (3 - 2 * s));
 };
+const glow_filter = (g: number): string =>
+  `drop-shadow(0 0 ${(1.2 * g).toFixed(2)}em ` +
+  `rgb(255 153 153 / ${g.toFixed(3)})) ` +
+  `brightness(${(1 + 0.45 * g).toFixed(3)})`;
+const end_fade = (): void => {
+  if (fading_el) {
+    fading_el.classList.remove("drag-glow");
+    fading_el.style.removeProperty("filter");
+  }
+  cancelAnimationFrame(fade_raf);
+  fading_el = null;
+};
+/* Exit: exponential decay (fixed half-life so it feels the same at any
+ * refresh rate) — a rapid falloff that levels off into a shallow tail
+ * instead of vanishing on release / rail change. */
+const FADE_HALF_LIFE_MS = 50;
+const fade_glow = (el: HTMLElement, from: number): void => {
+  end_fade();
+  fading_el = el;
+  let g = from;
+  let last = performance.now();
+  const step = (): void => {
+    if (fading_el !== el) return;
+    const now = performance.now();
+    g *= Math.pow(2, -(now - last) / FADE_HALF_LIFE_MS);
+    last = now;
+    if (g < 0.02) return end_fade();
+    el.style.filter = glow_filter(g);
+    fade_raf = requestAnimationFrame(step);
+  };
+  fade_raf = requestAnimationFrame(step);
+};
 const tool_glow = (idx: number | null, t: number): void => {
   const el =
     idx === null ? null : document.getElementById(`transform-${idx}`);
-  if (glow_el && glow_el !== el) {
-    glow_el.classList.remove("drag-glow");
-    glow_el.style.removeProperty("filter");
-  }
+  if (glow_el && glow_el !== el) fade_glow(glow_el, glow_g);
+  if (el && fading_el === el) end_fade(); // reacquired mid-fade
   glow_el = el;
+  glow_g = el ? glow_strength(t) : 0;
   if (!el) return;
-  const g = glow_strength(t);
   el.classList.add("drag-glow");
-  el.style.filter =
-    `drop-shadow(0 0 ${(1.2 * g).toFixed(2)}em ` +
-    `rgb(255 153 153 / ${g.toFixed(3)})) ` +
-    `brightness(${(1 + 0.45 * g).toFixed(3)})`;
+  el.style.filter = glow_filter(glow_g);
 };
 const flash_tool = (idx: number): void => {
   const el = document.getElementById(`transform-${idx}`);
@@ -486,7 +516,7 @@ const flash_tool = (idx: number): void => {
   el.classList.remove("drag-glow-flash");
   void el.offsetWidth; // restart the animation if re-flashed
   el.classList.add("drag-glow-flash");
-  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 650);
+  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 800);
 };
 
 /* Track color is keyed to the RULE (toolbox index, golden-angle spread),
