@@ -84,8 +84,11 @@ body.cheapshadows.noshadows #seed * {
 }
 .Light body.cheapshadows .transform-view .pat.node,
 body.cheapshadows .Light .transform-view .pat.node {
-  box-shadow: 0.1em 0.1em 0.25em #90c2b366, 0.4em 0.4em 1.2em #90c2b34e,
-    -0.1em -0.1em 0.25em #e4ffe966, -0.4em -0.4em 1.2em #d6fff04e !important;
+  box-shadow:
+    0.1em 0.1em 0.25em #90c2b366,
+    0.4em 0.4em 1.2em #90c2b34e,
+    -0.1em -0.1em 0.25em #e4ffe966,
+    -0.4em -0.4em 1.2em #d6fff04e !important;
 }
 /* EXPERIMENT (step 1 of shadow-strategy ladder): clone shadow strip
    disabled to re-measure post-rigid-grouping. A/B on the 6-projection-
@@ -280,9 +283,9 @@ body {
   height: 100vh;
   overflow: hidden;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /*background-color: #9cffcc !important;*/
@@ -299,8 +302,8 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 #main {
@@ -354,6 +357,8 @@ code {
   border-radius: 1em; /*0.5em  1.3em 0.9em 0.9em;*/
   padding: 0 0.25em;
   justify-content: center;
+  box-shadow: none;
+  border: none;
 }
 #stage .node.atom:hover,
 .transform .result.match:hover,
@@ -677,8 +682,11 @@ code {
 }*/
 
 #noolbox {
-  box-shadow: inset -8px 0px 8px #3ca38211, inset -4px 0px 4px #3ca38211,
-    inset -2px 0px 2px #3ca38211, inset -1px 0px 1px #3ca38211,
+  box-shadow:
+    inset -8px 0px 8px #3ca38211,
+    inset -4px 0px 4px #3ca38211,
+    inset -2px 0px 2px #3ca38211,
+    inset -1px 0px 1px #3ca38211,
     inset -0.5px 0px 0.5px #3ca38211;
   position: relative;
   display: grid;
@@ -690,14 +698,26 @@ code {
   border-bottom: 0.04em solid #53f5ff66;
   /* border-top: 0.02em solid #f8a7ff66; */
   width: fit-content;
-  padding: 0.3em 0.4em 0.3em 0;
-  /* native continuous scrolling; snap settles on a rule at gesture end
-     (max-height comes inline from tools.size — shift+wheel resizes) */
+  /* left padding: becoming a scroll container forced horizontal clipping
+     (overflow-y non-visible drags overflow-x along), so rule shadows need
+     room to fall off before the clip edge */
+  padding: 0.3em 0.4em 0.3em 0.7em;
+  /* native continuous scrolling; MANDATORY snap = smooth mid-gesture but
+     every rest position is row-aligned at the top (max-height comes
+     inline from tools.size — shift+wheel resizes) */
   overflow-y: auto;
   overscroll-behavior: contain;
-  scroll-snap-type: y proximity;
+  scroll-snap-type: y mandatory;
   scroll-padding-top: 0.3em;
   scrollbar-width: none;
+  /* recessed edges: fade clipped rows into the slot instead of hard cuts */
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 0.5em,
+    #000 calc(100% - 1em),
+    transparent 100%
+  );
 }
 #noolbox::-webkit-scrollbar {
   display: none;
@@ -1269,7 +1289,8 @@ v .transform-view .label {
   height: calc(1em * 0.5);
   position: relative;
   margin: 0.5em;
-  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
+  transition:
+    transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
     margin 0.1s linear;
 }
 
@@ -1378,9 +1399,13 @@ body:has(#main.Dark) {
   mix-blend-mode: screen;
 }
 .Dark .transform-view .node:hover {
-  box-shadow: inset 0px -1px 1px #fde8ff, inset 0px -1px 1px #9d80ff33,
-    inset 0px -2px 2px #a000ff, inset 0px -4px 4px #9d80ff33,
-    inset 0px -8px 8px #9d80ff33, inset 0px -16px 16px #9d80ff33;
+  box-shadow:
+    inset 0px -1px 1px #fde8ff,
+    inset 0px -1px 1px #9d80ff33,
+    inset 0px -2px 2px #a000ff,
+    inset 0px -4px 4px #9d80ff33,
+    inset 0px -8px 8px #9d80ff33,
+    inset 0px -16px 16px #9d80ff33;
 }
 
 /* HACKY INTERACTIONS */
@@ -1407,13 +1432,18 @@ body:has(#main.Dark) {
   color: black !important;
 }
 
-
 .Light .transform-view .pat.node {
-  box-shadow: 0.05em 0.05em 0.1em #90c2b344, 0.1em 0.1em 0.2em #90c2b344,
-    0.2em 0.2em 0.4em #90c2b344, 0.4em 0.4em 0.8em #90c2b344,
-    0.8em 0.8em 1.6em #90c2b344, -0.05em -0.05em 0.1em #e0ffe544,
-    -0.1em -0.1em 0.2em #ebfff744, -0.2em -0.2em 0.4em #d2fff044,
-    -0.4em -0.4em 0.8em #cff2e644, -0.8em -0.8em 1.6em #d2fff044;
+  box-shadow:
+    0.05em 0.05em 0.1em #90c2b344,
+    0.1em 0.1em 0.2em #90c2b344,
+    0.2em 0.2em 0.4em #90c2b344,
+    0.4em 0.4em 0.8em #90c2b344,
+    0.8em 0.8em 1.6em #90c2b344,
+    -0.05em -0.05em 0.1em #e0ffe544,
+    -0.1em -0.1em 0.2em #ebfff744,
+    -0.2em -0.2em 0.4em #d2fff044,
+    -0.4em -0.4em 0.8em #cff2e644,
+    -0.8em -0.8em 1.6em #d2fff044;
 }
 
 /* ============ Mobile / touch ============ */
