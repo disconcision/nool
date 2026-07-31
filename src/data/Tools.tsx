@@ -152,11 +152,11 @@ export const init = Object.entries({
   associate_plus,
   commute_plus,
   identity_plus,
+  commute_times,
+  distribute_times_plus,
   inverse_plus,
   associate_times,
-  commute_times,
   identity_times,
-  distribute_times_plus,
   double_neg,
 }).map(([name, base]) => mk(name, base));
 
