@@ -46,6 +46,9 @@ export const sound = (model: Model.t, action: Action.t): void => {
     case "unsetSelections":
       Sound.unselect("D2", 0.6);
       break;
+    case "strikeSeed":
+      Sound.bong();
+      break;
     case "moveTool":
       Sound.select(model.stage.selection.length, pitch, volume);
       break;
@@ -186,6 +189,9 @@ export const update = (model: Model.t, action: Action.t): result => {
       };
       return { ...model, tools, hover: hover };
     case "unsetSelections":
+    /* striking the seed doubles as a background click: same clearing,
+     * its own sound */
+    case "strikeSeed":
       return {
         ...model,
         stage: Stage.unset_selection(model.stage),

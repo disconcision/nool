@@ -27,7 +27,16 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
     }}
   >
     <ToolsView model={props.model} inject={props.inject} />
-    <div class="icon2">
+    <div
+      class="icon2"
+      /* the strike sounds in BOTH modes; stopping the bubble keeps the
+         background's unselect pluck from doubling it */
+      onmousedown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        props.inject({ t: "strikeSeed" });
+      }}
+    >
       <div class="inner" />
     </div>
     <StageView model={props.model} inject={props.inject} />

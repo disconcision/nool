@@ -18,6 +18,7 @@ export type Action =
   | { t: "moveTool"; direction: Direction }
   | { t: "wheelNumTools"; offset: number}
   | { t: "unsetSelections" }
+  | { t: "strikeSeed" }
   | { t: "undo" }
   | { t: "redo" }
   | {

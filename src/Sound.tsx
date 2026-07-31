@@ -183,6 +183,30 @@ synth.connect(rev);
 
 let tremolo = new Tone.Tremolo(70, 1.0).toDestination().start();
 synth.connect(tremolo);
+
+/* # The bong — striking the seed (the ∞ between the boxes), a demo's
+ * closing touchstone. A deep membrane boom on C — the pluck alphabet's
+ * root — with the alphabet's open fifth (C+G: plus and times) chiming
+ * above it, left to ring through a long tail. */
+const bong_verb = new Tone.Reverb({ decay: 6, wet: 0.5 }).toDestination();
+const bong_drum = new Tone.MembraneSynth({
+  pitchDecay: 0.09,
+  octaves: 7,
+  envelope: { attack: 0.001, decay: 1.1, sustain: 0.01, release: 1.6 },
+}).toDestination();
+bong_drum.connect(bong_verb);
+bong_drum.volume.value = -2;
+const bong_chime = new Tone.PolySynth(Tone.Synth, {
+  envelope: { attack: 0.004, decay: 1.2, sustain: 0.04, release: 2.5 },
+}).toDestination();
+bong_chime.connect(bong_verb);
+bong_chime.volume.value = -16;
+
+export const bong = (): void => {
+  const now = Tone.now();
+  bong_drum.triggerAttackRelease("C2", "2n", now);
+  bong_chime.triggerAttackRelease(["C4", "G4"], "1n", now + 0.02);
+};
 //let vib = new Tone.Vibrato ( 10,0.3 ).toDestination();
 //synth.connect(vib);
 
