@@ -1,0 +1,79 @@
+# Sound design (drag-era)
+
+Principle: each MEANING owns one AUDIO CHANNEL, so the sound system
+stays legible as it grows — the ear reads pitch register as one thing,
+chord quality as another, pan as another, without cross-talk.
+
+## Channel assignments
+
+| channel        | meaning                          | status            |
+|----------------|----------------------------------|-------------------|
+| register       | tree depth (select sound pitch)  | landed (pre-drag) |
+| contour        | drag direction (advance/recede)  | landed            |
+| chord quality  | rewrite's structural effect      | landed 2026-07-30 |
+| key / content  | operator content (see ladder)    | open — next       |
+| pan            | drag direction on screen         | open (sketched)   |
+| timbre         | (unassigned)                     | open              |
+
+## Decisions (2026-07-30)
+
+- **Drags speak in plucks; the rewrite samples are button-mode sounds.**
+  Verdict of a six-way bake-off (granular scrub of the commit sample,
+  scrub-only, mechanical detents, tension noise, plucks, commit-only —
+  all built behind a Shift+A cycle, since removed). The scrub read as
+  stuck tape; plucks won. Grammar: quantized notes at the rail's
+  quarter points, ascending advancing, dropped an octave receding — so
+  a completed rising figure IS the commit signal and a revert walks
+  back down. No separate commit accent (the octave-completing note is
+  the natural addition if one is ever wanted).
+- **Chord quality = structural effect, derived from the patterns.**
+  size(result) − size(source): isomorphic rearrangements (commute,
+  associate) pluck open fifths — nothing created or destroyed; growing
+  rewrites a major triad; shrinking ones minor. Nothing hand-assigned;
+  new rules get sounds automatically; and since flip swaps the
+  patterns, a reversed rule is automatically its forward form's
+  harmonic opposite. The sound algebra inherits the rewrite algebra.
+- Drag commits play NO sample (deliberate — see Update.sound comment).
+- Undo/redo are currently silent (open: should they speak? A candidate:
+  the pluck contour of the undone rule, receding).
+
+## The derivation ladder (how "non-arbitrary" gets deeper)
+
+Each rung subsumes the previous; all derive the sound from the rule's
+own patterns, pushing the axiomatic (hand-chosen) part smaller:
+
+1. **Size delta** (landed): iso / grow / shrink → chord quality.
+2. **Operator multiset**: the multiset of operators in the patterns.
+   Distinguishes what 1 cannot: commute_plus is {+} but associate_plus
+   is {+,+} — "associativity has two pluses" becomes literally audible
+   (multiplicity → octave doubling or repetition). Distinguishes
+   families too (plus-rules vs times-rules vs mixed: distribute is
+   {×,×,+} ⇄ {×,+}). The multiset CHANGES across a rewrite, so the
+   drag can sonify the delta (identity-intro: a + note fades in).
+   Axiomatic residue: one pitch class per operator symbol — a small
+   "sound alphabet" (like a color basis); everything else derives.
+3. **Pattern melody** (stretch): walk the result pattern in reading
+   order — operator → its alphabet pitch, variables → scale degrees,
+   depth → octave, quantized to a consonant scale. Each rule's motif IS
+   its pattern: distribute's repeated variable is a repeated note,
+   commute's figure is its operand order reversed. Subsumes 2 (the
+   multiset is the melody's pitch content, unordered). Risk: derived
+   motifs sounding like a modem; needs scale-quantization discipline.
+
+Current toolbox operator multisets (source ⇄ result), for reference:
+commute+ {+}⇄{+} · assoc+ {+,+}⇄{+,+} · identity+ {}⇄{+} ·
+inverse+ {}⇄{+,−} · dbl-neg {}⇄{−,−} · commute× {×}⇄{×} ·
+assoc× {×,×}⇄{×,×} · identity× {}⇄{×} · distribute {×,+}⇄{×,×,+}
+
+## Pan (concept 3, sketched)
+
+Stereo pan per pluck = the active rail's horizontal direction
+(normalized dx). Geometry channel, deliberately projection-relative:
+the ear hears WHERE the gesture goes, pitch says WHAT it does. One
+Panner node; per-pluck, not continuous.
+
+## Angle→pitch, rejected
+
+Mapping rail angle to pitch was considered and rejected: the same rule
+drags at different angles in different projections, so identity would
+be projection-dependent. Geometry belongs on pan, identity on pitch.

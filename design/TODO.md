@@ -18,6 +18,12 @@ items listed in full here are NOT recorded elsewhere.
   on held subtree, dim the rest); toolbox motion (tool flips snap; extend
   motion layer to pat-* ids); mobile gaps (touch toolbox scroll, landscape
   crampedness, touch equivalents for keyboard/debug shortcuts).
+- **design/sound.md** — the channel model (meaning → audio channel), the
+  plucks decision, the derivation ladder (size delta → operator multiset →
+  pattern melody), pan sketch; open: undo/redo sound.
+- **design/drag-target-decomposition.md** — tree-edit vs layout-reaction
+  in drag targets; site-frame rail correction (open, next) and staged
+  choreography (open, designed experiment); figs/rail-variants.png.
 
 ## Not recorded elsewhere (canonical here)
 
