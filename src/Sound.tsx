@@ -93,6 +93,27 @@ const isect = (a: string[], b: string[]): string[] => {
   });
 };
 
+/* # Harmony experiment (Shift+A toggles): layer the retired quality
+ * channel back UNDER the content chords — one added note, a third above
+ * each chord's root: major (4 semitones) when the rewrite grows, minor
+ * (3) when it shrinks, none when isomorphic. The content letters are
+ * untouched; the third only colors the mood. */
+let harmonized = false;
+export const toggle_harmony = (): string =>
+  (harmonized = !harmonized) ? "content+harmony" : "content";
+
+const SEMI_OF: Record<string, number> = {
+  C: 0, "C#": 1, Db: 1, D: 2, Eb: 3, E: 4, F: 5,
+  "F#": 6, Gb: 6, G: 7, Ab: 8, A: 9, Bb: 10, B: 11,
+};
+const SEMI_NAMES = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
+const transpose = (note: string, semis: number): string => {
+  const m = note.match(/^([A-G][b#]?)(\d)$/);
+  if (!m) return note;
+  const midi = SEMI_OF[m[1]] + 12 * (+m[2] + 1) + semis;
+  return `${SEMI_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+};
+
 let drag_active = false;
 let drag_last_t = 0;
 let pluck_chords: string[][] = [];
@@ -118,6 +139,14 @@ export const drag_sound_start = (
     chord_of(isect(source_ops, result_ops)),
     chord_of(result_ops),
   ];
+  if (harmonized) {
+    const delta = result_ops.length - source_ops.length;
+    if (delta !== 0)
+      pluck_chords = pluck_chords.map((c) => [
+        ...c,
+        transpose(c[0], delta > 0 ? 4 : 3),
+      ]);
+  }
 };
 
 export const drag_sound_set = (t: number): void => {

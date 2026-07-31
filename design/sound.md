@@ -79,6 +79,15 @@ commute+ {+}⇄{+} · assoc+ {+,+}⇄{+,+} · identity+ {}⇄{+} ·
 inverse+ {}⇄{+,−} · dbl-neg {}⇄{−,−} · commute× {×}⇄{×} ·
 assoc× {×,×}⇄{×,×} · identity× {}⇄{×} · distribute {×,+}⇄{×,×,+}
 
+## Harmony experiment (Shift+A, evaluating)
+
+Layers the retired quality channel back UNDER the content chords: one
+added note, a third above each chord's root — major (4 semitones) when
+the rewrite grows, minor (3) when it shrinks, none when isomorphic
+(open/hollow stays open). Content letters untouched; the third only
+colors the mood. Off by default ("content"); Shift+A toggles
+("content+harmony"), logged to console. Keep or delete after listening.
+
 ## Pan (concept 3, sketched)
 
 Stereo pan per pluck = the active rail's horizontal direction
