@@ -46,6 +46,14 @@ const action_of = (key: string): Action.t | "NoBinding" => {
 
 export const keydown =
   (inject: Action.Inject, model: Model.t) => (event: KeyboardEvent) => {
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      (event.key === "z" || event.key === "Z")
+    ) {
+      event.preventDefault();
+      inject({ t: event.shiftKey ? "redo" : "undo" });
+      return;
+    }
     const dir = arrow_of(event.key);
     if (dir) {
       event.preventDefault();

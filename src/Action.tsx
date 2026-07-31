@@ -18,6 +18,8 @@ export type Action =
   | { t: "wheelTools"; offset: number}
   | { t: "wheelNumTools"; offset: number}
   | { t: "unsetSelections" }
+  | { t: "undo" }
+  | { t: "redo" }
   | {
       t: "transformNode";
       idx: number;

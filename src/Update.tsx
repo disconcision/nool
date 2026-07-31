@@ -67,7 +67,14 @@ const update_stage = (model: Model.t, result: Pat.TransformResult): result =>
   /* Freshening as-is is a hack to deal with e.g. distributivity which copies nodes */
   result == "NoMatch"
     ? "NoChange"
-    : { ...model, stage: Stage.put_exp(model.stage, freshen(result)) };
+    : {
+        ...model,
+        stage: Stage.put_exp(model.stage, freshen(result)),
+        history: {
+          past: [...model.history.past, model.stage.exp],
+          future: [],
+        },
+      };
 
 /*export const imperative_update = (
   setModel: SetStoreFunction<Model.t>,
@@ -99,7 +106,44 @@ const update_stage = (model: Model.t, result: Pat.TransformResult): result =>
 export const update = (model: Model.t, action: Action.t): result => {
   switch (action.t) {
     case "restart":
-      return Model.init;
+      /* undoable: Escape shouldn't be able to destroy work */
+      return {
+        ...Model.init,
+        history: {
+          past: [...model.history.past, model.stage.exp],
+          future: [],
+        },
+      };
+    case "undo": {
+      const { past, future } = model.history;
+      if (past.length === 0) return "NoChange";
+      return {
+        ...model,
+        stage: Stage.unset_selection(
+          Stage.put_exp(model.stage, past[past.length - 1])
+        ),
+        hover: Hover.init,
+        history: {
+          past: past.slice(0, -1),
+          future: [...future, model.stage.exp],
+        },
+      };
+    }
+    case "redo": {
+      const { past, future } = model.history;
+      if (future.length === 0) return "NoChange";
+      return {
+        ...model,
+        stage: Stage.unset_selection(
+          Stage.put_exp(model.stage, future[future.length - 1])
+        ),
+        hover: Hover.init,
+        history: {
+          past: [...past, model.stage.exp],
+          future: future.slice(0, -1),
+        },
+      };
+    }
     case "setSetting": {
       const settings = Settings.update(model.settings, action.action);
       /* Entering drag mode retires the selection mechanic wholesale
