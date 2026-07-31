@@ -81,12 +81,27 @@ const provenance = (
   const liveIdx = index_by_id(liveExp);
   const siteLive = subtree_at(site, liveExp);
   const siteSubs = siteLive ? all_subtrees(siteLive) : [];
+  /* HEAD origin, not center origin: when a grow source (or absorb
+   * target) is a comp, anchor at its head's box — new material sprouting
+   * from a big composite's geometric center reads as a dot materializing
+   * amid its children (identity-intro on a large operand was the tell). */
+  const head_key_in = (
+    idx: Map<number, Exp.t>,
+    boxes: Map<string, Motion.Measured>,
+    key: string
+  ): string => {
+    const n = idx.get(+key.slice(5));
+    return n?.t === "Comp" && n.kids[0] && boxes.has(`node-${n.kids[0].id}`)
+      ? `node-${n.kids[0].id}`
+      : key;
+  };
+  const grow_src = head_key_in(liveIdx, live, grabbedKey);
   /* enters (node layers) */
   for (const key of cand.keys()) {
     if (live.has(key) || !key.startsWith("node-")) continue;
     const n = candIdx.get(+key.slice(5));
     if (!n) continue;
-    let spec: Motion.EmergeSpec = { source: grabbedKey, mode: "grow" };
+    let spec: Motion.EmergeSpec = { source: grow_src, mode: "grow" };
     if (n.t === "Atom") {
       const m = siteSubs.find((s) => s.t === "Atom" && Exp.equals(s, n));
       if (m && live.has(`node-${m.id}`))
@@ -156,7 +171,7 @@ const provenance = (
       }
     }
     if (!spec && siteKey && cand.has(siteKey))
-      spec = { target: siteKey, mode: "absorb" };
+      spec = { target: head_key_in(candIdx, cand, siteKey), mode: "absorb" };
     if (spec && !converge.has(key)) converge.set(key, spec);
   }
   /* sym exits follow their node's target (sym→sym when possible) */
