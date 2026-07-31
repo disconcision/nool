@@ -716,9 +716,6 @@ code {
 }
 #noolbox .transform-view {
   scroll-snap-align: start;
-  /* every flick advances at most one rule — no sailing past snap points
-     (trial: remove if it reads as too notchy) */
-  scroll-snap-stop: always;
 }
 .TreeLeft #noolbox {
   height: 9.2em;
@@ -860,8 +857,10 @@ v .transform-view .label {
   filter: saturate(1) opacity(0.5) hue-rotate(277deg) blur(0.2em) !important;
 }
 .previews .node-container:hover {
-  filter: saturate(1) brightness(0.1) invert(1) opacity(1) hue-rotate(210deg);
-  mix-blend-mode: exclusion;
+  /* !important: must outrank the rest-state blur above, which carries
+     !important — without this the previews were permanently blurred */
+  filter: saturate(1) brightness(0.1) invert(1) opacity(1) hue-rotate(210deg) !important;
+  mix-blend-mode: exclusion !important;
 }
 .previews .node.comp {
   background-color: #005bff26;
@@ -1062,50 +1061,45 @@ v .transform-view .label {
   scale: 0.8;
 }
 
+/* Corner L-clusters (matching SettingsView order):
+   top-left: 1 sound · 2 preview · 3 reset
+   top-right: 4 theme · 5 projection · 6 symbols
+   bottom-left: 7 drag mode · 8 drag mechanic · 9 drag debug */
 #settings-panel .icon:nth-child(1) {
   left: 0;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(2) {
-  right: 0;
-  bottom: 0;
+  left: 0.75em;
+  top: 0;
 }
-
 #settings-panel .icon:nth-child(3) {
   left: 0;
-  bottom: 0;
+  top: 0.75em;
 }
-
 #settings-panel .icon:nth-child(4) {
   right: 0;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(5) {
   right: 0.75em;
   top: 0;
 }
-
 #settings-panel .icon:nth-child(6) {
-  right: 0em;
+  right: 0;
   top: 0.75em;
 }
-
-/* drag-mode toggle: below the top-left icon, mirroring the top-right cluster */
 #settings-panel .icon:nth-child(7) {
   left: 0;
-  top: 0.75em;
+  bottom: 0;
 }
-/* drag-mechanic toggle (rails vs closest): beside the top-left icon */
 #settings-panel .icon:nth-child(8) {
   left: 0.75em;
-  top: 0;
+  bottom: 0;
 }
-/* drag-debug-overlay toggle: diagonal, completing the top-left 2x2 */
 #settings-panel .icon:nth-child(9) {
-  left: 0.75em;
-  top: 0.75em;
+  left: 0;
+  bottom: 0.75em;
 }
 
 /* In drag mode, grabbing shouldn't shake the tree (the :active wobble). */
@@ -1497,20 +1491,22 @@ body:has(#main.Dark) {
     width: max(0.5em, 30px);
     padding: max(0.15em, 8px);
   }
+  #settings-panel .icon:nth-child(2) {
+    left: max(0.75em, 52px);
+  }
+  #settings-panel .icon:nth-child(3) {
+    top: max(0.75em, 52px);
+  }
   #settings-panel .icon:nth-child(5) {
     right: max(0.75em, 52px);
   }
   #settings-panel .icon:nth-child(6) {
     top: max(0.75em, 52px);
   }
-  #settings-panel .icon:nth-child(7) {
-    top: max(0.75em, 52px);
-  }
   #settings-panel .icon:nth-child(8) {
     left: max(0.75em, 52px);
   }
   #settings-panel .icon:nth-child(9) {
-    left: max(0.75em, 52px);
-    top: max(0.75em, 52px);
+    bottom: max(0.75em, 52px);
   }
 }

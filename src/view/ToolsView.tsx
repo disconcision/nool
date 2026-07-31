@@ -229,9 +229,9 @@ export const ToolsView: Component<{
   /* All rules render; plain wheel scrolls NATIVELY (CSS scroll-snap
    * gives continuous scroll that settles on a rule when the gesture
    * ends — the old ring-buffer window stepped whole rules per event).
-   * Shift+wheel still resizes the box, by accumulated distance; on
-   * macOS shift turns trackpad deltas horizontal, hence deltaX. */
-  let resize_acc = 0;
+   * Shift+wheel resizes the box CONTINUOUSLY (size is fractional; the
+   * max-height tracks it smoothly); on macOS shift turns trackpad
+   * deltas horizontal, hence deltaX. */
   return (
     <div
       id="noolbox"
@@ -239,11 +239,9 @@ export const ToolsView: Component<{
       onWheel={(e) => {
         if (!e.shiftKey) return; // native scroll + snap
         e.preventDefault();
-        resize_acc += e.deltaY || e.deltaX;
-        const steps = Math.trunc(resize_acc / 100);
-        if (steps === 0) return;
-        resize_acc -= steps * 100;
-        props.inject({ t: "wheelNumTools", offset: steps });
+        const d = e.deltaY || e.deltaX;
+        if (d === 0) return;
+        props.inject({ t: "wheelNumTools", offset: d / 90 });
       }}
     >
       <For each={[...Array(props.model.tools.transforms.length).keys()]}>

@@ -163,20 +163,33 @@ let icon = (
   />
 );
 
+/* Corner clusters, three icons each (an L per corner, no 2x2 squares):
+ * top-left sound·preview·reset, top-right theme·projection·symbols,
+ * bottom-left the drag trio, bottom-right empty. Order here must match
+ * the nth-child positioning in index.css. */
 export const SettingsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => (
   <div id="settings-panel">
     {icon(props.inject, props.model.settings, "ToggleSound")}
-    {icon(props.inject, props.model.settings, "ToggleMotion")}
     {icon(props.inject, props.model.settings, "TogglePreview")}
+    <img
+      class="icon"
+      src={ded}
+      title="Reset everything (world, settings, history)"
+      onmousedown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.confirm("Reset everything to default?"))
+          props.inject({ t: "hardReset" });
+      }}
+    />
     {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
     {icon(props.inject, props.model.settings, "ToggleDragging")}
     {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
     {icon(props.inject, props.model.settings, "ToggleDragDebug")}
-
   </div>
 );

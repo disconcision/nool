@@ -43,6 +43,17 @@ items listed in full here are NOT recorded elsewhere.
 - Loadout persistence: tools.dragActive resets on restart (Escape) and
   isn't persisted across sessions.
 
+### Polish (Andrew's observations, not yet acted on)
+- Noolbox recess lip: the bottom turquoise line reads thicker than the
+  top edge; the top has a nice cast shadow below (maybe wants slightly
+  more) but lacks a brightness lip on its upper part. Subtle and easy to
+  overdo — parked. (An edge fade-out was tried and reverted: it dissolved
+  the hard lines that make the recess read as a slot; but the current
+  hard cutoff is also "close but imperfect".)
+- Noolbox exact-fit height (no truncated bottom row) would need
+  JS-driven resizing with a moving bottom lip, or elastic inter-rule
+  gaps — both judged worse than truncation for now; see discussion.
+
 ### Meta
 - Distill the capture-vs-internalize REPORT from captured-geometry.md's
   findings into a standalone write-up while fresh.
