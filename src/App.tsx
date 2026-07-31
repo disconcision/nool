@@ -8,7 +8,6 @@ import { SettingsView } from "./view/SettingsView";
 import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Motion from "./motion/Motion";
-import * as Sound from "./Sound";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
@@ -27,12 +26,10 @@ const App: Component = () => {
   };
   document.addEventListener("keydown", Keyboard.keydown(inject, model), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
-  // Debug toggles: Shift+S all shadows off; Shift+D cheap toolbox shadows;
-  // Shift+A cycles the drag-sound experiment mode
+  // Debug toggles: Shift+S all shadows off; Shift+D cheap toolbox shadows
   document.addEventListener("keydown", (e) => {
     if (e.key === "S") document.body.classList.toggle("noshadows");
     if (e.key === "D") document.body.classList.toggle("cheapshadows");
-    if (e.key === "A") console.log("drag sound:", Sound.cycle_drag_sound());
   });
   return (
     <div

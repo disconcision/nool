@@ -1,7 +1,6 @@
 import * as Pat from "./syntax/Pat";
 import { Exp } from "./syntax/Exp";
 import * as Path from "./syntax/Path";
-import type { Sfxbank } from "./Sound";
 
 export type Transform = {
   name: string;
@@ -9,8 +8,6 @@ export type Transform = {
   result: Pat.t;
   sound: () => void;
   sound_rev: () => void;
-  /* which sample the sound closures play — drag scrubbing needs the name */
-  sfx: Sfxbank;
   reversed: boolean;
 };
 

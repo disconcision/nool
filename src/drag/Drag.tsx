@@ -790,12 +790,8 @@ export const grab = (
         emerge: cands[i].emerge,
         converge: cands[i].converge,
       });
-      /* drag sound (mode-dependent, Shift+A cycles — see Sound.tsx) */
-      if (model.settings.sound)
-        Sound.drag_sound_start(
-          cands[i].transform.sfx,
-          cands[i].transform.reversed
-        );
+      /* drag plucks (see Sound.tsx) */
+      if (model.settings.sound) Sound.drag_sound_start();
     }
     activeT = t;
     Motion.manual_set(t);
