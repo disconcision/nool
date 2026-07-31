@@ -453,23 +453,32 @@ const clear_vis = (): void => {
 };
 
 /* # Noolbox rule glow — while a drag rides a rail, the rule it would
- * enact glows in the noolbox, strength = the rail parameter t, flipping
- * to the commit tint past COMMIT_T; a committed drag flashes it. Driven
- * imperatively (like the overlay): per-frame model round-trips for a
- * decoration would be waste. */
+ * enact lights up with the rule-press flashbang (.transform-view:active's
+ * pink drop-shadow + brightness), scaled continuously by the rail
+ * parameter, with a soft smoothstepped bump crossing COMMIT_T; a
+ * committed drag flashes the full effect. Driven imperatively (like the
+ * overlay): per-frame model round-trips for a decoration would be waste,
+ * and filter values can't ride a CSS custom property. */
 let glow_el: HTMLElement | null = null;
+const glow_strength = (t: number): number => {
+  const s = Math.max(0, Math.min(1, (t - (COMMIT_T - 0.08)) / 0.16));
+  return Math.min(1, Math.max(0, t) + 0.3 * s * s * (3 - 2 * s));
+};
 const tool_glow = (idx: number | null, t: number): void => {
   const el =
     idx === null ? null : document.getElementById(`transform-${idx}`);
   if (glow_el && glow_el !== el) {
-    glow_el.classList.remove("drag-glow", "drag-glow-commit");
-    glow_el.style.removeProperty("--drag-glow");
+    glow_el.classList.remove("drag-glow");
+    glow_el.style.removeProperty("filter");
   }
   glow_el = el;
   if (!el) return;
+  const g = glow_strength(t);
   el.classList.add("drag-glow");
-  el.classList.toggle("drag-glow-commit", t > COMMIT_T);
-  el.style.setProperty("--drag-glow", Math.min(1, t).toFixed(3));
+  el.style.filter =
+    `drop-shadow(0 0 ${(1.2 * g).toFixed(2)}em ` +
+    `rgb(255 153 153 / ${g.toFixed(3)})) ` +
+    `brightness(${(1 + 0.45 * g).toFixed(3)})`;
 };
 const flash_tool = (idx: number): void => {
   const el = document.getElementById(`transform-${idx}`);
