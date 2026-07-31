@@ -706,13 +706,46 @@ code {
    below), intensity driven per frame from Drag.tsx as an inline filter —
    continuous in the rail t, soft bump at the commit threshold. A
    committed drag flashes the full effect. */
-/* No blend mode here: plus-lighter changes the row's compositing for as
-   long as the class is on and SNAPS back to normal when it's removed — a
-   hard cutoff at the flash's end. The blown-out peak comes from
-   brightness instead. Linear timing: the rapid-falloff-into-shallow-tail
-   curve is encoded in the keyframes themselves. */
+/* The flashbang blowout comes from a plus-lighter OVERLAY whose opacity
+   animates to zero — an additive layer at opacity 0 contributes nothing,
+   so removing the class at the end is visually a no-op (putting the
+   blend mode on the row itself kept re-compositing it until the class
+   dropped: a hard cutoff). Linear timing: the rapid-falloff-into-
+   shallow-tail curve is encoded in the keyframes themselves. */
 .transform-view.drag-glow-flash {
   animation: drag-glow-flash 0.9s linear both;
+}
+.transform-view.drag-glow-flash::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 1em;
+  pointer-events: none;
+  mix-blend-mode: plus-lighter;
+  background: radial-gradient(
+    closest-side,
+    #ffffff,
+    #ffe4ee 55%,
+    #ffd0e400 100%
+  );
+  animation: drag-glow-flash-core 0.9s linear both;
+}
+@keyframes drag-glow-flash-core {
+  0% {
+    opacity: 1;
+  }
+  16% {
+    opacity: 0.4;
+  }
+  45% {
+    opacity: 0.13;
+  }
+  80% {
+    opacity: 0.04;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 @keyframes drag-glow-flash {
   0% {
