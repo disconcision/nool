@@ -38,6 +38,11 @@ export const sound = (model: Model.t, action: Action.t): void => {
         Sound.noop();
       }
       break;
+    case "transformNode":
+      /* drag commits: the transform's own sfx at the moment of release */
+      return action.transform.reversed
+        ? action.transform.sound_rev()
+        : action.transform.sound();
     case "setSelect":
       Sound.select(action.path.length, pitch, volume);
       break;
