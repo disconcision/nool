@@ -701,6 +701,37 @@ code {
   flex-direction: row-reverse;
 }*/
 
+/* Drag-to-rule feedback: while a drag rides a rail, the rule it would
+   enact glows, opacity = the rail parameter (--drag-glow, driven per
+   frame from Drag.tsx); past the commit threshold the glow goes green
+   (the drag foot's commit color); a committed drag flashes it. */
+.transform-view::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 1em;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 0.9em 0.2em #ffffffdd, inset 0 0 0.7em #ffffff99;
+}
+.transform-view.drag-glow::after {
+  opacity: var(--drag-glow, 0);
+}
+.transform-view.drag-glow-commit::after {
+  box-shadow: 0 0 0.9em 0.25em #2eeb76dd, inset 0 0 0.7em #2eeb7699;
+}
+.transform-view.drag-glow-flash::after {
+  animation: drag-glow-flash 0.6s ease-out;
+}
+@keyframes drag-glow-flash {
+  from {
+    opacity: 1;
+    box-shadow: 0 0 1.1em 0.3em #2eeb76ee, inset 0 0 0.8em #2eeb76aa;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .transform-view {
   position: relative;
   z-index: 10;

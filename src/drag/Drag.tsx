@@ -449,6 +449,35 @@ const clear_vis = (): void => {
   vis?.replaceChildren();
   vis_rails?.replaceChildren();
   vis_state = null;
+  tool_glow(null, 0);
+};
+
+/* # Noolbox rule glow — while a drag rides a rail, the rule it would
+ * enact glows in the noolbox, strength = the rail parameter t, flipping
+ * to the commit tint past COMMIT_T; a committed drag flashes it. Driven
+ * imperatively (like the overlay): per-frame model round-trips for a
+ * decoration would be waste. */
+let glow_el: HTMLElement | null = null;
+const tool_glow = (idx: number | null, t: number): void => {
+  const el =
+    idx === null ? null : document.getElementById(`transform-${idx}`);
+  if (glow_el && glow_el !== el) {
+    glow_el.classList.remove("drag-glow", "drag-glow-commit");
+    glow_el.style.removeProperty("--drag-glow");
+  }
+  glow_el = el;
+  if (!el) return;
+  el.classList.add("drag-glow");
+  el.classList.toggle("drag-glow-commit", t > COMMIT_T);
+  el.style.setProperty("--drag-glow", Math.min(1, t).toFixed(3));
+};
+const flash_tool = (idx: number): void => {
+  const el = document.getElementById(`transform-${idx}`);
+  if (!el) return;
+  el.classList.remove("drag-glow-flash");
+  void el.offsetWidth; // restart the animation if re-flashed
+  el.classList.add("drag-glow-flash");
+  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 650);
 };
 
 /* Track color is keyed to the RULE (toolbox index, golden-angle spread),
@@ -719,6 +748,7 @@ export const grab = (
     activeT = t;
     Motion.manual_set(t);
     update_vis(cands, active, t);
+    tool_glow(active >= 0 ? cands[active].idx : null, t);
   };
 
   /* Rails: the knob chases the pointer along its current rail at bounded
@@ -797,6 +827,7 @@ export const grab = (
     if (engaged && active >= 0) {
       if (activeT > COMMIT_T) {
         const c = cands[active];
+        flash_tool(c.idx);
         /* animate() captures the manual blend as its origin. Commit the
          * EXACT candidate exp: re-deriving the rewrite would mint different
          * fresh ids for created nodes, and the handoff would see the
