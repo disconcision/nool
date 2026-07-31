@@ -46,11 +46,16 @@
   opacity: 0.001 !important;
   pointer-events: none !important;
 }
-/* During a selection morph the glow travels as a synthetic overlay layer;
-   suppress the live glow so it doesn't double. */
+/* While a morph carries the glow as a synthetic overlay layer, suppress
+   the in-scene selection decoration so it doesn't double — on the live
+   node AND on clones (which bake in the post-state's classes). The
+   head's white pulse is part of the decoration. */
 #stage .node-container.selection-morphing .node.selected {
   outline: 0 !important;
   box-shadow: none !important;
+}
+#stage .node-container.selection-morphing .node.selected > .head {
+  animation: none !important;
 }
 /* Context shells: boxless wrappers replicating a clone's real ancestor
    classes so descendant selectors and inheritance apply to layers. */

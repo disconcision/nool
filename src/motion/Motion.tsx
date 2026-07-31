@@ -689,27 +689,10 @@ export const animate = (
        * interrupted glow still needs to finish traveling (e.g. held
        * arrow keys at the edge of the tree re-trigger no-op updates). */
       if ((pre_selected !== post_selected || glow_box) && sel_style) {
-        /* With no node selected the root (#main — the whole window) IS the
-         * selection: the glow expands out to the window's box on unselect
-         * and shrinks back down from it on the next select, instead of
-         * fading. (Its outline ends up just past the viewport edge, where
-         * #main's own permanent white outline conceptually lives.) */
-        const root_el = document.getElementById("main");
-        const root_box: Box | undefined = root_el
-          ? (() => {
-              const r = root_el.getBoundingClientRect();
-              return {
-                x: r.x,
-                y: r.y,
-                w: r.width,
-                h: r.height,
-                font: parseFloat(getComputedStyle(root_el).fontSize),
-              };
-            })()
-          : undefined;
         /* Retarget from the interrupted glow's mid-flight box when there
          * is one, so rapid selection changes read as one continuous
          * outline chasing the selection. */
+        const root_box = main_box();
         const from_box =
           glow_box ??
           (pre_selected ? before.get(pre_selected)?.box : undefined) ??
@@ -718,26 +701,6 @@ export const animate = (
           (post_selected ? after.get(post_selected)?.box : undefined) ??
           root_box;
         if (from_box || to_box) {
-          const el = document.createElement("div");
-          el.className = "motion-layer motion-selection";
-          el.style.outline = sel_style.outline;
-          el.style.boxShadow = sel_style.boxShadow;
-          el.style.borderRadius = sel_style.radius;
-          el.dataset.motionId = "@selection";
-          const from = from_box ?? to_box!;
-          const to = to_box ?? from_box!;
-          const layer: Layer = {
-            el,
-            mount: el,
-            from,
-            to,
-            fromOpacity: from_box ? 1 : 0,
-            toOpacity: to_box ? 1 : 0,
-            depth: 999,
-            parentId: null,
-            members: null,
-            mode: layer_mode(from, to),
-          };
           stage_container()?.classList.add("selection-morphing");
           /* Retargets (key repeat) get a short, fast-starting hop with no
            * warm-up — un-scaled by anim factor, since keeping up with the
@@ -745,7 +708,7 @@ export const animate = (
            * about a hop behind and settles when the keys stop. */
           const retarget = !!glow_box;
           run_tween(
-            new Map([["@selection", layer]]),
+            new Map([["@selection", mk_selection_layer(from_box, to_box)]]),
             retarget ? 120 : 200 * anim_factor(),
             false,
             retarget ? { ease: easeOutCubic, immediate: true } : undefined
@@ -767,7 +730,74 @@ export const animate = (
     reuse_exits,
     mk_opts?.(before, after)
   );
+  /* The selection glow rides full morphs as its own layer too: clones
+   * bake in the post-state's .selected decoration, which would otherwise
+   * flash fully-formed on a node still mid-flight (factoring: a times
+   * turns white instantly, then travels). Suppress the baked decoration
+   * (selection-morphing — heads' pulse included, see CSS) and fly the
+   * glow frame from the old selected box to the new one; it lands
+   * exactly as the live decoration returns at teardown. Unselecting
+   * morphs (undo) send it out to the window, per the root metaphor. */
+  if (sel_style && (pre_selected || post_selected || glow_box)) {
+    const root_box = main_box();
+    const from_box =
+      glow_box ??
+      (pre_selected ? before.get(pre_selected)?.box : undefined) ??
+      root_box;
+    const to_box =
+      (post_selected ? after.get(post_selected)?.box : undefined) ?? root_box;
+    if (from_box || to_box) {
+      layers.set("@selection", mk_selection_layer(from_box, to_box));
+      stage_container()?.classList.add("selection-morphing");
+    }
+  }
   run_tween(layers, 250 * anim_factor(), true);
+};
+
+/* With no node selected the root (#main — the whole window) IS the
+ * selection: glows expand out to the window's box on unselect and shrink
+ * back down from it on select. (The outline ends up just past the
+ * viewport edge, where #main's own permanent white outline conceptually
+ * lives.) */
+const main_box = (): Box | undefined => {
+  const el = document.getElementById("main");
+  if (!el) return undefined;
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.x,
+    y: r.y,
+    w: r.width,
+    h: r.height,
+    font: parseFloat(getComputedStyle(el).fontSize),
+  };
+};
+
+const mk_selection_layer = (
+  from_box: Box | undefined,
+  to_box: Box | undefined
+): Layer => {
+  const el = document.createElement("div");
+  el.className = "motion-layer motion-selection";
+  if (sel_style) {
+    el.style.outline = sel_style.outline;
+    el.style.boxShadow = sel_style.boxShadow;
+    el.style.borderRadius = sel_style.radius;
+  }
+  el.dataset.motionId = "@selection";
+  const from = from_box ?? to_box!;
+  const to = to_box ?? from_box!;
+  return {
+    el,
+    mount: el,
+    from,
+    to,
+    fromOpacity: from_box ? 1 : 0,
+    toOpacity: to_box ? 1 : 0,
+    depth: 999,
+    parentId: null,
+    members: null,
+    mode: layer_mode(from, to),
+  };
 };
 
 // # Manual (pointer-driven) mode — drags
