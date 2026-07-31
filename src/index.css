@@ -1283,9 +1283,7 @@ v .transform-view .label {
   height: calc(1em * 0.5);
   position: relative;
   margin: 0.5em;
-  transition:
-    transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
-    margin 0.1s linear;
+  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
 
 /* Actual image container */
@@ -1310,9 +1308,31 @@ v .transform-view .label {
 }
 #seed .icon2:active {
   /* animation: spin 0.4s infinite linear; */
-  margin: 1em;
   opacity: 1;
   transform: rotate(-359deg);
+}
+
+/* Pressing the seed displaces both flanks — by compositor transform, not
+   margin: the old margin bump re-laid-out and repainted the shadow-heavy
+   neighbors every frame of the transition. #stage itself must stay
+   transform-free (it would become the containing block for the
+   fixed-position, viewport-addressed #motion-overlay), so the stage's
+   side rides its root node, already on its own layer via will-change. */
+#noolbox {
+  transition: transform 0.1s linear;
+}
+#stage .node-container > .node {
+  /* restate .node's scale transition — this higher-specificity rule
+     replaces it wholesale */
+  transition:
+    scale 0.1s linear,
+    transform 0.1s linear;
+}
+#seed:has(.icon2:active) #noolbox {
+  transform: translateX(-0.5em);
+}
+#seed:has(.icon2:active) #stage .node-container > .node {
+  transform: translateX(0.5em);
 }
 #seed .icon2:active .inner {
   /* animation: spin 0.4s infinite linear; */
