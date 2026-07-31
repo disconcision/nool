@@ -79,6 +79,14 @@ commute+ {+}⇄{+} · assoc+ {+,+}⇄{+,+} · identity+ {}⇄{+} ·
 inverse+ {}⇄{+,−} · dbl-neg {}⇄{−,−} · commute× {×}⇄{×} ·
 assoc× {×,×}⇄{×,×} · identity× {}⇄{×} · distribute {×,+}⇄{×,×,+}
 
+Known asymmetry to listen for: shrinking rules lose their content at
+the ½ pluck (∩ = the smaller multiset) while growing rules gain theirs
+at ¾ — factoring "finishes early" sonically. If that grates, walking
+½ linearly source → result instead of through the intersection is a
+one-line change. Also queued: pan (below); a commit accent (the
+octave-completing fourth pluck) if the completed-triad-as-commit-signal
+ever feels insufficient.
+
 ## Harmony experiment (Shift+A, evaluating)
 
 Layers the retired quality channel back UNDER the content chords: one

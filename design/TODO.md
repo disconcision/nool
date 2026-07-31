@@ -53,6 +53,28 @@ items listed in full here are NOT recorded elsewhere.
   JS-driven resizing with a moving bottom lip, or elastic inter-rule
   gaps — both judged worse than truncation for now; see discussion.
 
+### Pending verdicts / watches
+- Shift+A harmony experiment (sound.md): keep or delete after listening.
+- Sound pan (concept 3, sound.md): queued, unbuilt.
+- Adjacent-possible previews: blur-at-rest/sharpen-on-hover fixed and
+  icon moved top-left — Andrew to judge whether the feature earns its
+  keep or gets deleted.
+- Stuck-mid-tween drag state (reported, never reproduced in three
+  scripted chaos campaigns): guards landed — if it recurs, check the
+  console for "manual_start: empty before-capture" and whether
+  window.__knob.frames is still advancing; either datum bisects the
+  hypothesis space.
+- Die loses blue tint during merge flights: diagnosis + candidate fix
+  in captured-geometry.md findings (backdrop baking); Andrew to call.
+
+### Icon workflow (idea, unbuilt)
+- Trying icon candidates in context: fetch SVGs by concept from the
+  Iconify API (aggregates 200+ open sets, no auth:
+  api.iconify.design/<set>/<name>.svg) into assets/icons/candidates/,
+  plus a one-page "icon lab" rendering each candidate at actual corner
+  size with the app's invert filter and hover styling. Noun Project API
+  (Andrew has an account) as the alternative source, same lab.
+
 ### Meta
 - Distill the capture-vs-internalize REPORT from captured-geometry.md's
   findings into a standalone write-up while fresh.

@@ -378,6 +378,27 @@ Per drag (or per click-animation):
      commits pass through untouched (selection is unselected in drag
      mode, and their provenance already resolved during the manual
      morph).
+   - **Bystander-twin tightening (2026-07-31).** Provenance-lite's comp
+     twin test (same head-sym in the site) matched innocent bystanders:
+     double-neg elimination merged its dying negations onto the
+     mushroom's minus, intro cloned them out of it, and dying head
+     GLYPHS independently flew to any structurally equal head. Now a
+     comp twin must itself have CHANGED in the rewrite (participants,
+     not bystanders — factor's merge and distribute's clone still
+     qualify), and comp heads never twin-match alone (they follow their
+     comp). Verified by trajectory sampling. Another instance of the
+     guessing that rewrite-recorded provenance (execution half, below)
+     would eliminate wholesale.
+   - **Open observation — flat layers lose their backdrop tint.** An
+     atom's in-situ tint (the die's blue) is the stack of translucent
+     ancestor comp backgrounds behind it; solo shallow layers sit on the
+     page gradient (context shells are display:contents — classes, no
+     painted boxes), so a merging die visibly pales in flight. Present
+     since the overlay design (the documented flattening tradeoff) but
+     conspicuous now that merges ride at full opacity. Candidate fix:
+     bake the origin backdrop (composite ancestor background colors)
+     behind each shallow layer's own background; bounded imperfection
+     (frozen tint until teardown). Not implemented — Andrew to call.
    - Still open: chain; Pat-level provenance, execution half (the
      affordance half landed above): rewrites recording correspondence so
      emerge/converge sources and the merge-copy choice come from the
