@@ -6,7 +6,6 @@ import * as Action from "./Action";
 export type t = {
   selector: Path.t;
   transforms: Transform.t[];
-  offset: number;
   size: number;
   /* which tools generate drag candidates (index-aligned with transforms;
    * both directions of a tool together) */
@@ -16,7 +15,6 @@ export type t = {
 export const init: t = {
   selector: [],
   transforms: Tools.init,
-  offset: 0,
   size: 5,
   /* default loadout: associativity (+,×), commutativity (+,×),
    * additive identity, and distributivity */

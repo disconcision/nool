@@ -15,7 +15,6 @@ export type Action =
   | { t: "setHover"; target: Hover.t }
   | { t: "setSelect"; path: Path.t }
   | { t: "moveTool"; direction: Direction }
-  | { t: "wheelTools"; offset: number}
   | { t: "wheelNumTools"; offset: number}
   | { t: "unsetSelections" }
   | { t: "undo" }

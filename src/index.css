@@ -691,6 +691,19 @@ code {
   /* border-top: 0.02em solid #f8a7ff66; */
   width: fit-content;
   padding: 0.3em 0.4em 0.3em 0;
+  /* native continuous scrolling; snap settles on a rule at gesture end
+     (max-height comes inline from tools.size — shift+wheel resizes) */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 0.3em;
+  scrollbar-width: none;
+}
+#noolbox::-webkit-scrollbar {
+  display: none;
+}
+#noolbox .transform-view {
+  scroll-snap-align: start;
 }
 .TreeLeft #noolbox {
   height: 9.2em;
@@ -1096,12 +1109,11 @@ v .transform-view .label {
 #seed.dragging .transform-view {
   cursor: pointer;
 }
-#seed.dragging .transform-arrow {
-  transition: text-shadow 0.15s ease-out, filter 0.15s ease-out;
-}
 #seed.dragging .transform-arrow.drag-on {
-  text-shadow: 0 0 0.35em #ffffff, 0 0 0.9em #ffffffaa;
-  filter: brightness(1.35);
+  /* solid-white glyph (emoji can't be colored; black-then-invert can)
+     with a tight halo, the retired dot's look */
+  filter: brightness(0) invert(1) drop-shadow(0 0 1.5px #ffffff)
+    drop-shadow(0 0 5px #ffffffaa);
 }
 /* Drag probe: hidden mount for measuring candidate states. */
 #stage .drag-probe {

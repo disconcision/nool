@@ -11,7 +11,6 @@ import { freshen } from "./syntax/Node";
 import * as Pat from "./syntax/Pat";
 import { SetStoreFunction } from "solid-js/store";
 import * as Path from "./syntax/Path";
-import * as Util from "./Util";
 
 
 export type result = Model.t | "NoChange";
@@ -244,18 +243,6 @@ export const update = (model: Model.t, action: Action.t): result => {
       };
     case "Noop":
       return "NoChange";
-    case "wheelTools":
-      console.log("wheelTools:" + action.offset + ":" + model.tools.offset);
-      return {
-        ...model,
-        tools: {
-          ...model.tools,
-          offset: Util.mod(
-            model.tools.offset + action.offset,
-            model.tools.transforms.length
-          ),
-        },
-      };
     case "wheelNumTools":
       const clamp = (x:number, a:number, b:number) => Math.max( a, Math.min(x, b) );
       console.log("wheelNumTools:" + action.offset + ":" + model.tools.size);

@@ -9,7 +9,6 @@ import * as ToolBox from "../ToolBox";
 import * as Names from "../Names";
 import * as Settings from "../Settings";
 import { map_ids } from "../syntax/Node";
-import * as Util from "../Util";
 import * as Stage from "../Stage";
 
 export const Toolbar: Component<{ model: Model; inject: Action.Inject }> = (
@@ -223,39 +222,31 @@ const TransformView: Component<{
 
 type Hover_t = import("../Hover").t;
 
-/* Ring-buffer window of transform indices. Rows are keyed by index (a
- * primitive), so scrolling the window only creates/removes edge rows. */
-const window_idxs = (tools: ToolBox.t): number[] => {
-  const len = tools.transforms.length;
-  const offset = Util.mod(tools.offset, len);
-  return [...Array(tools.size).keys()].map((i) => (i + offset) % len);
-};
-
 export const ToolsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
-  /* Trackpads emit dozens of small deltas per sweep (the old per-event
-   * throttle closures throttled nothing, so every one stepped a rule).
-   * Accumulate physical distance and step once per notch, carrying the
-   * remainder — a notchy mouse wheel (~100px/click) still steps 1:1. */
-  let wheel_acc = 0;
-  const WHEEL_NOTCH_PX = 100;
+  /* All rules render; plain wheel scrolls NATIVELY (CSS scroll-snap
+   * gives continuous scroll that settles on a rule when the gesture
+   * ends — the old ring-buffer window stepped whole rules per event).
+   * Shift+wheel still resizes the box, by accumulated distance; on
+   * macOS shift turns trackpad deltas horizontal, hence deltaX. */
+  let resize_acc = 0;
   return (
     <div
       id="noolbox"
+      style={{ "max-height": `${props.model.tools.size * 2.4}em` }}
       onWheel={(e) => {
-        const acc = wheel_acc + e.deltaY;
-        const steps = Math.trunc(acc / WHEEL_NOTCH_PX);
-        wheel_acc = acc - steps * WHEEL_NOTCH_PX;
+        if (!e.shiftKey) return; // native scroll + snap
+        e.preventDefault();
+        resize_acc += e.deltaY || e.deltaX;
+        const steps = Math.trunc(resize_acc / 100);
         if (steps === 0) return;
-        props.inject({
-          t: e.shiftKey ? "wheelNumTools" : "wheelTools",
-          offset: steps,
-        });
+        resize_acc -= steps * 100;
+        props.inject({ t: "wheelNumTools", offset: steps });
       }}
     >
-      <For each={window_idxs(props.model.tools)}>
+      <For each={[...Array(props.model.tools.transforms.length).keys()]}>
         {(idx) => (
           <TransformView idx={idx} model={props.model} inject={props.inject} />
         )}
