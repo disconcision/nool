@@ -51,30 +51,44 @@ export const sfx_reverse = (sfx: Sfxbank) => () => {
  * of its rail, descending (lower octave) when it recedes. Drags speak in
  * plucks; the rewrite samples are button-mode sounds. (Chosen over
  * granular sample-scrubbing, detents, and a tension layer — all tried,
- * 2026-07-30.) */
+ * 2026-07-30.)
+ *
+ * Chord quality carries the rewrite's STRUCTURAL EFFECT, derived from
+ * its patterns (nothing hand-assigned): isomorphic rearrangements pluck
+ * open fifths (nothing created or destroyed), growing rewrites a major
+ * triad, shrinking a minor one. flip swaps the patterns, so a reversed
+ * rule automatically sounds like its forward form's harmonic opposite. */
+export type DragQuality = "iso" | "grow" | "shrink";
+const TRIADS: Record<DragQuality, [string, string, string]> = {
+  iso: ["C4", "G4", "C5"],
+  grow: ["C4", "E4", "G4"],
+  shrink: ["C4", "Eb4", "G4"],
+};
 let drag_active = false;
 let drag_last_t = 0;
+let pluck_up: readonly string[] = TRIADS.iso;
 
 const pluck = (note: string, vol: number): void => {
   synth.volume.value = vol;
   synth.triggerAttackRelease(note, "64n");
 };
 
-const PLUCK_TS = [0.25, 0.5, 0.75];
-const PLUCK_UP = ["C4", "E4", "G4"];
-const PLUCK_DOWN = ["C3", "E3", "G3"];
+const octave_down = (n: string): string => n.replace(/\d/, (d) => `${+d - 1}`);
 
-export const drag_sound_start = (): void => {
+const PLUCK_TS = [0.25, 0.5, 0.75];
+
+export const drag_sound_start = (quality: DragQuality): void => {
   drag_active = true;
   drag_last_t = 0;
+  pluck_up = TRIADS[quality];
 };
 
 export const drag_sound_set = (t: number): void => {
   if (!drag_active) return;
   const tt = Math.max(0, Math.min(1, t));
   PLUCK_TS.forEach((th, i) => {
-    if (drag_last_t < th && tt >= th) pluck(PLUCK_UP[i], -16);
-    if (drag_last_t >= th && tt < th) pluck(PLUCK_DOWN[i], -22);
+    if (drag_last_t < th && tt >= th) pluck(pluck_up[i], -16);
+    if (drag_last_t >= th && tt < th) pluck(octave_down(pluck_up[i]), -22);
   });
   drag_last_t = tt;
 };

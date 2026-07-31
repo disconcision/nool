@@ -24,7 +24,7 @@ import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
 import * as Sound from "./../Sound";
 import * as Pat from "./../syntax/Pat";
-import { depth, freshen, id_at, subtree_at } from "./../syntax/Node";
+import { depth, freshen, id_at, size, subtree_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
 
 export type Candidate = {
@@ -424,6 +424,12 @@ type VisState = {
 
 let vis_state: VisState | null = null;
 
+/* the rewrite's structural effect, for the pluck chord quality */
+const rewrite_quality = (t: Transform): Sound.DragQuality => {
+  const d = size(t.result) - size(t.source);
+  return d === 0 ? "iso" : d > 0 ? "grow" : "shrink";
+};
+
 const SVGNS = "http://www.w3.org/2000/svg";
 
 const ensure_vis = (): HTMLElement => {
@@ -790,8 +796,10 @@ export const grab = (
         emerge: cands[i].emerge,
         converge: cands[i].converge,
       });
-      /* drag plucks (see Sound.tsx) */
-      if (model.settings.sound) Sound.drag_sound_start();
+      /* drag plucks; chord quality = the rewrite's structural effect,
+       * read off its patterns (see Sound.tsx) */
+      if (model.settings.sound)
+        Sound.drag_sound_start(rewrite_quality(cands[i].transform));
     }
     activeT = t;
     Motion.manual_set(t);
