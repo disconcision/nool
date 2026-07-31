@@ -1090,32 +1090,19 @@ v .transform-view .label {
 .transform-view {
   position: relative;
 }
-.drag-toggle {
-  display: none;
-  position: absolute;
-  left: -0.55em;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0.32em;
-  height: 0.32em;
-  border-radius: 50%;
-  border: 0.045em solid #ffffffcc;
-  background: transparent;
-  box-shadow: 0 0 0.15em #0003;
+/* Drag-mode loadout: the whole rule row is the toggle; the equals sign
+   carries the on/off state (white glow when the rule generates drag
+   candidates). */
+#seed.dragging .transform-view {
   cursor: pointer;
-  z-index: 12;
 }
-#seed.dragging .drag-toggle {
-  display: block;
+#seed.dragging .transform-arrow {
+  transition: text-shadow 0.15s ease-out, filter 0.15s ease-out;
 }
-.drag-toggle:hover {
-  scale: 1.25;
+#seed.dragging .transform-arrow.drag-on {
+  text-shadow: 0 0 0.35em #ffffff, 0 0 0.9em #ffffffaa;
+  filter: brightness(1.35);
 }
-.drag-toggle.active {
-  background: #ffffffdd;
-  box-shadow: 0 0 0.3em #ffffffaa;
-}
-
 /* Drag probe: hidden mount for measuring candidate states. */
 #stage .drag-probe {
   position: absolute;
@@ -1488,9 +1475,5 @@ body:has(#main.Dark) {
   #settings-panel .icon:nth-child(9) {
     left: max(0.75em, 52px);
     top: max(0.75em, 52px);
-  }
-  .drag-toggle {
-    width: max(0.32em, 20px);
-    height: max(0.32em, 20px);
   }
 }

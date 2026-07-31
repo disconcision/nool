@@ -89,6 +89,8 @@ const TransformView: Component<{
       ? "NoMatch"
       : "match";
   const transformNode = (e: Event) => {
+    /* drag mode: let the press bubble to the row (loadout toggle) */
+    if (props.model.settings.dragging) return;
     e.preventDefault();
     e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
@@ -102,6 +104,8 @@ const TransformView: Component<{
     }
   };
   const transformNodeReverse = (e: Event) => {
+    /* drag mode: let the press bubble to the row (loadout toggle) */
+    if (props.model.settings.dragging) return;
     e.preventDefault();
     e.stopPropagation();
     if (props.model.stage.selection != "unselected") {
@@ -121,37 +125,31 @@ const TransformView: Component<{
         target: target(),
       });
   };
-  const do_nothing = (e: Event) => {
+  const row_pointerdown = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
-    props.inject({ t: "Noop" });
+    /* drag mode: the whole row is the loadout toggle */
+    if (props.model.settings.dragging)
+      props.inject({ t: "toggleDragTool", idx: props.idx });
+    else props.inject({ t: "Noop" });
   };
   const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
   const selected_src = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 0 ? "selected" : "";
-  const toggleDragTool = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    props.inject({ t: "toggleDragTool", idx: props.idx });
-  };
   return (
     <div
       id={`transform-${props.idx}`}
       class={`transform-view`}
-      onpointerdown={do_nothing}
+      title={
+        props.model.settings.dragging
+          ? `Draggable: ${
+              props.model.tools.dragActive[props.idx] ? "on" : "off"
+            } (click to toggle)`
+          : undefined
+      }
+      onpointerdown={row_pointerdown}
     >
-      {/* drag-loadout toggle: which rules generate drag candidates
-          (visible in drag mode only, via CSS) */}
-      <div
-        class={`drag-toggle ${
-          props.model.tools.dragActive[props.idx] ? "active" : ""
-        }`}
-        title={`Draggable: ${
-          props.model.tools.dragActive[props.idx] ? "on" : "off"
-        }`}
-        onpointerdown={toggleDragTool}
-      />
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
@@ -171,7 +169,11 @@ const TransformView: Component<{
           symbols={props.model.settings.symbols}
         />
       </div>
-      <div class="transform-arrow">
+      <div
+        class={`transform-arrow ${
+          props.model.tools.dragActive[props.idx] ? "drag-on" : ""
+        }`}
+      >
         <Switch fallback="🟰">
           {/*  arrows:
                 ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬
@@ -229,46 +231,28 @@ const window_idxs = (tools: ToolBox.t): number[] => {
   return [...Array(tools.size).keys()].map((i) => (i + offset) % len);
 };
 
-function throttle(
-  func: (...args: any[]) => void,
-  limit: number
-): (...args: any[]) => void {
-  let inThrottle: boolean;
-  return function (this: any, ...args: any[]) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-}
-
 export const ToolsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => {
+  /* Trackpads emit dozens of small deltas per sweep (the old per-event
+   * throttle closures throttled nothing, so every one stepped a rule).
+   * Accumulate physical distance and step once per notch, carrying the
+   * remainder — a notchy mouse wheel (~100px/click) still steps 1:1. */
+  let wheel_acc = 0;
+  const WHEEL_NOTCH_PX = 100;
   return (
     <div
       id="noolbox"
       onWheel={(e) => {
-        if (Math.abs(e.deltaY) < 1.5) return;
-        if (e.shiftKey) {
-          throttle(() => {
-            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
-            props.inject({
-              t: "wheelNumTools",
-              offset,
-            });
-          }, 1000)();
-        } else {
-          throttle(() => {
-            const offset = e.deltaY == 0 ? 0 : e.deltaY / Math.abs(e.deltaY);
-            props.inject({
-              t: "wheelTools",
-              offset: offset,
-            });
-          }, 1000)();
-        }
+        const acc = wheel_acc + e.deltaY;
+        const steps = Math.trunc(acc / WHEEL_NOTCH_PX);
+        wheel_acc = acc - steps * WHEEL_NOTCH_PX;
+        if (steps === 0) return;
+        props.inject({
+          t: e.shiftKey ? "wheelNumTools" : "wheelTools",
+          offset: steps,
+        });
       }}
     >
       <For each={window_idxs(props.model.tools)}>
