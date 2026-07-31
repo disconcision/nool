@@ -718,6 +718,9 @@ const KNOB_SPEED = 20;
  * previous one. */
 let end_current: (() => void) | null = null;
 
+/* e.g. undo mid-drag would yank the world out from under the probes */
+export const drag_in_progress = (): boolean => end_current !== null;
+
 export const grab = (
   model: Model.t,
   inject: Action.Inject,

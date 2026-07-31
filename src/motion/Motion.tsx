@@ -766,9 +766,17 @@ export const manual_start = (
   opts?: EmergeOpts
 ): boolean => {
   const { before, exit_sources, reuse_exits } = capture_before();
-  if (before.size === 0) return false;
+  if (before.size === 0) {
+    /* a silent false here leaves the previous overlay frozen — if the
+     * "stuck mid-blend drag" ever recurs, look for this warning */
+    console.warn("manual_start: empty before-capture; drag will not animate");
+    return false;
+  }
   const layers = build_layers(before, after, exit_sources, reuse_exits, opts);
-  if (!mount_layers(layers, true)) return false;
+  if (!mount_layers(layers, true)) {
+    console.warn("manual_start: overlay mount failed; drag will not animate");
+    return false;
+  }
   tween = {
     layers,
     start: performance.now(),

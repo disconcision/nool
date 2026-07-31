@@ -18,8 +18,9 @@ export const init: t = {
   transforms: Tools.init,
   offset: 0,
   size: 5,
-  /* default loadout: commutativity (+,×) and distributivity */
-  dragActive: Tools.init.map((_, i) => [1, 5, 7].includes(i)),
+  /* default loadout: associativity (+,×), commutativity (+,×),
+   * additive identity, and distributivity */
+  dragActive: Tools.init.map((_, i) => [0, 1, 2, 4, 5, 7].includes(i)),
 };
 
 export const toggle_drag_tool = (tools: t, idx: number): t => ({

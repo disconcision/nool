@@ -1,6 +1,7 @@
 import * as Action from "./Action";
 import * as Model from "./Model";
 import * as Navigate from "./Navigate";
+import * as Drag from "./drag/Drag";
 
 const arrow_of = (key: string): Navigate.Direction | null => {
   switch (key) {
@@ -51,7 +52,9 @@ export const keydown =
       (event.key === "z" || event.key === "Z")
     ) {
       event.preventDefault();
-      inject({ t: event.shiftKey ? "redo" : "undo" });
+      /* not mid-drag: the drag's probes and tween assume a stable world */
+      if (!Drag.drag_in_progress())
+        inject({ t: event.shiftKey ? "redo" : "undo" });
       return;
     }
     const dir = arrow_of(event.key);
