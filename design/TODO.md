@@ -1,4 +1,4 @@
-# TODO — consolidated index (draggable branch)
+# TODO — consolidated index
 
 Single place to find remaining work. Detail lives in the referenced docs;
 items listed in full here are NOT recorded elsewhere.
@@ -23,6 +23,35 @@ items listed in full here are NOT recorded elsewhere.
 - **design/drag-target-decomposition.md** — tree-edit vs layout-reaction
   in drag targets; site-frame rail correction (open, next) and staged
   choreography (open, designed experiment); figs/rail-variants.png.
+- **design/binary.md** — binary moon arithmetic plan (snoc convention,
+  corrected rule set, classifier-not-types, digit rendering, macro
+  outlook); reference prototype is the world-tree branch (PR #3,
+  port-don't-merge).
+- **design/performance.md** — the four scaling walls (grab probing,
+  global motion measurement, shadow paint, hover churn) with fixes and
+  bite-triggers; folding-as-projection is the collapse-perf answer.
+
+## Midterm track (world-tree successor — being scoped with Andrew)
+
+- Binary rules + digit rendering + classifier (design/binary.md).
+- Folds/quasifolds + folders on BOTH stage and noolbox; fold state
+  likely as syntax-level annotation (erased by matching/equality) —
+  decision pending; fold-down must reach EXACTLY the current UI (no
+  persistent "⋯" chrome; seed click as the reveal/hide toggle for
+  top-level fold handles on both sides is the candidate gesture).
+- Fold-matching semantics: folding signals keep-whole intent —
+  variables may bind folded subtrees; structural matching inside folds
+  shouldn't fire silently (either gated out or fold-breaking).
+- Multiple stages / world tree: nomenclature leaning — the world tree
+  is everything rooted at the seed (noolbox + stage + eventually
+  settings), folders within both sides.
+- Some ability to create new stages, sooner rather than later (full
+  builder ergonomics deferred; "is building a sequence of rewrites?"
+  question parked — note the unsurfaced maker tools in Tools.tsx
+  `_init` already model building as hole-filling rewrites).
+- Macro recorder (speculative until designed): dragology derive-by-diff
+  (before/after snapshot → rule, both directions), not action-sequence
+  replay; macros are ordinary Rewrites, hence toolbox citizens.
 
 ## Not recorded elsewhere (canonical here)
 
