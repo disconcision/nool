@@ -730,15 +730,19 @@ export const animate = (
     reuse_exits,
     mk_opts?.(before, after)
   );
-  /* The selection glow rides full morphs as its own layer too: clones
-   * bake in the post-state's .selected decoration, which would otherwise
-   * flash fully-formed on a node still mid-flight (factoring: a times
-   * turns white instantly, then travels). Suppress the baked decoration
-   * (selection-morphing — heads' pulse included, see CSS) and fly the
-   * glow frame from the old selected box to the new one; it lands
-   * exactly as the live decoration returns at teardown. Unselecting
-   * morphs (undo) send it out to the window, per the root metaphor. */
-  if (sel_style && (pre_selected || post_selected || glow_box)) {
+  /* When a full morph MOVES the selection between nodes, the glow rides
+   * it as its own layer: clones bake in the post-state's .selected
+   * decoration, which would otherwise flash fully-formed on a node still
+   * mid-flight (factoring: a times turns white instantly, then travels).
+   * Suppress the baked decoration (selection-morphing — heads' pulse
+   * included, see CSS) and fly the glow frame from the old selected box
+   * to the new one; it lands exactly as the live decoration returns at
+   * teardown. Unselecting morphs (undo) send it out to the window, per
+   * the root metaphor. A STATIONARY selection (commute at the selected
+   * node: same node, only its children rearrange) keeps its baked
+   * decoration riding the clone — that's the truthful rendering, and
+   * suppressing it read as the highlight flickering off. */
+  if (sel_style && (pre_selected !== post_selected || glow_box)) {
     const root_box = main_box();
     const from_box =
       glow_box ??
