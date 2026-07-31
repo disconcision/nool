@@ -22,6 +22,7 @@ import * as Exp from "./../syntax/Exp";
 import * as ID from "./../syntax/ID";
 import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
+import * as Pat from "./../syntax/Pat";
 import { depth, freshen, id_at, subtree_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
 
@@ -289,36 +290,79 @@ const probe_candidate = (
   return { measured: Motion.measure_root(cont, dx, dy), dispose };
 };
 
-/* A node's LOCAL tree position: parent id and index among its kids. */
-const local_pos = (
-  e: Exp.t,
-  m: Map<number, { parent: number | null; index: number }> = new Map(),
-  parent: number | null = null,
-  index = 0
-): Map<number, { parent: number | null; index: number }> => {
-  m.set(e.id, { parent, index });
-  if (e.t === "Comp") e.kids.forEach((k, i) => local_pos(k, m, e.id, i));
-  return m;
+/* # Pattern-level moverhood (see design/captured-geometry.md)
+ *
+ * The affordance filter reads the grab's role out of the rule's own
+ * patterns. Matching the source pattern against the site classifies the
+ * grabbed node as matched structure (a pattern comp/const), the root of
+ * a variable's binding, or strictly inside one. Inside-a-binding nodes
+ * are passengers (they ride; grab the binding's root instead). Everyone
+ * else moves iff their pattern-level position differs between source and
+ * result — positions are pattern paths annotated with the pattern ids
+ * they descend through, and multi-occurrence variables/nodes compare
+ * their whole occurrence sets. So the shared factor in distribute/factor
+ * is a mover in BOTH directions (its occurrence set changes shape),
+ * while a rewrite's fixed points (the root plus under commute or
+ * associate) stay parked; consumed/created grabs always participate. */
+
+type GrabRole =
+  | { t: "structure"; pid: number }
+  | { t: "binding"; name: string }
+  | { t: "inside" }
+  | null;
+
+const contains_id = (e: Exp.t, id: ID.t): boolean =>
+  e.id === id || (e.t === "Comp" && e.kids.some((k) => contains_id(k, id)));
+
+/* Walk pattern and (matching) exp in parallel to classify the grab. */
+const grab_role = (pat: Pat.t, exp: Exp.t, id: ID.t): GrabRole => {
+  if (pat.t === "Atom" && pat.sym.t === "Var") {
+    if (exp.id === id) return { t: "binding", name: pat.sym.name };
+    return contains_id(exp, id) ? { t: "inside" } : null;
+  }
+  if (exp.id === id) return { t: "structure", pid: pat.id };
+  if (pat.t === "Comp" && exp.t === "Comp")
+    for (let i = 0; i < pat.kids.length && i < exp.kids.length; i++) {
+      const r = grab_role(pat.kids[i], exp.kids[i], id);
+      if (r) return r;
+    }
+  return null;
 };
 
-/* Affordance filter: the grab must be a MOVER in the candidate, not a
- * passenger — judged logically: it moves iff its local tree position
- * (parent, or index within it) changed. A node deep inside a relocated
- * subtree keeps both and reads as riding along (grab the ancestor
- * instead); a rewrite's fixed point (the root under commute/associate)
- * keeps both and no longer counts as moving just because its box
- * reflowed. Consumed or created grabs are genuine participants. This is
- * the demo's trigger discipline, judged on tree structure instead of
- * measured geometry. */
+/* Every occurrence's annotated path, per variable name and pattern id. */
+const pat_positions = (
+  p: Pat.t
+): { vars: Map<string, string[]>; nodes: Map<number, string[]> } => {
+  const vars = new Map<string, string[]>();
+  const nodes = new Map<number, string[]>();
+  const go = (n: Pat.t, path: string): void => {
+    if (n.t === "Atom" && n.sym.t === "Var")
+      vars.set(n.sym.name, [...(vars.get(n.sym.name) ?? []), path]);
+    else nodes.set(n.id, [...(nodes.get(n.id) ?? []), path]);
+    if (n.t === "Comp")
+      n.kids.forEach((k, i) => go(k, `${path}${n.id}.${i}/`));
+  };
+  go(p, "");
+  return { vars, nodes };
+};
+
+const occ_key = (paths: string[] | undefined): string =>
+  paths ? [...paths].sort().join("|") : "∅";
+
 const grab_is_mover = (
-  liveExp: Exp.t,
-  candExp: Exp.t,
+  t: Transform,
+  site: Exp.t | undefined,
   grabbedId: ID.t
 ): boolean => {
-  const l = local_pos(liveExp).get(grabbedId);
-  const c = local_pos(candExp).get(grabbedId);
-  if (!l || !c) return true;
-  return l.parent !== c.parent || l.index !== c.index;
+  if (!site) return true;
+  const role = grab_role(t.source, site, grabbedId);
+  if (role === null) return true; // outside the match: genuine participant
+  if (role.t === "inside") return false;
+  const src = pat_positions(t.source);
+  const res = pat_positions(t.result);
+  return role.t === "binding"
+    ? occ_key(src.vars.get(role.name)) !== occ_key(res.vars.get(role.name))
+    : occ_key(src.nodes.get(role.pid)) !== occ_key(res.nodes.get(role.pid));
 };
 
 export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
@@ -337,7 +381,10 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
     /* No anchor = the grab is consumed by this rewrite; it has no track to
      * ride. Such rules are reached by grabbing a node that survives (e.g.
      * factoring via the shared factor or the sum, not the product). */
-    if (!anchor || !grab_is_mover(model.stage.exp, c.exp, grabbedId)) {
+    if (
+      !anchor ||
+      !grab_is_mover(c.transform, subtree_at(c.site, model.stage.exp), grabbedId)
+    ) {
       probe.dispose();
       continue;
     }

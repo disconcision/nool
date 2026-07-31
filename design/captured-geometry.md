@@ -338,8 +338,41 @@ Per drag (or per click-animation):
      factoring, and the OTHER copy becomes the merging exit. This is the
      demo's applyRewrite rule done without touching Pat; rewrite-recorded
      provenance remains the cleaner endgame.
+   - **Pattern-level moverhood landed (supersedes the geometric mover
+     filter, 2026-07-30).** The affordance filter went through three
+     formulations, each probed on a suss case: (1) the geometric
+     ride-along test wrongly offered rules AT THEIR FIXED POINTS —
+     grabbing the root + offered commute/associate (the root has no
+     parent frame so the test passed vacuously, and different-sized
+     operands swapping reflows its box past MIN_TRAVEL); (2) local tree
+     position (parent id + seat changed) parked the fixed points exactly
+     but excluded the shared-factor grip — the die in a×b + a×c keeps
+     its parent and seat while the sum dissolves from over it — and the
+     tempting lost-ancestor patch is direction-asymmetric (factoring
+     loses an ancestor, distributing gains one, and gained-ancestor
+     tests readmit the associate-internal passengers); (3) pattern-level:
+     classify the grab against the rule's source pattern — matched
+     structure, binding root, or strictly inside a binding — and move
+     iff the pattern-position occurrence set differs source↔result.
+     Inside-a-binding = passenger; fixed points (the root + under
+     commute/associate) have identical occurrence sets and park; the
+     shared factor's occurrence set changes shape ({1·1, 2·1} ⇄ {1}) so
+     the die grips factoring AND distributing, symmetrically — verified
+     live in both directions. Across the whole toolbox the three
+     formulations disagree ONLY on repeated-variable bindings, so this
+     was precisely a decision about whether "pinch the shared thing" is
+     a gesture (it now is). Report note: the demo hand-annotates `#A`
+     for exactly this; the pattern already contained the answer — "who
+     moves" is decidable from the rewrite rule alone, no annotations, no
+     measured geometry. Trigger annotations remain relevant only as an
+     ergonomic OVERRIDE (grips the pattern calls parked, or suppressing
+     offered ones), not as the default mechanism. This is the affordance
+     half of Pat-level provenance; the execution half stays open below.
    - Still open: chain; click-path emerge (needs the rewrite site plumbed
-     into noolbox actions); Pat-level provenance (above);
+     into noolbox actions); Pat-level provenance, execution half (the
+     affordance half landed above): rewrites recording correspondence so
+     emerge/converge sources and the merge-copy choice come from the
+     rule application instead of structural guessing;
      near-collinear rail acquisition tie-breaks (first capture is by
      perpendicular distance and can pick the shorter of two nearly-parallel
      rails).

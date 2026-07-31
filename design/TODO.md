@@ -7,11 +7,12 @@ items listed in full here are NOT recorded elsewhere.
 
 - **design/captured-geometry.md** — plan step 4 "Still open": chaining
   (multi-rewrite drags); click-path emerge (plumb the rewrite site into
-  noolbox actions); Pat-level provenance (rewrites record correspondence —
-  subsumes comp-match ambiguity and clone-source edge cases); near-collinear
-  rail acquisition tie-breaks. Also its findings entries: trigger
-  annotations ∪ geometry (the factor-via-shared-die gesture the mover
-  filter excludes); and "Rule gating (game design, sketch)".
+  noolbox actions); Pat-level provenance, execution half (rewrites record
+  correspondence — subsumes comp-match ambiguity and clone-source edge
+  cases; the affordance half — pattern-level moverhood — landed
+  2026-07-30, restoring the factor-via-shared-die gesture symmetrically);
+  near-collinear rail acquisition tie-breaks. Also its findings entry
+  "Rule gating (game design, sketch)".
 - **design/pinned.md** — shadow strategy reevaluation (nine-slice sprite
   etc.) + Shift+D default decision; drag overlap legibility (shadow + scale
   on held subtree, dim the rest); toolbox motion (tool flips snap; extend
