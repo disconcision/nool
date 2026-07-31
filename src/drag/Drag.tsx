@@ -22,6 +22,7 @@ import * as Exp from "./../syntax/Exp";
 import * as ID from "./../syntax/ID";
 import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
+import * as Sound from "./../Sound";
 import * as Pat from "./../syntax/Pat";
 import { depth, freshen, id_at, subtree_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
@@ -789,11 +790,15 @@ export const grab = (
         emerge: cands[i].emerge,
         converge: cands[i].converge,
       });
+      /* scrub the rewrite's own commit sample along the rail */
+      if (model.settings.sound)
+        Sound.scrub_start(cands[i].transform.sfx, cands[i].transform.reversed);
     }
     activeT = t;
     Motion.manual_set(t);
     update_vis(cands, active, t);
     tool_glow(active >= 0 ? cands[active].idx : null, t);
+    Sound.scrub_set(t);
   };
 
   /* Rails: the knob chases the pointer along its current rail at bounded
@@ -869,6 +874,7 @@ export const grab = (
     window.removeEventListener("pointercancel", onUp);
     cancelAnimationFrame(raf);
     clear_vis();
+    Sound.scrub_stop();
     if (engaged && active >= 0) {
       if (activeT > COMMIT_T) {
         const c = cands[active];

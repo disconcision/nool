@@ -47,6 +47,66 @@ export const sfx_reverse = (sfx: Sfxbank) => () => {
   p.start();
 };
 
+/* # Drag scrub — a granular playhead over the transform's own sample.
+ * The rail parameter drives the position of a small looping grain
+ * window, so dragging literally scrubs the rewrite's commit sound:
+ * it unfolds as you pull, retreats as you back off, and reversed
+ * candidates traverse it backwards (position mirror — cheaper than
+ * re-reversing the buffer). Own GrainPlayers with own buffers so the
+ * commit Players' reverse-toggling never cross-talks. */
+const mk_scrub = (url: string): Tone.GrainPlayer => {
+  const p = new Tone.GrainPlayer({
+    url,
+    loop: true,
+    grainSize: 0.12,
+    overlap: 0.08,
+  }).toDestination();
+  p.connect(revsfx);
+  p.volume.value = -24;
+  return p;
+};
+const scrub_players: Record<Sfxbank, Tone.GrainPlayer> = {
+  pew: mk_scrub(pew),
+  pshew: mk_scrub(pshew),
+  klohk: mk_scrub(klohk),
+  chchiu: mk_scrub(chchiu),
+  shwoph: mk_scrub(shwoph),
+  tiup: mk_scrub(tiup),
+};
+let scrubbing: Tone.GrainPlayer | null = null;
+let scrub_rev = false;
+
+export const scrub_start = (bank: Sfxbank, reversed: boolean): void => {
+  scrub_stop();
+  const p = scrub_players[bank];
+  if (!p.loaded) return;
+  scrub_rev = reversed;
+  scrubbing = p;
+  p.volume.value = -24;
+  p.start();
+};
+
+export const scrub_set = (t: number): void => {
+  if (!scrubbing) return;
+  const dur = scrubbing.buffer.duration;
+  const win = Math.min(0.15, dur / 3);
+  const tt = Math.max(0, Math.min(1, t));
+  const pos = (scrub_rev ? 1 - tt : tt) * Math.max(0, dur - win);
+  scrubbing.loopStart = pos;
+  scrubbing.loopEnd = pos + win;
+  /* swell toward the commit point */
+  scrubbing.volume.value = -24 + 14 * tt;
+};
+
+export const scrub_stop = (): void => {
+  if (!scrubbing) return;
+  const p = scrubbing;
+  scrubbing = null;
+  /* fade before stopping so the grains don't clip off */
+  p.volume.rampTo(-60, 0.08);
+  window.setTimeout(() => p.stop(), 120);
+};
+
 const player = new Tone.Player(pew).toDestination();
 let rev2 = new Tone.Reverb(2).toDestination();
 player.connect(rev2);

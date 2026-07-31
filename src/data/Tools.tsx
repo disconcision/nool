@@ -143,6 +143,7 @@ const mk = (name: string, { source, result, sound }: Base): Transform.t => ({
   result,
   sound: Sound.sfx(sound),
   sound_rev: Sound.sfx_reverse(sound),
+  sfx: sound,
   reversed: false,
 });
 
