@@ -10,10 +10,15 @@ chord quality as another, pan as another, without cross-talk.
 |----------------|----------------------------------|-------------------|
 | register       | tree depth (select sound pitch)  | landed (pre-drag) |
 | contour        | drag direction (advance/recede)  | landed            |
-| chord quality  | rewrite's structural effect      | landed 2026-07-30 |
-| key / content  | operator content (see ladder)    | open — next       |
+| pitch content  | the rule's operator multisets    | landed 2026-07-30 |
+| dynamics       | crescendo toward commit          | landed 2026-07-30 |
 | pan            | drag direction on screen         | open (sketched)   |
 | timbre         | (unassigned)                     | open              |
+
+(An earlier chord-quality channel — iso/grow/shrink triads from the
+size delta, ladder rung 1 — was landed then superseded the same day by
+rung 2: the multiset makes grow/shrink audible as content arriving or
+departing, and says WHICH operator changed.)
 
 ## Decisions (2026-07-30)
 
@@ -42,8 +47,16 @@ chord quality as another, pan as another, without cross-talk.
 Each rung subsumes the previous; all derive the sound from the rule's
 own patterns, pushing the axiomatic (hand-chosen) part smaller:
 
-1. **Size delta** (landed): iso / grow / shrink → chord quality.
-2. **Operator multiset**: the multiset of operators in the patterns.
+1. **Size delta** (landed, then superseded by 2): iso / grow / shrink
+   → chord quality.
+2. **Operator multiset** (landed 2026-07-30): the multiset of operators
+   (comp heads) in the patterns. Alphabet: ➕→C, ✖️→G, ➖→Eb, other→D,
+   ∅→A3 (the bare-variable world). The quarter-point plucks walk the
+   content source → result: ¼ = source multiset, ½ = the invariant core
+   (∩), ¾ = result — created content audibly arrives near commit,
+   consumed content departs. Multiplicity stacks octaves (associate =
+   the plus-note doubled). Advancing plucks crescendo; receding drops
+   the chord an octave, quieter.
    Distinguishes what 1 cannot: commute_plus is {+} but associate_plus
    is {+,+} — "associativity has two pluses" becomes literally audible
    (multiplicity → octave doubling or repetition). Distinguishes
@@ -51,7 +64,8 @@ own patterns, pushing the axiomatic (hand-chosen) part smaller:
    {×,×,+} ⇄ {×,+}). The multiset CHANGES across a rewrite, so the
    drag can sonify the delta (identity-intro: a + note fades in).
    Axiomatic residue: one pitch class per operator symbol — a small
-   "sound alphabet" (like a color basis); everything else derives.
+   "sound alphabet" (like a color basis); everything else derives. The
+   alphabet carries forward unchanged if rung 3 lands.
 3. **Pattern melody** (stretch): walk the result pattern in reading
    order — operator → its alphabet pitch, variables → scale degrees,
    depth → octave, quantized to a consonant scale. Each rule's motif IS

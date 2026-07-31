@@ -47,48 +47,86 @@ export const sfx_reverse = (sfx: Sfxbank) => () => {
   p.start();
 };
 
-/* # Drag plucks — quantized notes as a drag crosses the quarter points
- * of its rail, descending (lower octave) when it recedes. Drags speak in
- * plucks; the rewrite samples are button-mode sounds. (Chosen over
- * granular sample-scrubbing, detents, and a tension layer — all tried,
+/* # Drag plucks — quantized chords as a drag crosses the quarter points
+ * of its rail, dropped an octave when it recedes. Drags speak in plucks;
+ * the rewrite samples are button-mode sounds. (Chosen over granular
+ * sample-scrubbing, detents, and a tension layer — all tried,
  * 2026-07-30.)
  *
- * Chord quality carries the rewrite's STRUCTURAL EFFECT, derived from
- * its patterns (nothing hand-assigned): isomorphic rearrangements pluck
- * open fifths (nothing created or destroyed), growing rewrites a major
- * triad, shrinking a minor one. flip swaps the patterns, so a reversed
- * rule automatically sounds like its forward form's harmonic opposite. */
-export type DragQuality = "iso" | "grow" | "shrink";
-const TRIADS: Record<DragQuality, [string, string, string]> = {
-  iso: ["C4", "G4", "C5"],
-  grow: ["C4", "E4", "G4"],
-  shrink: ["C4", "Eb4", "G4"],
+ * Pluck CONTENT is the rule's operator multiset (see design/sound.md):
+ * each operator symbol has a pitch class — the sound ALPHABET, the one
+ * axiomatic choice; everything above it derives. A rule's quarter-point
+ * plucks walk its content from source to result: ¼ = source multiset,
+ * ½ = the invariant core (source ∩ result), ¾ = result multiset.
+ * Multiplicity stacks octaves ("associativity has two pluses" is the
+ * plus-note doubled), created content audibly arrives, consumed content
+ * departs, and flip swaps the walk. Advancing plucks crescendo;
+ * receding replays the chord an octave down, quieter. */
+const OP_PITCH: Record<string, string> = { "➕": "C", "✖️": "G", "➖": "Eb" };
+const OP_FALLBACK = "D"; // operators outside the alphabet
+const EMPTY_NOTE = "A3"; // the bare-variable world: no structure yet
+const OCTAVES = [4, 5, 3, 6]; // multiplicity → octave stacking
+
+const op_note = (op: string): string => OP_PITCH[op] ?? OP_FALLBACK;
+
+const chord_of = (ops: string[]): string[] => {
+  if (ops.length === 0) return [EMPTY_NOTE];
+  const sorted = [...ops].sort(
+    (a, b) => op_note(a).localeCompare(op_note(b)) || a.localeCompare(b)
+  );
+  const counts = new Map<string, number>();
+  return sorted.map((op) => {
+    const n = counts.get(op) ?? 0;
+    counts.set(op, n + 1);
+    return `${op_note(op)}${OCTAVES[Math.min(n, OCTAVES.length - 1)]}`;
+  });
 };
+
+/* multiset intersection */
+const isect = (a: string[], b: string[]): string[] => {
+  const rest = [...b];
+  return a.filter((x) => {
+    const i = rest.indexOf(x);
+    if (i < 0) return false;
+    rest.splice(i, 1);
+    return true;
+  });
+};
+
 let drag_active = false;
 let drag_last_t = 0;
-let pluck_up: readonly string[] = TRIADS.iso;
+let pluck_chords: string[][] = [];
 
-const pluck = (note: string, vol: number): void => {
+const pluck = (notes: readonly string[], vol: number): void => {
   synth.volume.value = vol;
-  synth.triggerAttackRelease(note, "64n");
+  synth.triggerAttackRelease(notes as string[], "64n");
 };
 
 const octave_down = (n: string): string => n.replace(/\d/, (d) => `${+d - 1}`);
 
 const PLUCK_TS = [0.25, 0.5, 0.75];
+const PLUCK_VOLS = [-20, -17, -14]; // crescendo toward commit
 
-export const drag_sound_start = (quality: DragQuality): void => {
+export const drag_sound_start = (
+  source_ops: string[],
+  result_ops: string[]
+): void => {
   drag_active = true;
   drag_last_t = 0;
-  pluck_up = TRIADS[quality];
+  pluck_chords = [
+    chord_of(source_ops),
+    chord_of(isect(source_ops, result_ops)),
+    chord_of(result_ops),
+  ];
 };
 
 export const drag_sound_set = (t: number): void => {
   if (!drag_active) return;
   const tt = Math.max(0, Math.min(1, t));
   PLUCK_TS.forEach((th, i) => {
-    if (drag_last_t < th && tt >= th) pluck(pluck_up[i], -16);
-    if (drag_last_t >= th && tt < th) pluck(octave_down(pluck_up[i]), -22);
+    if (drag_last_t < th && tt >= th) pluck(pluck_chords[i], PLUCK_VOLS[i]);
+    if (drag_last_t >= th && tt < th)
+      pluck(pluck_chords[i].map(octave_down), -24);
   });
   drag_last_t = tt;
 };

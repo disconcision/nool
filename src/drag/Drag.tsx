@@ -24,7 +24,7 @@ import * as Motion from "./../motion/Motion";
 import { at_path, flip, Transform } from "./../Transform";
 import * as Sound from "./../Sound";
 import * as Pat from "./../syntax/Pat";
-import { depth, freshen, id_at, size, subtree_at } from "./../syntax/Node";
+import { depth, freshen, id_at, subtree_at } from "./../syntax/Node";
 import { ViewOnly } from "./../view/ExpView";
 
 export type Candidate = {
@@ -439,10 +439,14 @@ type VisState = {
 
 let vis_state: VisState | null = null;
 
-/* the rewrite's structural effect, for the pluck chord quality */
-const rewrite_quality = (t: Transform): Sound.DragQuality => {
-  const d = size(t.result) - size(t.source);
-  return d === 0 ? "iso" : d > 0 ? "grow" : "shrink";
+/* a pattern's operator multiset (comp heads), for the pluck content */
+const pat_ops = (p: Pat.t, out: string[] = []): string[] => {
+  if (p.t === "Comp") {
+    const h = p.kids[0];
+    if (h?.t === "Atom" && h.sym.t === "Const") out.push(h.sym.name);
+    p.kids.forEach((k) => pat_ops(k, out));
+  }
+  return out;
 };
 
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -811,10 +815,13 @@ export const grab = (
         emerge: cands[i].emerge,
         converge: cands[i].converge,
       });
-      /* drag plucks; chord quality = the rewrite's structural effect,
-       * read off its patterns (see Sound.tsx) */
+      /* drag plucks; content = the rule's operator multisets, walked
+       * source → result across the quarter points (see Sound.tsx) */
       if (model.settings.sound)
-        Sound.drag_sound_start(rewrite_quality(cands[i].transform));
+        Sound.drag_sound_start(
+          pat_ops(cands[i].transform.source),
+          pat_ops(cands[i].transform.result)
+        );
     }
     activeT = t;
     Motion.manual_set(t);
