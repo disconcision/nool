@@ -99,6 +99,22 @@ export const provenance = (
       : key;
   };
   const grow_src = head_key_in(liveIdx, live, grabbedKey);
+  /* Bystanders are not twins: a comp only clones from / merges into a
+   * same-headed comp that itself CHANGED in the rewrite. Without this,
+   * double-neg elimination merged its dying negations onto any minus
+   * that happened to survive in the site (the mushroom's), and intro
+   * cloned its new negations out of it. And comp HEADS never twin-match
+   * on their own — they follow their comp (or grow/absorb with it);
+   * otherwise the dying glyph flies to an unrelated same-glyph head. */
+  const changed_in_rewrite = (id: number): boolean => {
+    const l = liveIdx.get(id);
+    const c = candIdx.get(id);
+    return !l || !c || !Exp.equals(l, c);
+  };
+  const comp_heads = new Set<number>();
+  for (const idx of [candIdx, liveIdx])
+    for (const n of idx.values())
+      if (n.t === "Comp" && n.kids[0]?.t === "Atom") comp_heads.add(n.kids[0].id);
   /* enters (node layers) */
   for (const key of cand.keys()) {
     if (live.has(key) || !key.startsWith("node-")) continue;
@@ -106,13 +122,20 @@ export const provenance = (
     if (!n) continue;
     let spec: Motion.EmergeSpec = { source: grow_src, mode: "grow" };
     if (n.t === "Atom") {
-      const m = siteSubs.find((s) => s.t === "Atom" && Exp.equals(s, n));
+      const m = comp_heads.has(n.id)
+        ? undefined
+        : siteSubs.find((s) => s.t === "Atom" && Exp.equals(s, n));
       if (m && live.has(`node-${m.id}`))
         spec = { source: `node-${m.id}`, mode: "clone" };
     } else {
       const hs = head_sym(n);
       const m = hs
-        ? siteSubs.find((s) => head_sym(s) === hs && live.has(`node-${s.id}`))
+        ? siteSubs.find(
+            (s) =>
+              head_sym(s) === hs &&
+              live.has(`node-${s.id}`) &&
+              changed_in_rewrite(s.id)
+          )
         : undefined;
       if (m) {
         spec = { source: `node-${m.id}`, mode: "clone" };
@@ -150,15 +173,20 @@ export const provenance = (
     if (!g) continue;
     let spec: Motion.ConvergeSpec | null = null;
     if (g.t === "Atom") {
-      const twin = siteCandSubs.find(
-        (s) => s.t === "Atom" && Exp.equals(s, g) && cand.has(`node-${s.id}`)
-      );
+      const twin = comp_heads.has(g.id)
+        ? undefined
+        : siteCandSubs.find(
+            (s) => s.t === "Atom" && Exp.equals(s, g) && cand.has(`node-${s.id}`)
+          );
       if (twin) spec = { target: `node-${twin.id}`, mode: "merge" };
     } else {
       const hs = head_sym(g);
       const twin = hs
         ? siteCandSubs.find(
-            (s) => head_sym(s) === hs && cand.has(`node-${s.id}`)
+            (s) =>
+              head_sym(s) === hs &&
+              cand.has(`node-${s.id}`) &&
+              changed_in_rewrite(s.id)
           )
         : undefined;
       if (twin) {
