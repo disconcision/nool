@@ -714,7 +714,7 @@ code {
    the curve is encoded in the keyframes). */
 .transform-view.drag-glow-flash {
   mix-blend-mode: plus-lighter;
-  animation: drag-glow-flash 0.9s linear both;
+  animation: drag-glow-flash 0.28s linear both;
 }
 @keyframes drag-glow-flash {
   0% {

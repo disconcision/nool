@@ -523,7 +523,7 @@ const flash_tool = (idx: number): void => {
   el.classList.remove("drag-glow-flash");
   void el.offsetWidth; // restart the animation if re-flashed
   el.classList.add("drag-glow-flash");
-  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 950);
+  window.setTimeout(() => el.classList.remove("drag-glow-flash"), 330);
 };
 
 /* Track color is keyed to the RULE (toolbox index, golden-angle spread),
