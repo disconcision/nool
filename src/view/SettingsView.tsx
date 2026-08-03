@@ -18,7 +18,7 @@ import sun_off from "../assets/icons/noun-sun-6322390.svg";
 import palette_2 from "../assets/icons/noun-paint-6329583.svg";
 import palette_1 from "../assets/icons/noun-palette-1918496.svg";
 import alphabet from "../assets/icons/noun-alphabet-3591519.svg"
-import ded from "../assets/icons/noun-dead-5130035.svg"
+import x_reset from "../assets/icons/x.svg"
 import prims from "../assets/icons/noun-geometry-4695832.svg"
 import drag_off from "../assets/icons/noun-tool-3376727.svg"
 import drag_on from "../assets/icons/noun-transformation-6040368.svg"
@@ -163,20 +163,27 @@ let icon = (
   />
 );
 
-/* Corner clusters, three icons each (an L per corner, no 2x2 squares):
- * top-left sound·preview·reset, top-right theme·projection·symbols,
- * bottom-left the drag trio, bottom-right empty. Order here must match
- * the nth-child positioning in index.css. */
+/* Corner clusters (an L or pair per corner, no 2x2 squares):
+ * top-left the drag trio, top-right theme·projection·symbols,
+ * bottom-left sound·reset, bottom-right the help badge (HelpView).
+ * Order here must match the nth-child positioning in index.css.
+ * (The adjacent-possible preview toggle is intentionally unsurfaced;
+ * see design/TODO.md — the feature is parked, its code retained.) */
 export const SettingsView: Component<{
   model: Model;
   inject: (_: Action.t) => void;
 }> = (props) => (
   <div id="settings-panel">
+    {icon(props.inject, props.model.settings, "ToggleDragging")}
+    {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
+    {icon(props.inject, props.model.settings, "ToggleDragDebug")}
+    {icon(props.inject, props.model.settings, "ToggleDark")}
+    {icon(props.inject, props.model.settings, "ToggleProjection")}
+    {icon(props.inject, props.model.settings, "ToggleSymbols")}
     {icon(props.inject, props.model.settings, "ToggleSound")}
-    {icon(props.inject, props.model.settings, "TogglePreview")}
     <img
       class="icon"
-      src={ded}
+      src={x_reset}
       title="Reset everything (world, settings, history)"
       onmousedown={(e) => {
         e.preventDefault();
@@ -185,11 +192,5 @@ export const SettingsView: Component<{
           props.inject({ t: "hardReset" });
       }}
     />
-    {icon(props.inject, props.model.settings, "ToggleDark")}
-    {icon(props.inject, props.model.settings, "ToggleProjection")}
-    {icon(props.inject, props.model.settings, "ToggleSymbols")}
-    {icon(props.inject, props.model.settings, "ToggleDragging")}
-    {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
-    {icon(props.inject, props.model.settings, "ToggleDragDebug")}
   </div>
 );

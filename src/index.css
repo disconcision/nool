@@ -1060,6 +1060,10 @@ v .transform-view .label {
 #settings-panel .icon {
   opacity: 90%;
   width: 0.5em;
+  /* uniform box + contain: the source SVGs have varying aspect ratios,
+     which otherwise misaligns neighbors in a cluster */
+  height: 0.5em;
+  object-fit: contain;
   padding: 0.15em;
   filter: invert(1);
   position: fixed;
@@ -1067,9 +1071,10 @@ v .transform-view .label {
 }
 
 /* Corner L-clusters (matching SettingsView order):
-   top-left: 1 sound · 2 preview · 3 reset
+   top-left: 1 drag mode · 2 drag mechanic · 3 drag debug
    top-right: 4 theme · 5 projection · 6 symbols
-   bottom-left: 7 drag mode · 8 drag mechanic · 9 drag debug */
+   bottom-left: 7 sound · 8 reset
+   bottom-right: help badge (#help) */
 #settings-panel .icon:nth-child(1) {
   left: 0;
   top: 0;
@@ -1102,9 +1107,71 @@ v .transform-view .label {
   left: 0.75em;
   bottom: 0;
 }
-#settings-panel .icon:nth-child(9) {
-  left: 0;
-  bottom: 0.75em;
+/* Bottom pair reads black: white-on-green lacked contrast down there.
+   Dark theme goes back to white (black would vanish). */
+#settings-panel .icon:nth-child(7),
+#settings-panel .icon:nth-child(8) {
+  filter: none;
+}
+.Dark #settings-panel .icon:nth-child(7),
+.Dark #settings-panel .icon:nth-child(8) {
+  filter: invert(1);
+}
+
+/* Bottom-right help badge: unlike the corner icons this WANTS to be
+   found — bigger, high contrast, with a hover panel. */
+#help {
+  position: fixed;
+  right: 0.22em;
+  bottom: 0.22em;
+  z-index: 80;
+}
+#help .badge {
+  /* font-size half of #main's em, box sized in those halves: ~41px disc,
+     ~24px glyph */
+  font-size: 0.5em;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: system-ui, sans-serif;
+  cursor: help;
+  user-select: none;
+  transition: scale 0.15s ease;
+}
+#help:hover .badge {
+  scale: 1.12;
+}
+#help .panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.25em);
+  width: 21em;
+  max-width: 80vw;
+  font-size: 0.31em;
+  font-family: system-ui, sans-serif;
+  line-height: 1.45;
+  background: #fffffff2;
+  color: #223;
+  border-radius: 1em 1em 0.25em 1em;
+  padding: 0.4em 1.2em;
+  box-shadow: 0 0.2em 1.5em #00000033;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+#help:hover .panel {
+  opacity: 1;
+  pointer-events: auto;
+}
+.Dark #help .panel {
+  background: #131b33f2;
+  color: #d8e2ff;
 }
 
 /* In drag mode, grabbing shouldn't shake the tree (the :active wobble). */

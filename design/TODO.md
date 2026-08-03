@@ -85,9 +85,11 @@ items listed in full here are NOT recorded elsewhere.
 ### Pending verdicts / watches
 - Shift+A harmony experiment (sound.md): keep or delete after listening.
 - Sound pan (concept 3, sound.md): queued, unbuilt.
-- Adjacent-possible previews: blur-at-rest/sharpen-on-hover fixed and
-  icon moved top-left — Andrew to judge whether the feature earns its
-  keep or gets deleted.
+- Adjacent-possible previews: PARKED 2026-08-03 — toggle removed from
+  the settings panel (it also wasn't rendering, cause undiagnosed, and
+  Andrew judged the current form not useful). Code retained end to end:
+  PreView.tsx, settings.preview + TogglePreview, the SeedView Show.
+  Revisit as a redesign, not a re-enable.
 - Stuck-mid-tween drag state (reported, never reproduced in three
   scripted chaos campaigns): guards landed — if it recurs, check the
   console for "manual_start: empty before-capture" and whether

@@ -36,12 +36,6 @@ export type Action =
   | "ToggleDragMechanic"
   | "ToggleDragDebug";
 
-/* Touch devices default to drag mode (their natural interaction). */
-const coarse_pointer =
-  typeof window !== "undefined" &&
-  !!window.matchMedia &&
-  window.matchMedia("(pointer: coarse)").matches;
-
 export const init: t = {
   sound: true,
   motion: "Half",
@@ -49,9 +43,9 @@ export const init: t = {
   projection: "TreeLeft",
   symbols: "Emoji",
   theme: "Light",
-  dragging: coarse_pointer,
+  dragging: true,
   dragMechanic: "Rails",
-  dragDebug: true,
+  dragDebug: false,
 };
 
 export const update = (settings: t, action: Action): t => {

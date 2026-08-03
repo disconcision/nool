@@ -5,6 +5,7 @@ import * as Model from "./Model";
 import * as Action from "./Action";
 import * as Keyboard from "./Keyboard";
 import { SettingsView } from "./view/SettingsView";
+import { HelpView } from "./view/HelpView";
 import { Seed } from "./view/SeedView";
 import * as ExpToPat from "./syntax/ExpToPat";
 import * as Motion from "./motion/Motion";
@@ -83,6 +84,7 @@ const App: Component = () => {
     >
       <Seed model={model} inject={inject} />
       <SettingsView model={model} inject={inject} />
+      <HelpView dragging={model.settings.dragging} />
     </div>
   );
 };
