@@ -8,9 +8,9 @@ export const HelpView: Component<{ dragging: boolean }> = (props) => (
     <div class="badge">?</div>
     <div class="panel">
       <p>
-        <b>nool</b> makes math tweakable, tuggable + fussable. it's a work
-        in progress — there isn't much to do yet, but you can bop it. on the
-        left is the <b>noolbox</b>, and on the right is the <b>stage</b>.
+        <b>nool</b> makes math tweakable, tuggable, and fussable. it's a work in
+        progress. there isn't much to do yet. but you can bop it. on the left is
+        the <b>noolbox</b>, and on the right is the <b>stage</b>.
       </p>
       <p>
         there are two different ways to play; switch using the top-left corner
