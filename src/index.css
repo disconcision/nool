@@ -514,18 +514,22 @@ code {
 
 /* Projection-specific styles*/
 
-#seed.TreeTop {
+/* :not(.docked): the docked noolbox stays projection-INVARIANT — one
+   constant shape regardless of the stage's projection */
+#seed.TreeTop:not(.docked) {
   flex-direction: column-reverse;
 }
-.TreeTop #noolbox {
+#seed.TreeTop:not(.docked) #noolbox {
   grid-template-columns: none;
 }
-.TreeTop #noolbox .transform-view {
+#seed.TreeTop:not(.docked) #noolbox .transform-view {
   grid-template-rows: subgrid;
   grid-row: 1 / span 3;
   grid-column: unset;
 }
-.TreeTop .node-container.TreeTop .node.comp {
+/* container-keyed (NOT seed-keyed): projection-pull probes render other
+   projections inside the current seed and must measure true */
+.node-container.TreeTop .node.comp {
   align-items: end;
   display: grid;
   grid-auto-flow: row;
@@ -557,8 +561,12 @@ code {
   grid-row: 1/3;
 }
 
-#seed:has(.LinearPrefix),
-#seed:has(.LinearInfix) {
+/* Direct-child scoping: hidden drag probes may mount OTHER projections'
+   node-containers inside #stage; only the live container may flip the
+   seed's layout. */
+#seed:not(.docked):has(#stage > .node-container.LinearPrefix),
+#seed:not(.docked):has(#stage > .node-container.LinearInfix),
+#seed:not(.docked):has(#stage > .node-container.LinearPostfix) {
   flex-direction: column-reverse;
 }
 
@@ -634,6 +642,53 @@ code {
 }
 /* Special case for unary ops (TODO: Betterize) */
 .node-container.LinearInfix
+  .node.comp:has(> :nth-child(2):last-child)
+  *:nth-child(1) {
+  order: 1;
+}
+
+/* Postfix flat: same flattening as prefix, heads pushed to the end. */
+.node-container.LinearPostfix .node.comp {
+  margin: 0;
+  padding: 0;
+  border-radius: 1.5em;
+  box-shadow: none;
+}
+.node-container.LinearPostfix .node.atom {
+  border-radius: 1.5em;
+  border-color: #0000;
+  box-shadow: none;
+}
+.node-container.LinearPostfix .node.comp > *:nth-child(1) {
+  order: 9;
+}
+
+/* Vertical flat: LinearInfix's rotation twin — same flattening and infix
+   ordering, column flow (glyphs stack upright, reading top-to-bottom). */
+.node-container.LinearInfixV .node {
+  flex-direction: column;
+}
+.node-container.LinearInfixV .node.comp {
+  margin: 0;
+  padding: 0;
+  border-radius: 1.5em;
+  box-shadow: none;
+}
+.node-container.LinearInfixV .node.atom {
+  border-radius: 1.5em;
+  border-color: #0000;
+  box-shadow: none;
+}
+.node-container.LinearInfixV .node.comp *:nth-child(1) {
+  order: 2;
+}
+.node-container.LinearInfixV .node.comp *:nth-child(2) {
+  order: 1;
+}
+.node-container.LinearInfixV .node.comp *:nth-child(3) {
+  order: 3;
+}
+.node-container.LinearInfixV
   .node.comp:has(> :nth-child(2):last-child)
   *:nth-child(1) {
   order: 1;
@@ -722,7 +777,7 @@ code {
 #noolbox .transform-view {
   scroll-snap-align: start;
 }
-.TreeLeft #noolbox {
+#seed.TreeLeft:not(.docked) #noolbox {
   height: 9.2em;
 }
 /*#noolbox .result .node.comp,
@@ -1071,9 +1126,10 @@ v .transform-view .label {
 }
 
 /* Corner L-clusters (matching SettingsView order):
-   top-left: 1 drag mode · 2 drag mechanic · 3 drag debug
-   top-right: 4 theme · 5 projection · 6 symbols
-   bottom-left: 7 sound · 8 reset
+   top-left: 1 drag mode · 2 drag mechanic · 3 drag debug ·
+             4 projection pulls · 5 dock (tall L down the left edge)
+   top-right: 6 theme · 7 projection · 8 symbols
+   bottom-left: 9 sound · 10 reset
    bottom-right: help badge (#help) */
 #settings-panel .icon:nth-child(1) {
   left: 0;
@@ -1088,33 +1144,41 @@ v .transform-view .label {
   top: 0.75em;
 }
 #settings-panel .icon:nth-child(4) {
-  right: 0;
-  top: 0;
+  left: 0;
+  top: 1.5em;
 }
 #settings-panel .icon:nth-child(5) {
-  right: 0.75em;
-  top: 0;
+  left: 0;
+  top: 2.25em;
 }
 #settings-panel .icon:nth-child(6) {
   right: 0;
-  top: 0.75em;
+  top: 0;
 }
 #settings-panel .icon:nth-child(7) {
+  right: 0.75em;
+  top: 0;
+}
+#settings-panel .icon:nth-child(8) {
+  right: 0;
+  top: 0.75em;
+}
+#settings-panel .icon:nth-child(9) {
   left: 0;
   bottom: 0;
 }
-#settings-panel .icon:nth-child(8) {
+#settings-panel .icon:nth-child(10) {
   left: 0.75em;
   bottom: 0;
 }
 /* Bottom pair reads black: white-on-green lacked contrast down there.
    Dark theme goes back to white (black would vanish). */
-#settings-panel .icon:nth-child(7),
-#settings-panel .icon:nth-child(8) {
+#settings-panel .icon:nth-child(9),
+#settings-panel .icon:nth-child(10) {
   filter: none;
 }
-.Dark #settings-panel .icon:nth-child(7),
-.Dark #settings-panel .icon:nth-child(8) {
+.Dark #settings-panel .icon:nth-child(9),
+.Dark #settings-panel .icon:nth-child(10) {
   filter: invert(1);
 }
 
@@ -1350,7 +1414,9 @@ v .transform-view .label {
   height: calc(1em * 0.5);
   position: relative;
   margin: 0.5em;
-  transition: transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  transition:
+    transform 1s cubic-bezier(0.68, -0.6, 0.32, 1.6),
+    opacity 0.25s ease;
 }
 
 /* Actual image container */
@@ -1386,7 +1452,9 @@ v .transform-view .label {
    fixed-position, viewport-addressed #motion-overlay), so the stage's
    side rides its root node, already on its own layer via will-change. */
 #noolbox {
-  transition: transform 0.1s linear;
+  transition:
+    transform 0.1s linear,
+    opacity 0.25s ease;
 }
 #stage .node-container > .node {
   /* restate .node's scale transition — this higher-specificity rule
@@ -1400,6 +1468,33 @@ v .transform-view .label {
 }
 #seed:has(.icon2:active) #stage .node-container > .node {
   transform: translateX(0.5em);
+}
+
+/* Projection pulls in flight: the flanks recede — the morphing stage may
+   sprawl over their space, and the dimming reads as the modal state. */
+#seed.projection-pulling #noolbox,
+#seed.projection-pulling .icon2 {
+  opacity: 0.12;
+}
+
+/* Docked mode (experimental): a compact, projection-invariant noolbox
+   pinned at the seed's left; the stage centers in the REMAINING space
+   (auto margins), so they never overlap; the sigil parks top-center.
+   The projection-specific seed/noolbox rules above are all scoped
+   :not(.docked) so nothing here reshapes when the projection changes. */
+#seed.docked #noolbox {
+  margin-left: 0.3em;
+  font-size: 0.6em;
+  z-index: 20;
+}
+#seed.docked #stage {
+  margin: auto;
+}
+#seed.docked .icon2 {
+  position: fixed;
+  left: 50%;
+  top: 0.5em;
+  translate: -50% 0;
 }
 #seed .icon2:active .inner {
   /* animation: spin 0.4s infinite linear; */

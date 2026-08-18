@@ -24,6 +24,12 @@ import drag_off from "../assets/icons/noun-tool-3376727.svg"
 import drag_on from "../assets/icons/noun-transformation-6040368.svg"
 import mech_rails from "../assets/icons/noun-cycle-4446.svg"
 import mech_closest from "../assets/icons/noun-cycle-1793611.svg"
+import mech_sticky from "../assets/icons/magnet.svg"
+import mech_blend from "../assets/icons/blend.svg"
+import projection_fan from "../assets/icons/fan.svg"
+import vflat from "../assets/icons/vflat.svg"
+import hpost from "../assets/icons/hpost.svg"
+import dock from "../assets/icons/dock.svg"
 import debug_on from "../assets/icons/noun-1831710.svg"
 import debug_off from "../assets/icons/noun-1831712.svg"
 
@@ -62,6 +68,10 @@ const projection_icon = (projection: Settings.projection): string => {
       return linear_prefix;
     case "LinearInfix":
       return linear_infix;
+    case "LinearPostfix":
+      return hpost;
+    case "LinearInfixV":
+      return vflat;
     case "TreeLeft":
       return tree_left;
     case "TreeTop":
@@ -90,8 +100,18 @@ const theme_icon = (theme: Settings.theme): string => {
 const dragging_icon = (dragging: boolean): string =>
   dragging ? drag_on : drag_off;
 
-const drag_mechanic_icon = (m: Settings.dragMechanic): string =>
-  m === "Rails" ? mech_rails : mech_closest;
+const drag_mechanic_icon = (m: Settings.dragMechanic): string => {
+  switch (m) {
+    case "Classic":
+      return mech_closest;
+    case "Sticky":
+      return mech_sticky;
+    case "Rails":
+      return mech_rails;
+    case "Blend":
+      return mech_blend;
+  }
+};
 
 const drag_debug_icon = (on: boolean): string => (on ? debug_on : debug_off);
 
@@ -115,6 +135,10 @@ let action_icon = (action: Settings.Action, settings: Settings.t): string => {
       return drag_mechanic_icon(settings.dragMechanic);
     case "ToggleDragDebug":
       return drag_debug_icon(settings.dragDebug);
+    case "ToggleProjectionDrag":
+      return projection_fan;
+    case "ToggleDockNoolbox":
+      return dock;
   }
 };
 
@@ -137,15 +161,29 @@ const action_title = (action: Settings.Action, settings: Settings.t): string => 
       return `Drag mode (drag nodes to rewrite): ${
         settings.dragging ? "on" : "off"
       }`;
-    case "ToggleDragMechanic":
-      return `Drag mechanic: ${
-        settings.dragMechanic === "Rails"
-          ? "Rails (knob rides rails; change rules at the hub)"
-          : "Closest (nearest track wins each frame)"
-      }`;
+    case "ToggleDragMechanic": {
+      const desc: Record<Settings.dragMechanic, string> = {
+        Classic:
+          "Classic (dragology parity: memoryless nearest-rail, no hysteresis)",
+        Sticky: "Sticky (Classic + incumbent hysteresis)",
+        Rails:
+          "Rails (memoryful knob; rides rails, switches at the hub — rewrite drags only)",
+        Blend:
+          "Blend (no tracks: weighted mixture of all targets — projection pulls only)",
+      };
+      return `Drag mechanic: ${desc[settings.dragMechanic]}`;
+    }
     case "ToggleDragDebug":
       return `Drag debug overlay (rails, anchors, t readout): ${
         settings.dragDebug ? "on" : "off"
+      }`;
+    case "ToggleProjectionDrag":
+      return `Projection pulls (drags morph the LAYOUT, not the math): ${
+        settings.projectionDrag ? "on" : "off"
+      }`;
+    case "ToggleDockNoolbox":
+      return `Dock the noolbox to the screen edge (stage stops being pushed around): ${
+        settings.dockNoolbox ? "on" : "off"
       }`;
   }
 };
@@ -177,6 +215,8 @@ export const SettingsView: Component<{
     {icon(props.inject, props.model.settings, "ToggleDragging")}
     {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
     {icon(props.inject, props.model.settings, "ToggleDragDebug")}
+    {icon(props.inject, props.model.settings, "ToggleProjectionDrag")}
+    {icon(props.inject, props.model.settings, "ToggleDockNoolbox")}
     {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}

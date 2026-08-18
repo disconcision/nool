@@ -12,6 +12,26 @@ import * as ID from "./syntax/ID";
 const KEY = "nool-state-v1";
 let timer: number | undefined;
 
+/* Stored enum values can outlive their unions (the drag-mechanic options
+ * have been renamed across experiments); fall back to defaults rather
+ * than crash a switch somewhere downstream. */
+const sanitize_settings = (s: Model.t["settings"]): Model.t["settings"] => ({
+  ...s,
+  dragMechanic: ["Classic", "Sticky", "Rails", "Blend"].includes(s.dragMechanic)
+    ? s.dragMechanic
+    : Model.init.settings.dragMechanic,
+  projection: [
+    "LinearPrefix",
+    "LinearInfix",
+    "LinearPostfix",
+    "LinearInfixV",
+    "TreeLeft",
+    "TreeTop",
+  ].includes(s.projection)
+    ? s.projection
+    : Model.init.settings.projection,
+});
+
 export const save_soon = (model: Model.t): void => {
   clearTimeout(timer);
   timer = window.setTimeout(() => {
@@ -51,7 +71,10 @@ export const load = (): Model.t | null => {
     return {
       ...Model.init,
       stage: { ...stage, selection: s.selection ?? "unselected" },
-      settings: { ...Model.init.settings, ...(s.settings ?? {}) },
+      settings: sanitize_settings({
+        ...Model.init.settings,
+        ...(s.settings ?? {}),
+      }),
       tools: {
         ...Model.init.tools,
         dragActive: s.dragActive ?? Model.init.tools.dragActive,

@@ -1,14 +1,30 @@
 export type motion = "On" | "Off" | "Half";
 
-export type projection = "LinearPrefix" | "LinearInfix" | "TreeLeft" | "TreeTop";
+/* LinearInfixV: the vertical flat line — LinearInfix's rotation twin in
+ * the projection state machine (design/drag-legibility.md) */
+export type projection =
+  | "LinearPrefix"
+  | "LinearInfix"
+  | "LinearPostfix"
+  | "LinearInfixV"
+  | "TreeLeft"
+  | "TreeTop";
 
 export type symbols = "Emoji" | "SingleChar";
 
 export type theme = "Light" | "Dark";
 
-/* drag dispatch mechanic: knob-on-rails vs per-frame nearest-candidate
- * (experimental comparison toggle; see design/captured-geometry.md) */
-export type dragMechanic = "Rails" | "Closest";
+/* drag dispatch mechanic (experimental comparison toggle; see
+ * design/drag-legibility.md):
+ * - Classic: dragology demo parity — memoryless rail-gap dispatch,
+ *   stickiness 0; the display is a pure function of pointer position
+ * - Sticky: Classic + incumbent hysteresis (isolates whether stickiness
+ *   alone helps)
+ * - Rails: knob-on-rails — deliberately MEMORYFUL (bounded speed,
+ *   switch at the hub); rewrite drags only (projection treats as Classic)
+ * - Blend: no tracks at all — the scene is a weighted mixture over all
+ *   candidate states (projection pulls only; Classic elsewhere) */
+export type dragMechanic = "Classic" | "Sticky" | "Rails" | "Blend";
 
 export type t = {
   sound: boolean;
@@ -23,6 +39,12 @@ export type t = {
   dragMechanic: dragMechanic;
   /* drag debug overlay: rails, anchor dots, live t readout */
   dragDebug: boolean;
+  /* experimental modal toggle: node pulls morph between PROJECTIONS of
+   * the same expression instead of rewriting (design/drag-legibility.md) */
+  projectionDrag: boolean;
+  /* experimental: pin the noolbox to the screen's left edge (and the seed
+   * icon up top) so stage/layout reflows stop pushing the flanks around */
+  dockNoolbox: boolean;
 };
 
 export type Action =
@@ -34,7 +56,9 @@ export type Action =
   | "ToggleDark"
   | "ToggleDragging"
   | "ToggleDragMechanic"
-  | "ToggleDragDebug";
+  | "ToggleDragDebug"
+  | "ToggleProjectionDrag"
+  | "ToggleDockNoolbox";
 
 export const init: t = {
   sound: true,
@@ -44,8 +68,10 @@ export const init: t = {
   symbols: "Emoji",
   theme: "Light",
   dragging: true,
-  dragMechanic: "Rails",
+  dragMechanic: "Classic",
   dragDebug: false,
+  projectionDrag: false,
+  dockNoolbox: false,
 };
 
 export const update = (settings: t, action: Action): t => {
@@ -68,12 +94,15 @@ export const update = (settings: t, action: Action): t => {
         case "LinearPrefix":
           return { ...settings, projection: "LinearInfix" };
         case "LinearInfix":
+          return { ...settings, projection: "LinearPostfix" };
+        case "LinearPostfix":
+          return { ...settings, projection: "LinearInfixV" };
+        case "LinearInfixV":
           return { ...settings, projection: "TreeTop" };
         case "TreeTop":
-            return { ...settings, projection: "TreeLeft" };
+          return { ...settings, projection: "TreeLeft" };
         case "TreeLeft":
           return { ...settings, projection: "LinearPrefix" };
-        
       }
     case "ToggleSymbols":
       switch (settings.symbols) {
@@ -91,12 +120,20 @@ export const update = (settings: t, action: Action): t => {
       }
     case "ToggleDragging":
       return { ...settings, dragging: !settings.dragging };
-    case "ToggleDragMechanic":
-      return {
-        ...settings,
-        dragMechanic: settings.dragMechanic === "Rails" ? "Closest" : "Rails",
+    case "ToggleDragMechanic": {
+      const cycle: Record<dragMechanic, dragMechanic> = {
+        Classic: "Sticky",
+        Sticky: "Rails",
+        Rails: "Blend",
+        Blend: "Classic",
       };
+      return { ...settings, dragMechanic: cycle[settings.dragMechanic] };
+    }
     case "ToggleDragDebug":
       return { ...settings, dragDebug: !settings.dragDebug };
+    case "ToggleProjectionDrag":
+      return { ...settings, projectionDrag: !settings.projectionDrag };
+    case "ToggleDockNoolbox":
+      return { ...settings, dockNoolbox: !settings.dockNoolbox };
   }
 };

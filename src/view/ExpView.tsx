@@ -24,6 +24,9 @@ type expviewprops = {
   symbols: Settings.symbols;
   /* drag mode: pointerdown grabs the node instead of selecting it */
   grab?: (id: number, e: PointerEvent) => void;
+  /* projection pulls: heads are the best handles for inline transitions
+   * (they travel the most), so they become grabbable too */
+  grabHeads?: boolean;
 };
 
 const setSelect = (props: expviewprops) => (e: PointerEvent) => {
@@ -73,7 +76,19 @@ const ExpViewGo: Component<expviewprops> = (props) => {
             </div>
           }
         >
-          <div id={`node-${props.node.id}`} class="head">
+          <div
+            id={`node-${props.node.id}`}
+            class="head"
+            onpointerdown={
+              props.grabHeads && props.grab
+                ? (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    props.grab!(props.node.id, e);
+                  }
+                : undefined
+            }
+          >
             {Names.get(props.symbols, sym())}
           </div>
         </Show>
@@ -95,6 +110,7 @@ const ExpViewGo: Component<expviewprops> = (props) => {
               mask={props.mask}
               symbols={props.symbols}
               grab={props.grab}
+              grabHeads={props.grabHeads}
             />
           )}
         </For>
@@ -109,6 +125,7 @@ export const ExpView: Component<{
   mask: Pat.Binding[];
   symbols: Settings.symbols;
   grab?: (id: number, e: PointerEvent) => void;
+  grabHeads?: boolean;
 }> = (props) => (
   <ExpViewGo
     info={props.stage.info}
@@ -119,6 +136,7 @@ export const ExpView: Component<{
     is_head={false}
     symbols={props.symbols}
     grab={props.grab}
+    grabHeads={props.grabHeads}
   />
 );
 

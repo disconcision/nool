@@ -53,6 +53,7 @@ export const sound = (model: Model.t, action: Action.t): void => {
       Sound.select(model.stage.selection.length, pitch, volume);
       break;
     case "setSetting":
+    case "setProjection":
       Sound.sfx("pew")();
       break;
     case "Noop":
@@ -169,6 +170,12 @@ export const update = (model: Model.t, action: Action.t): result => {
           : {}),
       };
     }
+    case "setProjection":
+      if (model.settings.projection === action.projection) return "NoChange";
+      return {
+        ...model,
+        settings: { ...model.settings, projection: action.projection },
+      };
     case "setSelect":
       if (
         model.stage.selection === "unselected"

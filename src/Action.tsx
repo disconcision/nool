@@ -13,6 +13,8 @@ export type Action =
   | { t: "restart" }
   | { t: "hardReset" }
   | { t: "setSetting"; action: Settings.Action }
+  /* direct set (projection pulls commit a specific target, no cycling) */
+  | { t: "setProjection"; projection: Settings.projection }
   | { t: "setHover"; target: Hover.t }
   | { t: "setSelect"; path: Path.t }
   | { t: "moveTool"; direction: Direction }

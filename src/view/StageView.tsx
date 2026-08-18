@@ -32,6 +32,9 @@ export const StageView: Component<{
               ? (id, e) => Drag.grab(props.model, props.inject, id, e)
               : undefined
           }
+          grabHeads={
+            props.model.settings.dragging && props.model.settings.projectionDrag
+          }
         />
       </div>
     </div>

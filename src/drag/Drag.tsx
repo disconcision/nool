@@ -302,7 +302,14 @@ export const enumerate = (
  * dispose() when the drag ends. */
 const probe_candidate = (
   exp: Exp.t,
-  settings: Settings.t
+  settings: Settings.t,
+  /* projection pulls probe the SAME exp under a different projection */
+  projection: Settings.projection = settings.projection,
+  /* optional alignment anchor: position the probe so THIS element's
+   * center coincides with the given live point (projection pulls pin
+   * the root head — the visible fixed point); default: center-align
+   * the whole scene */
+  anchor?: { key: string; at: { x: number; y: number } }
 ): { measured: Map<string, Motion.Measured>; dispose: () => void } | null => {
   const stageEl = document.getElementById("stage");
   const live = stageEl?.querySelector<HTMLElement>(".node-container");
@@ -315,7 +322,7 @@ const probe_candidate = (
   stageEl.appendChild(host);
   const dispose_solid = render(
     () => (
-      <div class={`node-container ${settings.projection}`}>
+      <div class={`node-container ${projection}`}>
         <ViewOnly node={exp} symbols={settings.symbols} />
       </div>
     ),
@@ -330,10 +337,21 @@ const probe_candidate = (
     dispose();
     return null;
   }
-  const lr = live.getBoundingClientRect();
-  const pr = cont.getBoundingClientRect();
-  const dx = lr.x + lr.width / 2 - (pr.x + pr.width / 2);
-  const dy = lr.y + lr.height / 2 - (pr.y + pr.height / 2);
+  let dx: number;
+  let dy: number;
+  const anchorEl = anchor
+    ? cont.querySelector<HTMLElement>(`#${CSS.escape(anchor.key)}`)
+    : null;
+  if (anchor && anchorEl) {
+    const ar = anchorEl.getBoundingClientRect();
+    dx = anchor.at.x - (ar.x + ar.width / 2);
+    dy = anchor.at.y - (ar.y + ar.height / 2);
+  } else {
+    const lr = live.getBoundingClientRect();
+    const pr = cont.getBoundingClientRect();
+    dx = lr.x + lr.width / 2 - (pr.x + pr.width / 2);
+    dy = lr.y + lr.height / 2 - (pr.y + pr.height / 2);
+  }
   return { measured: Motion.measure_root(cont, dx, dy), dispose };
 };
 
@@ -459,13 +477,27 @@ export const candidates = (model: Model.t, grabbedId: ID.t): Candidate[] => {
 
 let vis: HTMLElement | null = null;
 
+/* Candidate-agnostic display item: the vis draws whatever carries a
+ * target, colors, and a label — rewrite candidates and projection pulls
+ * both map into this. */
+type VisItem = {
+  ax: number;
+  ay: number;
+  color: string; // track + tick stroke
+  dotBg: string;
+  dotInk?: string; // reversed rules: white field, rule color as ink
+  label: () => HTMLElement; // fresh node each call (dot AND t-label use it)
+  labelBg: string;
+  labelFg: string;
+};
+
 type VisState = {
   lines: SVGLineElement[];
   dots: (HTMLElement | null)[];
   foot: HTMLElement;
   tlabel: HTMLElement;
   a0: { x: number; y: number };
-  targets: { ax: number; ay: number }[];
+  items: VisItem[];
 };
 
 let vis_state: VisState | null = null;
@@ -619,10 +651,35 @@ const code_el = (c: Candidate): HTMLElement => {
   return span;
 };
 
+/* rewrite candidates → display items */
 const show_vis = (
   grabbedId: ID.t,
   cands: Candidate[],
   targets: { ax: number; ay: number }[],
+  a0: { x: number; y: number }
+): void =>
+  show_vis_items(
+    grabbedId,
+    cands.map((c, i) => {
+      const dark = `hsl(${Math.round(c.idx * 137.508) % 360} 70% 35%)`;
+      const solid = track_color({ idx: c.idx, reversed: false });
+      return {
+        ax: targets[i].ax,
+        ay: targets[i].ay,
+        color: track_color(c),
+        dotBg: c.reversed ? "white" : solid,
+        dotInk: c.reversed ? solid : undefined,
+        label: () => code_el(c),
+        labelBg: c.reversed ? "white" : dark,
+        labelFg: c.reversed ? dark : "white",
+      };
+    }),
+    a0
+  );
+
+const show_vis_items = (
+  grabbedId: ID.t,
+  items: VisItem[],
   a0: { x: number; y: number }
 ): void => {
   const v = ensure_vis();
@@ -642,9 +699,9 @@ const show_vis = (
   ensure_rails().replaceChildren(svg);
   const lines: SVGLineElement[] = [];
   const dots: (HTMLElement | null)[] = [];
-  cands.forEach((c, i) => {
-    const tg = targets[i];
-    const color = track_color(c);
+  items.forEach((it) => {
+    const tg = it;
+    const color = it.color;
     const reachable = Math.hypot(tg.ax - a0.x, tg.ay - a0.y) >= MIN_TRAVEL;
     const line = document.createElementNS(SVGNS, "line");
     line.setAttribute("x1", `${a0.x}`);
@@ -676,14 +733,11 @@ const show_vis = (
     dot.className = "anchor-dot";
     dot.style.left = `${tg.ax}px`;
     dot.style.top = `${tg.ay}px`;
-    /* reversed: inverted — all-white dot, the rule's solid color as ink
-     * (the white field is the reversal marker; ink matches the forward
-     * dot) */
-    const solid = track_color({ idx: c.idx, reversed: false });
-    dot.style.background = c.reversed ? "white" : solid;
-    dot.style.borderColor = c.reversed ? "white" : solid;
-    if (c.reversed) dot.style.color = solid;
-    dot.replaceChildren(code_el(c));
+    /* white-field dots mark reversed rules; ink matches the forward dot */
+    dot.style.background = it.dotBg;
+    dot.style.borderColor = it.dotBg;
+    if (it.dotInk) dot.style.color = it.dotInk;
+    dot.replaceChildren(it.label());
     v.appendChild(dot);
     dots.push(dot);
   });
@@ -696,38 +750,36 @@ const show_vis = (
   tlabel.className = "t-label";
   tlabel.style.display = "none";
   v.appendChild(tlabel);
-  vis_state = { lines, dots, foot, tlabel, a0, targets };
+  vis_state = { lines, dots, foot, tlabel, a0, items };
 };
 
-const update_vis = (cands: Candidate[], active: number, t: number): void => {
+const update_vis = (active: number, t: number): void => {
   const s = vis_state;
   if (!s) return;
   s.lines.forEach((ln, i) => ln.classList.toggle("active", i === active));
   s.dots.forEach((d, i) => d?.classList.toggle("active", i === active));
-  const tg = active >= 0 ? s.targets[active] : null;
-  if (!tg) {
+  const it = active >= 0 ? s.items[active] : null;
+  if (!it) {
     s.foot.style.display = "none";
     s.tlabel.style.display = "none";
     return;
   }
-  const fx = s.a0.x + (tg.ax - s.a0.x) * t;
-  const fy = s.a0.y + (tg.ay - s.a0.y) * t;
-  const c = cands[active];
+  const fx = s.a0.x + (it.ax - s.a0.x) * t;
+  const fy = s.a0.y + (it.ay - s.a0.y) * t;
   s.foot.style.display = "";
   s.foot.style.left = `${fx}px`;
   s.foot.style.top = `${fy}px`;
-  s.foot.style.borderColor = track_color(c);
+  s.foot.style.borderColor = it.color;
   s.foot.classList.toggle("committing", t > COMMIT_T);
   s.tlabel.style.display = "";
   s.tlabel.style.left = `${fx}px`;
   s.tlabel.style.top = `${fy}px`;
   s.tlabel.replaceChildren(
-    code_el(c),
+    it.label(),
     ` t=${t.toFixed(2)}${t > COMMIT_T ? " ✓" : ""}`
   );
-  const dark = `hsl(${Math.round(c.idx * 137.508) % 360} 70% 35%)`;
-  s.tlabel.style.background = c.reversed ? "white" : dark;
-  s.tlabel.style.color = c.reversed ? dark : "white";
+  s.tlabel.style.background = it.labelBg;
+  s.tlabel.style.color = it.labelFg;
 };
 
 // # The drag itself
@@ -744,6 +796,9 @@ const HUB_PX = 10;
  * feel 1:1 under the pointer; slow enough that flowing out of the hub onto
  * a new rail reads as motion, not teleportation. */
 const KNOB_SPEED = 20;
+/* Sticky mechanic: the incumbent track's distance gets this head start
+ * before a rival can take over (dragology's `stickiness` option). */
+const STICKY_PX = 24;
 
 /* Only one drag at a time: a new grab (or any stuck state) force-ends the
  * previous one. */
@@ -752,12 +807,557 @@ let end_current: (() => void) | null = null;
 /* e.g. undo mid-drag would yank the world out from under the probes */
 export const drag_in_progress = (): boolean => end_current !== null;
 
+/* # Projection pulls (experimental; settings.projectionDrag).
+ *
+ * The projection STATE MACHINE (design/drag-legibility.md): flat infix is
+ * the H-hub, vertical flat the V-hub; trees hang off their hub by fan
+ * edges; the hubs connect by rotation about the root. Each edge gets a
+ * designed displacement field so the gesture directions stay legible:
+ * inline shuffles run ALONG the line, fans run ACROSS it, rotation chords
+ * are DIAGONAL. Inline edges use real probes; fan and rotation targets
+ * are SYNTHESIZED from the live measurement (phase 1 of the sketch), and
+ * the commit's normal animate() handoff supplies phase 2 — the settle
+ * into the real committed layout. Rotation rides a two-segment rail
+ * through a half-rotation waypoint ("arcs as waypoints": piecewise-linear
+ * betweens, no new motion model). Dispatch is RAIL-GAP (dragology's
+ * d.closest — see the comment in onMove) over the edges of the CURRENT
+ * state only. */
+type ProjEdge =
+  | { to: Settings.projection; kind: "probe" }
+  | { to: Settings.projection; kind: "fan-out"; axis: "x" | "y"; dir: 1 | -1 }
+  | { to: Settings.projection; kind: "fan-in"; axis: "x" | "y" }
+  | { to: Settings.projection; kind: "rotate"; quarter: 1 | -1 };
+
+const PROJ_EDGES: Record<Settings.projection, ProjEdge[]> = {
+  LinearInfix: [
+    { to: "LinearPrefix", kind: "probe" },
+    { to: "LinearPostfix", kind: "probe" },
+    { to: "TreeTop", kind: "fan-out", axis: "y", dir: 1 },
+    { to: "LinearInfixV", kind: "rotate", quarter: 1 },
+  ],
+  LinearPrefix: [{ to: "LinearInfix", kind: "probe" }],
+  LinearPostfix: [{ to: "LinearInfix", kind: "probe" }],
+  TreeTop: [{ to: "LinearInfix", kind: "fan-in", axis: "y" }],
+  LinearInfixV: [
+    { to: "LinearInfix", kind: "rotate", quarter: -1 },
+    { to: "TreeLeft", kind: "fan-out", axis: "x", dir: 1 },
+  ],
+  TreeLeft: [{ to: "LinearInfixV", kind: "fan-in", axis: "x" }],
+};
+
+/* fixed hues (not golden-angle: these should stay recognizable) */
+const PROJ_COLOR: Record<Settings.projection, string> = {
+  LinearPrefix: "hsl(205 70% 45%)",
+  LinearInfix: "hsl(265 65% 50%)",
+  LinearPostfix: "hsl(180 65% 38%)",
+  LinearInfixV: "hsl(325 65% 48%)",
+  TreeLeft: "hsl(140 60% 38%)",
+  TreeTop: "hsl(28 80% 45%)",
+};
+const PROJ_CODE: Record<Settings.projection, string> = {
+  LinearPrefix: "LP",
+  LinearInfix: "LI",
+  LinearPostfix: "LO",
+  LinearInfixV: "LV",
+  TreeLeft: "TL",
+  TreeTop: "TT",
+};
+/* destination comp radii, adopted at pull start so pills reshape toward
+ * their new arrangement immediately (KEEP IN SYNC with index.css:
+ * Linear* comps 1.5em; TreeTop override; TreeLeft uses the .node base) */
+const PROJ_RADIUS: Record<Settings.projection, string> = {
+  LinearPrefix: "1.5em",
+  LinearInfix: "1.5em",
+  LinearPostfix: "1.5em",
+  LinearInfixV: "1.5em",
+  TreeLeft: "3em 1.2em 0.6em 32%",
+  TreeTop: "3em 3em 1em 1em",
+};
+
+// # Synthetic projection states (derived from the live measurement)
+
+type MMap = Map<string, Motion.Measured>;
+
+const box_center = (b: Motion.Box): { x: number; y: number } => ({
+  x: b.x + b.w / 2,
+  y: b.y + b.h / 2,
+});
+
+const box_union = (boxes: Motion.Box[]): Motion.Box => {
+  const x0 = Math.min(...boxes.map((b) => b.x));
+  const y0 = Math.min(...boxes.map((b) => b.y));
+  const x1 = Math.max(...boxes.map((b) => b.x + b.w));
+  const y1 = Math.max(...boxes.map((b) => b.y + b.h));
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, font: boxes[0].font };
+};
+
+/* Comps regrow to contain their moved contents, keeping each side's
+ * original padding. Children resolve before parents (depth-descending). */
+const regrow_comps = (live: MMap, moved: Map<string, Motion.Box>): void => {
+  const kids = new Map<string, string[]>();
+  live.forEach((m, id) => {
+    if (id.startsWith("node-") && m.parentId)
+      kids.set(m.parentId, [...(kids.get(m.parentId) ?? []), id]);
+  });
+  const comps = [...live.entries()]
+    .filter(([id, m]) => id.startsWith("node-") && m.el.classList.contains("comp"))
+    .sort((a, b) => b[1].depth - a[1].depth);
+  for (const [id, m] of comps) {
+    const ch = kids.get(id) ?? [];
+    if (ch.length === 0) continue;
+    const beforeU = box_union(ch.map((c) => live.get(c)!.box));
+    const afterU = box_union(ch.map((c) => moved.get(c)!));
+    const b = m.box;
+    moved.set(id, {
+      ...moved.get(id), // keep radius/rot annotations
+      x: afterU.x - (beforeU.x - b.x),
+      y: afterU.y - (beforeU.y - b.y),
+      w: afterU.w + (b.w - beforeU.w),
+      h: afterU.h + (b.h - beforeU.h),
+      font: b.font,
+    });
+  }
+};
+
+/* Syms ride their atoms; everything else takes its moved box. */
+const finalize_synth = (live: MMap, moved: Map<string, Motion.Box>): MMap => {
+  const out: MMap = new Map();
+  live.forEach((m, id) => {
+    if (id.startsWith("sym-")) {
+      const nkey = "node-" + id.slice(4);
+      const from = live.get(nkey)?.box;
+      const to = moved.get(nkey);
+      out.set(id, {
+        ...m,
+        box:
+          from && to
+            ? { ...m.box, x: m.box.x + (to.x - from.x), y: m.box.y + (to.y - from.y) }
+            : { ...m.box },
+      });
+    } else {
+      out.set(id, { ...m, box: moved.get(id) ?? { ...m.box } });
+    }
+  });
+  return out;
+};
+
+/* Heads ride their comp's layer, not their own depth — the root's head
+ * stays in the base line while everything deeper fans away from it. */
+const fan_level = (m: Motion.Measured): number =>
+  m.el.classList.contains("head") ? m.depth - 1 : m.depth;
+
+/* Fan phase 1: "out" shifts every node along `axis` by its level (the
+ * all-nodes-stay-in-line intermediate); "in" collapses every node onto
+ * the root head's line. Comps regrow around their contents. */
+const synth_fan = (
+  live: MMap,
+  rootKey: string,
+  axis: "x" | "y",
+  dir: 1 | -1,
+  mode: "out" | "in",
+  radius: string
+): MMap => {
+  let unit = 0;
+  live.forEach((m) => {
+    const cl = m.el.classList;
+    if (cl.contains("atom") || cl.contains("head"))
+      unit = Math.max(unit, axis === "y" ? m.box.h : m.box.w);
+  });
+  const step = unit * 1.2;
+  let line = 0;
+  if (mode === "in")
+    live.forEach((m) => {
+      if (m.el.classList.contains("head") && m.parentId === rootKey) {
+        const c = box_center(m.box);
+        line = axis === "y" ? c.y : c.x;
+      }
+    });
+  const moved = new Map<string, Motion.Box>();
+  live.forEach((m, id) => {
+    if (!id.startsWith("node-")) return;
+    const b: Motion.Box = { ...m.box };
+    if (!m.el.classList.contains("comp")) {
+      if (mode === "out") {
+        const off = fan_level(m) * step * dir;
+        if (axis === "y") b.y += off;
+        else b.x += off;
+      } else {
+        if (axis === "y") b.y = line - b.h / 2;
+        else b.x = line - b.w / 2;
+      }
+    } else {
+      b.radius = radius;
+    }
+    moved.set(id, b);
+  });
+  regrow_comps(live, moved);
+  return finalize_synth(live, moved);
+};
+
+/* Rotation: a RIGID quarter-turn about the root pivot. Every box carries
+ * the pivot, so Motion interpolates its center along the true arc (polar
+ * path — no waypoint seams); comp pills additionally spin (Box.rot);
+ * glyph boxes stay upright — Ferris-wheel motion. */
+const synth_rotate = (
+  live: MMap,
+  rootKey: string,
+  deg: number,
+  radius: string,
+  pivotAt?: { x: number; y: number }
+): MMap => {
+  const rootBox = live.get(rootKey)?.box;
+  const pivot = pivotAt ?? (rootBox ? box_center(rootBox) : { x: 0, y: 0 });
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const moved = new Map<string, Motion.Box>();
+  live.forEach((m, id) => {
+    if (!id.startsWith("node-")) return;
+    const c = box_center(m.box);
+    const vx = c.x - pivot.x;
+    const vy = c.y - pivot.y;
+    const nx = pivot.x + vx * cos - vy * sin;
+    const ny = pivot.y + vx * sin + vy * cos;
+    const isComp = m.el.classList.contains("comp");
+    moved.set(id, {
+      x: nx - m.box.w / 2,
+      y: ny - m.box.h / 2,
+      w: m.box.w,
+      h: m.box.h,
+      font: m.box.font,
+      pivot,
+      ...(isComp ? { rot: deg, radius } : {}),
+    });
+  });
+  return finalize_synth(live, moved);
+};
+const proj_label = (p: Settings.projection) => (): HTMLElement => {
+  const span = document.createElement("span");
+  span.className = "rule-code";
+  span.textContent = PROJ_CODE[p];
+  return span;
+};
+
+/* Phase 2 of a projection commit: the seed's flex direction can change,
+ * teleporting the flanks (noolbox, seed icon). FLIP them: measure before
+ * the commit, invert after, glide to rest. (Sizes still snap — the
+ * noolbox reshapes under .TreeTop — translate-only for now.) */
+const flip_flanks = (els: HTMLElement[], before: DOMRect[]): void => {
+  els.forEach((el, i) => {
+    const b = before[i];
+    const a = el.getBoundingClientRect();
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    if (Math.abs(dx) + Math.abs(dy) < 1) return;
+    el.style.transition = "none";
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+    void el.offsetWidth;
+    el.style.transition =
+      "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease";
+    el.style.transform = "";
+    const done = (ev: TransitionEvent): void => {
+      if (ev.propertyName !== "transform") return;
+      el.style.removeProperty("transition");
+      el.style.removeProperty("transform");
+      el.removeEventListener("transitionend", done);
+    };
+    el.addEventListener("transitionend", done);
+  });
+};
+
+/* Single-stage fan experiment: fan edges probe the REAL target layout and
+ * the drag rides straight there — no intermediate all-in-line state, no
+ * phase-2 settle (direct, but per-node rail directions get mixed). Flip
+ * to false for the staged fan-then-settle choreography. */
+const FAN_SINGLE_STAGE = true;
+
+/* carry destination comp radii onto a measured target so pills reshape
+ * continuously across the pull instead of popping at the reveal */
+const decorate_radius = (m: MMap, radius: string): MMap => {
+  m.forEach((v, id) => {
+    if (id.startsWith("node-") && v.el.classList.contains("comp"))
+      v.box.radius = radius;
+  });
+  return m;
+};
+
+const grab_projection = (
+  model: Model.t,
+  inject: Action.Inject,
+  grabbedId: ID.t,
+  e: PointerEvent
+): void => {
+  end_current?.();
+  const container = document.querySelector<HTMLElement>(
+    "#stage .node-container"
+  );
+  if (!container) return;
+  const live = Motion.measure_root(container);
+  const key = `node-${grabbedId}`;
+  const rootKey = `node-${model.stage.exp.id}`;
+  /* the root's head glyph is the gesture family's fixed point: fan/tree
+   * targets pin it in place and rotation pivots on it, so the visible
+   * operator never moves during a pull (the commit's retarget then does
+   * the repositioning as its own stage). Inline edges are the exception:
+   * they MOVE the head, so they keep whole-scene centering. */
+  let rootHead: { key: string; at: { x: number; y: number } } | undefined;
+  live.forEach((m, id) => {
+    if (m.el.classList.contains("head") && m.parentId === rootKey)
+      rootHead = { key: id, at: box_center(m.box) };
+  });
+  const liveBox = live.get(key)?.box;
+  const rel = liveBox
+    ? {
+        x: (e.clientX - liveBox.x) / Math.max(1, liveBox.w),
+        y: (e.clientY - liveBox.y) / Math.max(1, liveBox.h),
+      }
+    : { x: 0.5, y: 0.5 };
+  const a0 = { x: e.clientX, y: e.clientY };
+
+  const cands = (PROJ_EDGES[model.settings.projection] ?? [])
+    .map((edge) => {
+      let segments: MMap[];
+      let dispose: (() => void) | undefined;
+      switch (edge.kind) {
+        case "probe": {
+          const probe = probe_candidate(model.stage.exp, model.settings, edge.to);
+          if (!probe) return null;
+          segments = [decorate_radius(probe.measured, PROJ_RADIUS[edge.to])];
+          dispose = probe.dispose;
+          break;
+        }
+        case "fan-out":
+        case "fan-in": {
+          if (FAN_SINGLE_STAGE) {
+            const probe = probe_candidate(
+              model.stage.exp,
+              model.settings,
+              edge.to,
+              rootHead
+            );
+            if (!probe) return null;
+            segments = [decorate_radius(probe.measured, PROJ_RADIUS[edge.to])];
+            dispose = probe.dispose;
+            break;
+          }
+          segments = [
+            edge.kind === "fan-out"
+              ? synth_fan(live, rootKey, edge.axis, edge.dir, "out", PROJ_RADIUS[edge.to])
+              : synth_fan(live, rootKey, edge.axis, 1, "in", PROJ_RADIUS[edge.to]),
+          ];
+          break;
+        }
+        case "rotate":
+          /* single segment: the polar path (Box.pivot) makes the arc
+           * exact — no waypoints, no retarget seams */
+          segments = [
+            synth_rotate(
+              live,
+              rootKey,
+              90 * edge.quarter,
+              PROJ_RADIUS[edge.to],
+              rootHead?.at
+            ),
+          ];
+          break;
+      }
+      const end = segments[segments.length - 1].get(key)?.box;
+      if (!end) {
+        dispose?.();
+        return null;
+      }
+      const ax = end.x + rel.x * end.w;
+      const ay = end.y + rel.y * end.h;
+      /* a handle can only drive edges it travels along */
+      if (Math.hypot(ax - a0.x, ay - a0.y) < MIN_TRAVEL) {
+        dispose?.();
+        return null;
+      }
+      return { edge, segments, dispose, ax, ay };
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null);
+
+  const rails = cands.map((c) => {
+    const vx = c.ax - a0.x;
+    const vy = c.ay - a0.y;
+    const len = Math.hypot(vx, vy);
+    return { vx, vy, len };
+  });
+
+  /* flanks recede while the layout morph sprawls (see index.css) */
+  const seed = document.getElementById("seed");
+  seed?.classList.add("projection-pulling");
+
+  if (model.settings.dragDebug)
+    show_vis_items(
+      grabbedId,
+      cands.map((c) => ({
+        ax: c.ax,
+        ay: c.ay,
+        color: PROJ_COLOR[c.edge.to],
+        dotBg: PROJ_COLOR[c.edge.to],
+        label: proj_label(c.edge.to),
+        labelBg: PROJ_COLOR[c.edge.to],
+        labelFg: "white",
+      })),
+      a0
+    );
+
+  let engaged = false;
+  let active = -1;
+  let activeT = 0;
+  let pointer = { x: e.clientX, y: e.clientY };
+  const mechanic = model.settings.dragMechanic;
+
+  const commit_flip = (to: Settings.projection): void => {
+    const flanks = [
+      document.getElementById("noolbox"),
+      document.querySelector<HTMLElement>("#seed .icon2"),
+    ].filter((el): el is HTMLElement => el !== null);
+    const before = flanks.map((el) => el.getBoundingClientRect());
+    inject({ t: "setProjection", projection: to });
+    flip_flanks(flanks, before);
+  };
+
+  const teardown = (): void => {
+    end_current = null;
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
+    seed?.classList.remove("projection-pulling");
+    clear_vis();
+    Sound.drag_sound_stop();
+  };
+
+  /* # Blend: no tracks, no dispatch — the scene is a weighted mixture
+   * over [base, ...candidate states] (inverse-square weights on distance
+   * to each state's anchor: at the grab point the base owns everything;
+   * approaching an anchor hands it the scene). Drop rule = dragology's:
+   * nearest anchor at release (base nearest = no commit). */
+  const target_of = (c: (typeof cands)[number]): MMap =>
+    c.segments[c.segments.length - 1];
+  let set_weights: ((w: number[]) => void) | null = null;
+  const blend_move = (): void => {
+    if (!set_weights) return;
+    const anchors = [a0, ...cands.map((c) => ({ x: c.ax, y: c.ay }))];
+    const raw = anchors.map(
+      (p) => 1 / (Math.hypot(pointer.x - p.x, pointer.y - p.y) ** 2 + 400)
+    );
+    const sum = raw.reduce((a, b) => a + b, 0);
+    const weights = raw.map((r) => r / sum);
+    set_weights(weights);
+    let mi = 0;
+    weights.forEach((w, i) => {
+      if (i > 0 && w > weights[mi]) mi = i;
+    });
+    activeT = mi > 0 ? weights[mi] / (weights[mi] + weights[0]) : 0;
+    active = mi - 1;
+    update_vis(active, activeT);
+    Sound.drag_sound_set(1 - weights[0]);
+  };
+
+  const set_active = (i: number, t: number): void => {
+    if (i !== active) {
+      active = i;
+      /* Classic/Sticky: memoryless targets (dragology semantics) with the
+       * default branch-switch spring gliding the display across switches */
+      Motion.manual_start(target_of(cands[i]), { origin: live, glide: true });
+      /* layout-only pull: content multisets are empty, so the plucks are
+       * the bare-variable note — a soft tick, deliberately unlike rules */
+      if (model.settings.sound) Sound.drag_sound_start([], []);
+    }
+    activeT = t;
+    Motion.manual_set(t);
+    update_vis(active, t);
+    Sound.drag_sound_set(t);
+  };
+
+  const onMove = (ev: PointerEvent): void => {
+    pointer = { x: ev.clientX, y: ev.clientY };
+    if (!engaged && Math.hypot(pointer.x - a0.x, pointer.y - a0.y) >= ENGAGE_PX) {
+      engaged = true;
+      if (mechanic === "Blend") {
+        set_weights = Motion.manual_field([live, ...cands.map(target_of)]);
+        if (model.settings.sound) Sound.drag_sound_start([], []);
+      }
+    }
+    if (!engaged) return;
+    if (mechanic === "Blend") {
+      blend_move();
+      return;
+    }
+    /* Rail-gap dispatch (dragology's d.closest): perpendicular distance
+     * to each rail's clamped projection. Direction-sensitive from the
+     * first pixel — endpoint-Voronoi (tried) biases toward NEAR targets,
+     * whose cells engulf every initial direction; a far target only won
+     * past the endpoint bisector, ~halfway up its own rail. Collinear
+     * rails of different lengths stratify naturally: past the short
+     * target its projection clamps and its gap grows, so the long rail
+     * takes over. */
+    const stickiness = mechanic === "Sticky" ? STICKY_PX : 0;
+    let best = -1;
+    let bestD = Infinity;
+    let bestT = 0;
+    cands.forEach((_, i) => {
+      const r = rails[i];
+      const t = clamp01(
+        ((pointer.x - a0.x) * r.vx + (pointer.y - a0.y) * r.vy) /
+          (r.len * r.len)
+      );
+      const d =
+        Math.hypot(
+          pointer.x - (a0.x + t * r.vx),
+          pointer.y - (a0.y + t * r.vy)
+        ) - (i === active ? stickiness : 0);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+        bestT = t;
+      }
+    });
+    if (best >= 0) set_active(best, bestT);
+  };
+
+  const onUp = (): void => {
+    teardown();
+    if (mechanic === "Blend") {
+      if (engaged && set_weights) {
+        /* dragology's drop rule: nearest anchor wins */
+        const anchors = [a0, ...cands.map((c) => ({ x: c.ax, y: c.ay }))];
+        let mi = 0;
+        let md = Infinity;
+        anchors.forEach((p, i) => {
+          const d = Math.hypot(pointer.x - p.x, pointer.y - p.y);
+          if (d < md) {
+            md = d;
+            mi = i;
+          }
+        });
+        if (mi > 0) commit_flip(cands[mi - 1].edge.to);
+        else Motion.manual_release();
+      }
+    } else if (engaged && active >= 0 && activeT > COMMIT_T) {
+      commit_flip(cands[active].edge.to);
+    } else if (engaged && active >= 0) {
+      Motion.manual_release();
+    }
+    cands.forEach((c) => c.dispose?.());
+  };
+
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+  end_current = onUp;
+};
+
 export const grab = (
   model: Model.t,
   inject: Action.Inject,
   grabbedId: ID.t,
   e: PointerEvent
 ): void => {
+  if (model.settings.projectionDrag)
+    return grab_projection(model, inject, grabbedId, e);
   end_current?.();
   const exp_at_grab = model.stage.exp;
   const cands = candidates(model, grabbedId);
@@ -842,12 +1442,30 @@ export const grab = (
   let pointer = { x: e.clientX, y: e.clientY };
   let raf = 0;
 
+  const mechanic = model.settings.dragMechanic;
+  /* Classic/Sticky are MEMORYLESS (dragology semantics): track switches
+   * re-originate at the grab-time base, so the display is a pure function
+   * of pointer position. Rails keeps capture-the-blend — its knob is
+   * deliberately continuous, and switches only happen at the hub where
+   * the blend ≈ the base anyway. */
+  const base_live =
+    mechanic === "Rails"
+      ? null
+      : (() => {
+          const c = document.querySelector<HTMLElement>(
+            "#stage .node-container"
+          );
+          return c ? Motion.measure_root(c) : null;
+        })();
+
   const set_active = (i: number, t: number): void => {
     if (i !== active) {
       active = i;
       Motion.manual_start(cands[i].measured, {
         emerge: cands[i].emerge,
         converge: cands[i].converge,
+        origin: base_live ?? undefined,
+        glide: true,
       });
       /* drag plucks; content = the rule's operator multisets, walked
        * source → result across the quarter points (see Sound.tsx) */
@@ -859,7 +1477,7 @@ export const grab = (
     }
     activeT = t;
     Motion.manual_set(t);
-    update_vis(cands, active, t);
+    update_vis(active, t);
     tool_glow(active >= 0 ? cands[active].idx : null, t);
     Sound.drag_sound_set(t);
   };
@@ -900,17 +1518,18 @@ export const grab = (
     raf = requestAnimationFrame(rails_step);
   };
 
-  /* Closest: memoryless per-frame nearest-segment dispatch (the original,
-   * pre-stickiness behavior) — kept for comparison via the mechanic
-   * toggle. Jumps at decision boundaries are inherent to it. */
-  const closest_move = (): void => {
+  /* Closest-family dispatch: per-frame nearest-segment — dragology's
+   * d.closest gap metric (perpendicular distance to the clamped
+   * projection). `stickiness` gives the incumbent a head start
+   * (dragology's option; 0 = the demo's memoryless default). */
+  const closest_move = (stickiness: number): void => {
     let best = -1;
     let bestD = Infinity;
     let bestT = 0;
     rails.forEach((r, i) => {
       if (!r.ok) return;
       const t = proj_t(pointer, i);
-      const d = perp_d(pointer, i, t);
+      const d = perp_d(pointer, i, t) - (i === active ? stickiness : 0);
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -920,14 +1539,17 @@ export const grab = (
     if (best >= 0) set_active(best, bestT);
   };
 
-  const mechanic = model.settings.dragMechanic;
   if (mechanic === "Rails") raf = requestAnimationFrame(rails_step);
 
   const onMove = (ev: PointerEvent): void => {
     pointer = { x: ev.clientX, y: ev.clientY };
     if (!engaged && Math.hypot(pointer.x - a0.x, pointer.y - a0.y) >= ENGAGE_PX)
       engaged = true;
-    if (engaged && mechanic === "Closest") closest_move();
+    if (!engaged) return;
+    if (mechanic !== "Rails")
+      /* Blend has no rewrite-drag form (candidate node sets differ);
+       * it behaves as Classic here */
+      closest_move(mechanic === "Sticky" ? STICKY_PX : 0);
   };
 
   const onUp = (): void => {

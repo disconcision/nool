@@ -152,7 +152,11 @@ const TransformView: Component<{
       {/*<div class="label">{props.t.name}</div>*/}
       <div
         class={`source node-container ${
-          props.model.settings.projection
+          /* docked noolbox stays projection-invariant: pats keep the
+           * default rendering regardless of the stage's projection */
+          props.model.settings.dockNoolbox
+            ? "TreeLeft"
+            : props.model.settings.projection
         } ${selected_src(props.model.tools, props.idx)} ${source_cls()}`}
         onmouseenter={setHover(source_cls, () => ({
           t: "TransformSource",
@@ -200,7 +204,9 @@ const TransformView: Component<{
       </div>
       <div
         class={`result node-container ${
-          props.model.settings.projection
+          props.model.settings.dockNoolbox
+            ? "TreeLeft"
+            : props.model.settings.projection
         } ${selected_res(props.model.tools, props.idx)} ${result_cls()}`}
         onmouseenter={setHover(result_cls, () => ({
           t: "TransformResult",
