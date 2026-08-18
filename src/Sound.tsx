@@ -152,11 +152,18 @@ export const drag_sound_start = (
 export const drag_sound_set = (t: number): void => {
   if (!drag_active) return;
   const tt = Math.max(0, Math.min(1, t));
+  /* A jump can cross several thresholds in one call (the Snap mechanic
+   * lands on t=1 from anywhere). Voice only the last chord crossed:
+   * stacked same-instant plucks re-trigger shared voices at an identical
+   * start time, which Tone rejects with an uncaught error. */
+  let advancing = -1;
+  let receding = -1;
   PLUCK_TS.forEach((th, i) => {
-    if (drag_last_t < th && tt >= th) pluck(pluck_chords[i], PLUCK_VOLS[i]);
-    if (drag_last_t >= th && tt < th)
-      pluck(pluck_chords[i].map(octave_down), -24);
+    if (drag_last_t < th && tt >= th) advancing = i;
+    if (drag_last_t >= th && tt < th) receding = i;
   });
+  if (advancing >= 0) pluck(pluck_chords[advancing], PLUCK_VOLS[advancing]);
+  else if (receding >= 0) pluck(pluck_chords[receding].map(octave_down), -24);
   drag_last_t = tt;
 };
 
