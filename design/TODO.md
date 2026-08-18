@@ -30,6 +30,12 @@ items listed in full here are NOT recorded elsewhere.
 - **design/performance.md** — the four scaling walls (grab probing,
   global motion measurement, shadow paint, hover churn) with fixes and
   bite-triggers; folding-as-projection is the collapse-perf answer.
+- **design/drag-legibility.md** — ambiguity taxonomy (coincident /
+  directional / undraggable), detection tiers, static vs dynamic
+  indication, control-vs-display geometry (rail fanning), loadout
+  presets, projection legibility + quasi-modal projection drags,
+  provenance moverhood, chain ("pass-off") as future toggle. Subsumes
+  the game-track "loadout conflict detection" sketch.
 
 ## Midterm track (world-tree successor — being scoped with Andrew)
 
@@ -52,12 +58,42 @@ items listed in full here are NOT recorded elsewhere.
 - Macro recorder (speculative until designed): dragology derive-by-diff
   (before/after snapshot → rule, both directions), not action-sequence
   replay; macros are ordinary Rewrites, hence toolbox citizens.
+- Projection machine follow-ups (drag-legibility.md): per-edge
+  enable/disable surface for the projection transformations; whether
+  flat infix becomes the standard/default mode; root-pinning across
+  commits (recentering loses mental context — sigil-anchor territory);
+  tree-up / tree-right to complete the rose.
 
 ## Not recorded elsewhere (canonical here)
 
 ### Decisions awaiting Andrew
-- Rails vs Closest drag mechanic: comparison toggle exists (8th corner
-  icon); pick one, delete the other.
+- Drag mechanic: 4-way comparison toggle (second top-left icon), round
+  2 — Classic · Sticky · Rails · Blend (see drag-legibility.md Rounds
+  5–6; the memoryless-vs-memory and track-vs-field axes). ALL modes
+  committed intact 2026-08-09 — committed ≠ decided; the verdict is
+  still open. Until it lands: new drag features target Classic first,
+  other mechanics opt in explicitly; unexercised modes have no tests
+  and can rot silently, so re-check each before comparing. Also still
+  switchable: FAN_SINGLE_STAGE in Drag.tsx (single-stage vs staged fan
+  choreography). After the verdict, delete the losers.
+- (superseded history) Round 1 of the toggle was Rails · Closest ·
+  Sticky · Snap; Snap and its bullseye icon are deleted. Analysis vs the dragology demo
+  (2026-08-03): the demo's dispatch is d.closest of two-state d.betweens
+  with stickiness 0 + withSnapRadius(1, {chain:true}); for two-state
+  betweens its gap = perpendicular distance to the clamped projection
+  and its drop rule = nearest endpoint, so nool's CLOSEST at COMMIT_T
+  0.5 is already the exact analog minus the snap layer. Sticky adds
+  dragology's stickiness hysteresis (STICKY_PX); Snap adds the
+  snap-radius click-into-place (SNAP_PX) WITHOUT the chain half —
+  chaining (commit mid-drag, re-enumerate, keep pulling) remains the
+  real delta and is already the top open item in captured-geometry.md.
+  Eventually: pick one mechanic, delete the rest.
+- Other dragology combinators noted as candidate experiments, unbuilt:
+  whenFar background (pull far from all tracks → disengage/cancel
+  affordance, with gapIn/gapOut hysteresis); between `sharpness` (ease
+  the blend toward endpoints); withFloating ghost as a whenFar fallback
+  only (whole-scene morph stays the committed feel — floating rejected
+  as the primary); d.vary is the internalization trigger, out of scope.
 - Debug defaults when tuning ends: drag-debug overlay currently ON by
   default; Shift+S / Shift+D toggles and `window.__knob` debug global
   should be removed or gated.
