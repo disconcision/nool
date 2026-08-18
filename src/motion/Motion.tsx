@@ -23,7 +23,23 @@
  * See design/captured-geometry.md.
  */
 
-export type Box = { x: number; y: number; w: number; h: number; font: number };
+export type Box = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  font: number;
+  /* optional per-layer rotation, degrees (projection rotation edges:
+   * comp pills sweep; glyphs stay upright). Driven per frame like x/y. */
+  rot?: number;
+  /* optional target border-radius; interpolated per corner across the
+   * tween (synthetic projection states carry the destination layout's
+   * radii — continuity: small t, small shape change) */
+  radius?: string;
+  /* optional rotation pivot: the layer's center interpolates in POLAR
+   * coordinates about this point (true rigid arcs, no waypoint seams) */
+  pivot?: { x: number; y: number };
+};
 
 export type Measured = {
   el: HTMLElement;
@@ -57,6 +73,19 @@ type Layer = {
    * etc., which animate transform) compose instead of clobbering it.
    * "box": size changes — left/top/size/font interpolated per frame. */
   mode: "translate" | "box";
+  /* per-corner px radii for continuous interpolation (lazily computed on
+   * first frame when the target box declares a radius; null = not needed) */
+  radii?: { from: number[]; to: number[] } | null;
+};
+
+/* Branch-switch spring (dragology's default activePath transition: every
+ * closest-branch change blends from the previously displayed scene toward
+ * the new live-tracking pure display, 200ms cubic-out). Bounded, decaying
+ * memory: the display provably reaches the pure function at expiry. */
+type Glide = {
+  boxes: Map<string, { box: Box; opacity: number }>;
+  start: number;
+  duration: number;
 };
 
 type Tween = {
@@ -68,6 +97,7 @@ type Tween = {
   ease?: (x: number) => number;
   /* present while a drag drives t directly; no clock runs */
   manual?: { t: number };
+  glide?: Glide;
 };
 
 let overlay: HTMLElement | null = null;
@@ -83,7 +113,31 @@ const lerpBox = (a: Box, b: Box, t: number): Box => ({
   w: lerp(a.w, b.w, t),
   h: lerp(a.h, b.h, t),
   font: lerp(a.font, b.font, t),
+  ...(a.rot || b.rot ? { rot: lerp(a.rot ?? 0, b.rot ?? 0, t) } : {}),
 });
+
+/* A box at ±90° is the same visual as its dim-swapped upright twin; fold
+ * captured blends into the nearest-upright form so a handoff after a
+ * rotation morph reshapes instead of spinning back. */
+const norm_rot = (b: Box): Box => {
+  let out = b;
+  while (out.rot && Math.abs(out.rot) > 45) {
+    const s = out.rot > 0 ? -90 : 90;
+    out = {
+      ...out,
+      x: out.x + out.w / 2 - out.h / 2,
+      y: out.y + out.h / 2 - out.w / 2,
+      w: out.h,
+      h: out.w,
+      rot: out.rot + s,
+    };
+  }
+  if (out.rot && Math.abs(out.rot) < 0.5) {
+    const { rot: _drop, ...rest } = out;
+    out = rest;
+  }
+  return out;
+};
 
 /* Member boxes are stored relative to their group's to-box so they can be
  * reconstructed against any blended box on retarget. */
@@ -204,16 +258,101 @@ const set_base_box = (l: Layer): void => {
   s.height = `${l.from.h}px`;
   s.fontSize = `${l.from.font}px`;
   if (l.mode === "translate") {
-    s.willChange = "translate, opacity";
+    s.willChange = "translate, rotate, opacity";
   } else {
     s.translate = ""; // clear residue on reused (retargeted) elements
     s.willChange = "";
   }
 };
 
+/* CSS border-radius shorthand expansion + px resolution (em against the
+ * box's font, % approximated against width). */
+const expand_radius = (parts: string[]): string[] =>
+  parts.length === 1
+    ? [parts[0], parts[0], parts[0], parts[0]]
+    : parts.length === 2
+    ? [parts[0], parts[1], parts[0], parts[1]]
+    : parts.length === 3
+    ? [parts[0], parts[1], parts[2], parts[1]]
+    : parts.slice(0, 4);
+
+const radius_px = (v: string, w: number, font: number): number =>
+  v.endsWith("em")
+    ? parseFloat(v) * font
+    : v.endsWith("%")
+    ? (parseFloat(v) / 100) * w
+    : parseFloat(v) || 0;
+
+const layer_radii = (l: Layer): Layer["radii"] => {
+  if (l.to.radius === undefined) return null;
+  const cs = getComputedStyle(l.el);
+  const from = [
+    cs.borderTopLeftRadius,
+    cs.borderTopRightRadius,
+    cs.borderBottomRightRadius,
+    cs.borderBottomLeftRadius,
+  ].map((v) => radius_px(v.split(" ")[0], l.from.w, l.from.font));
+  const to = expand_radius(l.to.radius.trim().split(/\s+/)).map((v) =>
+    radius_px(v, l.to.w, l.to.font)
+  );
+  return { from, to };
+};
+
+const glide_ease = (x: number): number => 1 - Math.pow(1 - x, 3); // cubic-out
+
+const glide_s = (g: Glide): number =>
+  glide_ease(clamp01((performance.now() - g.start) / g.duration));
+
+/* The pure blend for a layer at t — including the polar path when the
+ * target carries a pivot (the center sweeps the arc; size/rot lerp). */
+const pure_box = (l: Layer, t: number): Box => {
+  const b = lerpBox(l.from, l.to, t);
+  const P = l.to.pivot;
+  if (P) {
+    const c0x = l.from.x + l.from.w / 2;
+    const c0y = l.from.y + l.from.h / 2;
+    const c1x = l.to.x + l.to.w / 2;
+    const c1y = l.to.y + l.to.h / 2;
+    const a0 = Math.atan2(c0y - P.y, c0x - P.x);
+    let da = Math.atan2(c1y - P.y, c1x - P.x) - a0;
+    if (da > Math.PI) da -= 2 * Math.PI;
+    if (da < -Math.PI) da += 2 * Math.PI;
+    const r = lerp(
+      Math.hypot(c0x - P.x, c0y - P.y),
+      Math.hypot(c1x - P.x, c1y - P.y),
+      t
+    );
+    const a = a0 + da * t;
+    b.x = P.x + r * Math.cos(a) - b.w / 2;
+    b.y = P.y + r * Math.sin(a) - b.h / 2;
+  }
+  return b;
+};
+
+/* The DISPLAYED box/opacity: the pure blend, pulled toward the
+ * branch-switch snapshot while a glide is decaying. */
+const display_of = (
+  id: string,
+  l: Layer,
+  t: number,
+  g: Glide | undefined
+): { box: Box; opacity: number } => {
+  const box = pure_box(l, t);
+  const opacity = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
+  const gb = g?.boxes.get(id);
+  if (!g || !gb) return { box, opacity };
+  const s = glide_s(g);
+  return {
+    box: lerpBox(box, gb.box, 1 - s),
+    opacity: lerp(opacity, gb.opacity, 1 - s),
+  };
+};
+
 const apply_frame = (layers: Map<string, Layer>, t: number): void => {
-  for (const l of layers.values()) {
-    const b = lerpBox(l.from, l.to, t);
+  const glide = tween && layers === tween.layers ? tween.glide : undefined;
+  for (const [id, l] of layers.entries()) {
+    const d = display_of(id, l, t, glide);
+    const b = d.box;
     const s = l.el.style;
     if (l.mode === "translate") {
       s.translate = `${b.x - l.from.x}px ${b.y - l.from.y}px`;
@@ -224,7 +363,15 @@ const apply_frame = (layers: Map<string, Layer>, t: number): void => {
       s.height = `${b.h}px`;
       s.fontSize = `${b.font}px`;
     }
-    s.opacity = `${clamp01(lerp(l.fromOpacity, l.toOpacity, t))}`;
+    /* the standalone rotate property composes with both the translate
+     * property and transform-animating clone styles */
+    s.rotate = b.rot ? `${b.rot}deg` : "";
+    if (l.radii === undefined) l.radii = layer_radii(l);
+    if (l.radii)
+      s.borderRadius = l.radii.from
+        .map((f, i) => `${lerp(f, l.radii!.to[i], t)}px`)
+        .join(" ");
+    s.opacity = `${d.opacity}`;
   }
 };
 
@@ -306,9 +453,10 @@ const capture_before = (): {
         glow_box = lerpBox(l.from, l.to, t);
         continue;
       }
-      const op = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
+      const d = display_of(id, l, t, prev.glide);
+      const op = d.opacity;
       if (op < 0.01 && l.toOpacity === 0) continue; // fully-faded exit: drop
-      const blend = lerpBox(l.from, l.to, t);
+      const blend = norm_rot(d.box);
       before.set(id, { box: blend, opacity: op, depth: l.depth, parentId: l.parentId });
       exit_sources.set(id, l.el);
       if (l.members)
@@ -349,6 +497,18 @@ export type ConvergeSpec = { target: string; mode: "merge" | "absorb" };
 export type EmergeOpts = {
   emerge?: Map<string, EmergeSpec>;
   converge?: Map<string, ConvergeSpec>;
+  /* memoryless drags (dragology semantics): the tween's origin is THIS
+   * state — the grab-time base — not the captured in-flight blend. Track
+   * switches become crisp re-evaluations of a pure function instead of
+   * accumulating history. (Capture-the-blend remains the default: it is
+   * what commits and clock morphs landing mid-flight want.) */
+  origin?: Map<string, Measured>;
+  /* with origin: spring from the previously displayed scene toward the
+   * new pure display (dragology's default branch transition) */
+  glide?: boolean;
+  /* skip rigid-subtree grouping (weight-field driving needs every node
+   * individually addressable) */
+  flat?: boolean;
 };
 
 /* Build the flat layer set morphing `before` (blend/live boxes) into
@@ -382,6 +542,7 @@ const build_layers = (
   /* A subtree is rigid when every before-descendant survives in place and
    * every member's box maps through the root's (uniform) scale+translate. */
   const subtree_rigid = (rootId: string): string[] | null => {
+    if (opts?.flat) return null;
     const rb = before.get(rootId);
     const ra = after.get(rootId);
     if (!rb || !ra || rb.box.w <= 0 || rb.box.h <= 0) return null;
@@ -814,7 +975,39 @@ export const manual_start = (
   after: Map<string, Measured>,
   opts?: EmergeOpts
 ): boolean => {
-  const { before, exit_sources, reuse_exits } = capture_before();
+  let before: Map<string, BeforeInfo>;
+  let exit_sources: Map<string, HTMLElement>;
+  let reuse_exits: boolean;
+  let pending_glide: Glide["boxes"] | undefined;
+  if (opts?.origin) {
+    /* memoryless: discard the in-flight tween, originate at the base —
+     * but first snapshot the displayed scene for the branch-switch
+     * spring (dragology's default activePath transition) */
+    if (tween) {
+      if (opts.glide && tween.manual) {
+        const t = eased_now(tween);
+        pending_glide = new Map();
+        for (const [id, l] of tween.layers)
+          pending_glide.set(id, display_of(id, l, t, tween.glide));
+      }
+      cancelAnimationFrame(tween.raf);
+      tween = null;
+    }
+    before = new Map();
+    exit_sources = new Map();
+    opts.origin.forEach((m, id) => {
+      before.set(id, {
+        box: m.box,
+        opacity: 1,
+        depth: m.depth,
+        parentId: m.parentId,
+      });
+      exit_sources.set(id, m.el);
+    });
+    reuse_exits = false;
+  } else {
+    ({ before, exit_sources, reuse_exits } = capture_before());
+  }
   if (before.size === 0) {
     /* a silent false here leaves the previous overlay frozen — if the
      * "stuck mid-blend drag" ever recurs, look for this warning */
@@ -833,14 +1026,86 @@ export const manual_start = (
     raf: 0,
     manual: { t: 0 },
   };
+  if (pending_glide) {
+    tween.glide = {
+      boxes: pending_glide,
+      start: performance.now(),
+      duration: 200,
+    };
+    start_glide_clock();
+  }
   apply_frame(layers, 0);
   return true;
+};
+
+/* The spring must advance even when the pointer is still: run a small
+ * clock while a glide is decaying, re-applying at the current manual t. */
+const start_glide_clock = (): void => {
+  const tw = tween;
+  if (!tw) return;
+  const step = (): void => {
+    if (tween !== tw || !tw.manual || !tw.glide) return;
+    if (performance.now() - tw.glide.start >= tw.glide.duration) {
+      tw.glide = undefined;
+      apply_frame(tw.layers, tw.manual.t);
+      return;
+    }
+    apply_frame(tw.layers, tw.manual.t);
+    tw.raf = requestAnimationFrame(step);
+  };
+  tw.raf = requestAnimationFrame(step);
 };
 
 export const manual_set = (t: number): void => {
   if (!tween?.manual) return;
   tween.manual.t = clamp01(t);
   apply_frame(tween.layers, tween.manual.t);
+};
+
+/* Weight-field driving (the Blend mechanic): no tracks, no dispatch — the
+ * scene is a weighted mixture over states[0] (the base) and the candidate
+ * states. Layers build once (flat: every node individually driven); the
+ * returned setter writes each layer's `to` as the mixture and pins t=1, so
+ * the ordinary machinery (release back to base, commit picking up the
+ * blend as its origin) keeps working unchanged. All states must share the
+ * same node set (projection pulls do; rewrites do not). */
+export const manual_field = (
+  states: Map<string, Measured>[]
+): ((weights: number[]) => void) | null => {
+  const base = states[0];
+  if (!manual_start(states[1] ?? base, { origin: base, flat: true }))
+    return null;
+  const tw = tween!;
+  for (const l of tw.layers.values()) {
+    l.mode = "box"; // sizes vary under the mixture
+    l.el.style.willChange = "";
+    l.el.style.translate = "";
+  }
+  return (weights: number[]): void => {
+    if (tween !== tw || !tw.manual) return;
+    for (const [id, l] of tw.layers) {
+      let x = 0;
+      let y = 0;
+      let w = 0;
+      let h = 0;
+      let font = 0;
+      let rot = 0;
+      states.forEach((s, i) => {
+        const b = (s.get(id) ?? base.get(id))?.box;
+        if (!b) return;
+        const wt = weights[i];
+        x += wt * b.x;
+        y += wt * b.y;
+        w += wt * b.w;
+        h += wt * b.h;
+        font += wt * b.font;
+        rot += wt * (b.rot ?? 0);
+      });
+      l.to = { x, y, w, h, font, ...(rot ? { rot } : {}) };
+    }
+    tw.manual.t = 1;
+    apply_frame(tw.layers, 1);
+  };
 };
 
 export const manual_t = (): number => tween?.manual?.t ?? 0;
@@ -851,16 +1116,16 @@ export const manual_t = (): number => tween?.manual?.t ?? 0;
 export const manual_release = (): void => {
   if (!tween?.manual) return;
   const t = tween.manual.t;
-  for (const l of tween.layers.values()) {
-    const blend = lerpBox(l.from, l.to, t);
-    const blendOp = clamp01(lerp(l.fromOpacity, l.toOpacity, t));
+  for (const [id, l] of tween.layers.entries()) {
+    const d = display_of(id, l, t, tween.glide);
     l.to = l.from;
     l.toOpacity = l.fromOpacity;
-    l.from = blend;
-    l.fromOpacity = blendOp;
+    l.from = d.box;
+    l.fromOpacity = d.opacity;
     l.mode = layer_mode(l.from, l.to);
     set_base_box(l);
   }
+  tween.glide = undefined;
   tween.manual = undefined;
   tween.start = performance.now();
   apply_frame(tween.layers, 0);
