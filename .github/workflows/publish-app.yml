@@ -1,0 +1,60 @@
+name: Publish app
+on:
+  push:
+    branches-ignore: [gh-pages]
+    paths-ignore: ['.github/**', 'DEPLOYMENT.md']
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to publish (empty uses the default branch)
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: publish-${{ github.event.inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      SOURCE_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+    steps:
+      - name: Checkout app source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_BRANCH }}
+          path: source
+          persist-credentials: false
+      - name: Checkout shared publishing tools
+        uses: actions/checkout@v4
+        with:
+          repository: disconcision/furl-next
+          ref: furl
+          path: automation
+          sparse-checkout: .github/pages
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and build
+        working-directory: source
+        run: |
+          if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          npm run build
+      - name: Stage build
+        run: mv source/dist build
+      - name: Checkout combined site
+        uses: actions/checkout@v4
+        with:
+          repository: disconcision/supernool
+          ref: gh-pages
+          path: site
+          ssh-key: ${{ secrets.PAGES_DEPLOY_KEY }}
+      - name: Publish this app without replacing other builds
+        run: |
+          python3 automation/.github/pages/publish.py \
+            --site site --build build --app nool \
+            --branch "$SOURCE_BRANCH" --default main --classic \
+            --revision "$(git -C source rev-parse HEAD)" --push
