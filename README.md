@@ -53,3 +53,7 @@ open [http://localhost:3000](http://localhost:3000)
 ### `pnpm run build`
 
 builds deployable in `dist` folder
+
+## Supernool
+
+The 3D game and its exploration archive now live in [supernool](https://github.com/disconcision/supernool), locally at `../supernool`. Nool remains the 2D interaction lab. The original integrated world experiment is preserved in Supernool under `legacy/nool-world/`; its pre-split source also remains in Nool Git history at `e8b38bc`.

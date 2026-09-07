@@ -4,10 +4,6 @@ import { render } from 'solid-js/web';
 import './index.css';
 //import 'bootstrap/dist/css/bootstrap.min.css'
 import App from './App';
-import WorldView from './world/WorldView';
-
-/* ?world: the isometric world mode; bare URL stays the single-tree sandbox */
-const world = new URLSearchParams(window.location.search).has('world');
 
 const root = document.getElementById('root');
 
@@ -17,4 +13,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => (world ? <WorldView /> : <App />), root!);
+render(() => <App />, root!);
