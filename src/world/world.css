@@ -1,0 +1,110 @@
+.world-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #cfd8d4;
+}
+
+.world-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* screen-space layer for the (single) live tree. No transforms anywhere
+ * on this chain: Motion/Drag overlays and #noolbox{position:fixed} rely
+ * on untransformed screen coordinates. */
+.world-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.world-anchor {
+  position: absolute;
+  pointer-events: auto;
+  visibility: hidden;
+  opacity: 0;
+  /* visibility flips only after the fade-out completes */
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+}
+.world-anchor.on {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+/* parked far off-viewport for boot-time rasterization */
+.world-anchor.offscreen {
+  left: -10000px !important;
+  top: 0 !important;
+  transition: none;
+}
+
+/* the app frame reads as UI chrome; in the world the tree is an organism */
+.world-anchor #main {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
+/* the seed icon isn't in the sprite capture (#stage only); hide it live
+ * too so dormant and awake are renderings of the same image */
+.world-anchor .icon2 {
+  display: none;
+}
+
+/* the noolbox is the player's toolset, not part of any one tree: a
+ * screen-level affordance that appears once the tree has settled (its
+ * fixed positioning is only correct when the anchor is untransformed) */
+.world-anchor #noolbox {
+  position: fixed;
+  left: 16px;
+  top: 18%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease 0.1s;
+}
+.world-anchor.settled #noolbox {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.world-hud {
+  position: absolute;
+  z-index: 3;
+  left: 1.2em;
+  bottom: 1em;
+  color: #35422f;
+  user-select: none;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+.world-energy {
+  font-size: 1.3em;
+}
+.world-hint {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+.world-mode {
+  position: absolute;
+  z-index: 3;
+  right: 1.2em;
+  bottom: 1em;
+  pointer-events: auto;
+  border: none;
+  border-radius: 1.2em;
+  padding: 0.5em 0.9em;
+  font: inherit;
+  font-size: 0.9em;
+  color: #35422f;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 4px rgba(40, 55, 40, 0.25);
+  cursor: pointer;
+  user-select: none;
+}
+.world-mode:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
