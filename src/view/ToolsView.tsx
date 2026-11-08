@@ -132,6 +132,14 @@ const TransformView: Component<{
       props.inject({ t: "toggleDragTool", idx: props.idx });
     else props.inject({ t: "Noop" });
   };
+  const dir = () => props.model.tools.dragActive[props.idx];
+  const drag_glyph = (): string | null => {
+    if (!props.model.settings.dragging) return null;
+    const d = dir();
+    if (d !== "fwd" && d !== "rev") return null;
+    /* canonical fwd reads left→right unless the row is displayed flipped */
+    return (d === "fwd") !== t().reversed ? "→" : "←";
+  };
   const selected_res = (tools: ToolBox.t, c: number) =>
     tools.selector[0] === c && tools.selector[1] === 1 ? "selected" : "";
   const selected_src = (tools: ToolBox.t, c: number) =>
@@ -143,8 +151,13 @@ const TransformView: Component<{
       title={
         props.model.settings.dragging
           ? `Draggable: ${
-              props.model.tools.dragActive[props.idx] ? "on" : "off"
-            } (click to toggle)`
+              {
+                off: "off",
+                both: "both ways",
+                fwd: "one way",
+                rev: "one way",
+              }[dir()]
+            } (click to cycle: off → both ways → → → ←)`
           : undefined
       }
       onpointerdown={row_pointerdown}
@@ -173,11 +186,14 @@ const TransformView: Component<{
         />
       </div>
       <div
-        class={`transform-arrow ${
-          props.model.tools.dragActive[props.idx] ? "drag-on" : ""
+        class={`transform-arrow ${dir() !== "off" ? "drag-on" : ""} ${
+          drag_glyph() ? "drag-oneway" : ""
         }`}
       >
         <Switch fallback="🟰">
+          {/* drag mode: a one-way loadout reads as its arrow, drawn in
+              the row's DISPLAYED orientation */}
+          <Match when={drag_glyph()}>{drag_glyph()}</Match>
           {/*  arrows:
                 ⇋ ⇌ ⇆ ⇄  ⇨ ➥ ➫ ➬
                 → ⇋ ⥊ ⥋ ⇋ ⇌ ⇆ ⇄
@@ -238,7 +254,43 @@ export const ToolsView: Component<{
    * Shift+wheel resizes the box CONTINUOUSLY (size is fractional; the
    * max-height tracks it smoothly); on macOS shift turns trackpad
    * deltas horizontal, hence deltaX. */
+  /* Folded noolbox (compact layouts, index.css): its spine — one mark per
+   * rule in the rule's loadout state (dim equals = off, lit equals = both
+   * ways, lit arrow = one way) — a summary and the unfold handle. */
+  const spine_glyph = (idx: number): string => {
+    const d = props.model.tools.dragActive[idx];
+    if (!props.model.settings.dragging || d === "off" || d === "both")
+      return "🟰";
+    return (d === "fwd") !== props.model.tools.transforms[idx].reversed
+      ? "→"
+      : "←";
+  };
   return (
+    <>
+    <div
+      id="noolbox-spine"
+      title="Unfold the noolbox"
+      onpointerdown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        props.inject({ t: "setSetting", action: "ToggleFold" });
+      }}
+    >
+      <For each={[...Array(props.model.tools.transforms.length).keys()]}>
+        {(idx) => (
+          <span
+            class={`spine-mark transform-arrow ${
+              props.model.settings.dragging &&
+              props.model.tools.dragActive[idx] !== "off"
+                ? "drag-on"
+                : ""
+            }`}
+          >
+            {spine_glyph(idx)}
+          </span>
+        )}
+      </For>
+    </div>
     <div
       id="noolbox"
       style={{ "max-height": `${props.model.tools.size * 2.4}em` }}
@@ -256,5 +308,6 @@ export const ToolsView: Component<{
         )}
       </For>
     </div>
+    </>
   );
 };

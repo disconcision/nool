@@ -776,6 +776,15 @@ const run_tween = (
  * synchronously (solid store writes do). `mk_opts`, when given, supplies
  * emerge/converge provenance for the morph from the before/after box
  * maps — the click-path twin of the drag path's candidate provenance. */
+/* Layout hook run right after every state change, before the "after"
+ * measurement — anything that adjusts geometry in response to the new
+ * state (the compact layout's stage fit, Fit.tsx) must land here or the
+ * morph would tween to stale boxes. */
+let after_apply: (() => void) | null = null;
+export const set_after_apply = (f: (() => void) | null): void => {
+  after_apply = f;
+};
+
 export const animate = (
   apply: () => void,
   enabled: boolean,
@@ -786,6 +795,7 @@ export const animate = (
 ): void => {
   if (!enabled || typeof document === "undefined") {
     apply();
+    after_apply?.();
     finish();
     return;
   }
@@ -797,6 +807,7 @@ export const animate = (
     capture_before();
 
   apply();
+  after_apply?.();
 
   const after = measure();
 

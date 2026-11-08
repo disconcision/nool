@@ -17,6 +17,7 @@ import { render } from "solid-js/web";
 import * as Model from "./../Model";
 import * as Statics from "./../Statics";
 import * as Settings from "./../Settings";
+import * as ToolBox from "./../ToolBox";
 import * as Action from "./../Action";
 import * as Exp from "./../syntax/Exp";
 import * as ID from "./../syntax/ID";
@@ -246,8 +247,15 @@ const prefer_grab = (
   return twin ? replace_by_id(candExp, twin.id, liveGrab) : candExp;
 };
 
-/* Must mirror StageView's depth-derived scale. */
+/* Must mirror StageView's depth-derived scale (and its compact-layout
+ * multipliers --stage-boost and --stage-fit, read live off #stage so the
+ * probe always matches). */
 const stage_scale = (d: number) => (d == 0 ? 1 : 4 / (d + 1));
+const stage_boost = (stageEl: HTMLElement): number => {
+  const cs = getComputedStyle(stageEl);
+  const v = (name: string) => parseFloat(cs.getPropertyValue(name)) || 1;
+  return v("--stage-boost") * v("--stage-fit");
+};
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
@@ -279,12 +287,15 @@ export const enumerate = (
   }[] = [];
   for (const site of sites) {
     model.tools.transforms.forEach((t, idx) => {
-      /* per-rule loadout toggles (the circles beside the rules) */
-      if (!model.tools.dragActive[idx]) return;
+      /* per-rule loadout (the rule row's equals/arrow glyph): off, both
+       * directions, or one canonical direction */
+      const dir = model.tools.dragActive[idx];
+      if (dir === "off") return;
       for (const [transform, reversed] of [
         [t, false],
         [flip(t), true],
       ] as const) {
+        if (!ToolBox.dir_allows(dir, transform)) continue;
         const r = at_path(transform, site)(model.stage.exp);
         if (r === "NoMatch") continue;
         const exp = freshen(r); // same normalization a commit would get
@@ -318,7 +329,9 @@ const probe_candidate = (
   const host = document.createElement("div");
   host.className = "drag-probe";
   const mainPx = parseFloat(getComputedStyle(main).fontSize);
-  host.style.fontSize = `${mainPx * stage_scale(depth(exp))}px`;
+  host.style.fontSize = `${
+    mainPx * stage_scale(depth(exp)) * stage_boost(stageEl)
+  }px`;
   stageEl.appendChild(host);
   const dispose_solid = render(
     () => (

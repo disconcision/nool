@@ -3,28 +3,66 @@ import * as Tools from "./data/Tools";
 import * as Path from "./syntax/Path";
 import * as Action from "./Action";
 
+/* Per-rule drag loadout: which directions of a rule generate drag
+ * candidates. Directions are CANONICAL (relative to the rule as written in
+ * data/Tools, i.e. Transform.reversed === false is "fwd"), so a rule the
+ * select mode has flipped in the box keeps its loadout meaning; the arrow
+ * glyph in the row is drawn relative to the row's displayed orientation.
+ * "both" is drawn as the equals sign: the rule as a two-way identity. */
+export type DragDir = "off" | "both" | "fwd" | "rev";
+
 export type t = {
   selector: Path.t;
   transforms: Transform.t[];
   size: number;
-  /* which tools generate drag candidates (index-aligned with transforms;
-   * both directions of a tool together) */
-  dragActive: boolean[];
+  /* index-aligned with transforms */
+  dragActive: DragDir[];
 };
 
 export const init: t = {
   selector: [],
   transforms: Tools.init,
   size: 5,
-  /* default loadout: associativity (+,×), commutativity (+,×),
-   * additive identity, and distributivity */
-  dragActive: Tools.init.map((_, i) => [0, 1, 2, 4, 5, 7].includes(i)),
+  /* default loadout (by name, so toolbox reordering can't silently shift
+   * it). Additive identity is one-way, zero-REMOVING only (0+a → a):
+   * zero-adding candidates made every drag soupy, worst on touch. */
+  dragActive: Tools.init.map((t): DragDir => default_dir(t.name)),
+};
+
+export function default_dir(name: string): DragDir {
+  switch (name) {
+    case "associate_plus":
+    case "commute_plus":
+    case "distribute_times_plus":
+    case "inverse_plus":
+    case "identity_times":
+      return "both";
+    case "identity_plus":
+      return "rev";
+    default:
+      return "off";
+  }
+}
+
+/* Tap cycle on a rule row: off → both (=) → fwd (→) → rev (←) → off */
+const next_dir: Record<DragDir, DragDir> = {
+  off: "both",
+  both: "fwd",
+  fwd: "rev",
+  rev: "off",
 };
 
 export const toggle_drag_tool = (tools: t, idx: number): t => ({
   ...tools,
-  dragActive: tools.dragActive.map((a, i) => (i === idx ? !a : a)),
+  dragActive: tools.dragActive.map((a, i) => (i === idx ? next_dir[a] : a)),
 });
+
+/* May a candidate built from `transform` (some orientation of a box rule)
+ * be offered as a drag target under `dir`? */
+export const dir_allows = (dir: DragDir, transform: Transform.t): boolean =>
+  dir === "both" ||
+  (dir === "fwd" && !transform.reversed) ||
+  (dir === "rev" && transform.reversed);
 
 export const update_selector = (tools: t, f: (_: Path.t) => Path.t): t => ({
   ...tools,

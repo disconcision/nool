@@ -1,6 +1,7 @@
 import * as Model from "./Model";
 import * as Stage from "./Stage";
 import * as ID from "./syntax/ID";
+import * as ToolBox from "./ToolBox";
 
 /* Session persistence: the model's own state (world, selection, settings,
  * loadout, history) survives refresh via localStorage — it's a few KB of
@@ -30,6 +31,10 @@ const sanitize_settings = (s: Model.t["settings"]): Model.t["settings"] => ({
   ].includes(s.projection)
     ? s.projection
     : Model.init.settings.projection,
+  chrome: ["corners", "fan", "dock"].includes(s.chrome)
+    ? s.chrome
+    : Model.init.settings.chrome,
+  boost: [1, 1.25, 1.5].includes(s.boost) ? s.boost : Model.init.settings.boost,
 });
 
 export const save_soon = (model: Model.t): void => {
@@ -60,6 +65,24 @@ export const clear = (): void => {
   } catch {}
 };
 
+/* Loadouts were boolean[] (both directions on/off) before rules gained
+ * one-way states. Migrate on/off to both/off, except rules whose new
+ * default is one-way (additive identity → zero-removing only), which
+ * adopt that default when on. Unknown shapes fall back to defaults. */
+const DIRS: ToolBox.DragDir[] = ["off", "both", "fwd", "rev"];
+const load_drag_dirs = (raw: unknown): ToolBox.DragDir[] => {
+  const init = Model.init.tools.dragActive;
+  if (!Array.isArray(raw) || raw.length !== init.length) return init;
+  return raw.map((v, i) => {
+    if (typeof v === "boolean") {
+      if (!v) return "off";
+      const d = init[i];
+      return d === "fwd" || d === "rev" ? d : "both";
+    }
+    return DIRS.includes(v) ? (v as ToolBox.DragDir) : init[i];
+  });
+};
+
 export const load = (): Model.t | null => {
   try {
     const raw = localStorage.getItem(KEY);
@@ -77,7 +100,7 @@ export const load = (): Model.t | null => {
       }),
       tools: {
         ...Model.init.tools,
-        dragActive: s.dragActive ?? Model.init.tools.dragActive,
+        dragActive: load_drag_dirs(s.dragActive),
         size: s.size ?? Model.init.tools.size,
       },
       history: s.history ?? { past: [], future: [] },

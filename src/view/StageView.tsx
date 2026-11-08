@@ -16,7 +16,12 @@ export const StageView: Component<{
   return (
     <div
       id="stage"
-      style={`font-size: ${stage_scale(depth(props.model.stage.exp))}em`}
+      /* compact layouts: --stage-boost enlarges the stage while the box is
+       * folded (index.css), --stage-fit shrinks it to fit the screen
+       * (Fit.tsx); both 1 elsewhere. Drag's probe reads the same two. */
+      style={`font-size: calc(${stage_scale(
+        depth(props.model.stage.exp)
+      )}em * var(--stage-boost, 1) * var(--stage-fit, 1))`}
     >
       <div id="debug" style="display:none">
         <div>selection.path: {props.model.stage.selection}</div>

@@ -1,12 +1,18 @@
-import { Component, Show } from "solid-js";
+import { Component, Show, createSignal } from "solid-js";
 
 /* Bottom-right help badge: deliberately bigger and higher-contrast than
  * the corner settings icons — the one control a newcomer should find.
  * Hovering reveals a terse guide to the two modes. */
-export const HelpView: Component<{ dragging: boolean }> = (props) => (
-  <div id="help">
-    <div class="badge">?</div>
-    <div class="panel">
+export const HelpView: Component<{ dragging: boolean }> = (props) => {
+  /* touch has no hover: a tap on the badge pins the panel open, a tap on
+   * the badge or the panel closes it */
+  const [open, setOpen] = createSignal(false);
+  return (
+  <div id="help" classList={{ open: open() }}>
+    <div class="badge" onclick={() => setOpen(!open())}>
+      ?
+    </div>
+    <div class="panel" onclick={() => setOpen(false)}>
       <p>
         <b>nool</b> makes math tweakable, tuggable, and fussable. it's a work in
         progress. there isn't much to do yet. but you can bop it. on the left is
@@ -34,6 +40,14 @@ export const HelpView: Component<{ dragging: boolean }> = (props) => (
         see if you can simplify the stage. the drag guides (the icon below the
         mode switch) help show where pulls can lead.
       </p>
+      {/* the nool menu/project page (site/ in this repo); absolute so it
+          resolves the same from /classic/ and every /classic/<branch>/ */}
+      <p class="more">
+        <a href="/about/" onclick={(e) => e.stopPropagation()}>
+          more nool →
+        </a>
+      </p>
     </div>
   </div>
-);
+  );
+};

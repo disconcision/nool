@@ -12,5 +12,6 @@
     "types": ["vite/client", "jest", "dom-view-transitions"],
     "noEmit": true,
     "isolatedModules": true,
-  }
+  },
+  "include": ["src"]
 }

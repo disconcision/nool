@@ -4,6 +4,8 @@ import { ToolsView } from "../view/ToolsView";
 import { AdjacentPossible } from "../view/PreView";
 import * as Model from "../Model";
 import * as Action from "../Action";
+import * as Settings from "../Settings";
+import { compact } from "./SettingsView";
 
 export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
   props
@@ -18,7 +20,10 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
         ? " notransition noanimation notransformation"
         : "") +
       (props.model.settings.dragging ? " dragging" : "") +
-      (props.model.settings.dockNoolbox ? " docked" : "")
+      (props.model.settings.dockNoolbox ? " docked" : "") +
+      /* compact layouts only (index.css): the noolbox folds to its spine */
+      (Settings.folded(props.model.settings) ? " folded" : "") +
+      ` boost-${String(props.model.settings.boost).replace(".", "")}`
     }
     onmousedown={(e) => {
       e.preventDefault();
@@ -35,7 +40,12 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
       onmousedown={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        props.inject({ t: "strikeSeed" });
+        /* compact layouts: the seed folds/unfolds the noolbox (the
+         * fold-handle role the world-tree design gives the seed); desktop
+         * keeps the strike */
+        if (compact())
+          props.inject({ t: "setSetting", action: "ToggleFold" });
+        else props.inject({ t: "strikeSeed" });
       }}
     >
       <div class="inner" />

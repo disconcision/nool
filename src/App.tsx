@@ -13,6 +13,7 @@ import * as Sound from "./Sound";
 import * as Persist from "./Persist";
 import * as Drag from "./drag/Drag";
 import { id_at } from "./syntax/Node";
+import * as Fit from "./Fit";
 
 export type SetModel = SetStoreFunction<Model.t>;
 
@@ -58,6 +59,11 @@ const App: Component = () => {
       mk_opts
     );
   };
+  /* compact layouts: keep the stage on screen (Fit.tsx) — after every
+   * state change (inside Motion, before it measures) and on resize */
+  Motion.set_after_apply(Fit.refit);
+  window.addEventListener("resize", () => Fit.refit());
+  requestAnimationFrame(() => Fit.refit());
   document.addEventListener("keydown", Keyboard.keydown(inject, model), false);
   document.addEventListener("keyup", Keyboard.keyup(inject), false);
   // Debug toggles: Shift+S all shadows off; Shift+D cheap toolbox

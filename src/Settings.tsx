@@ -26,6 +26,18 @@ export type theme = "Light" | "Dark";
  *   candidate states (projection pulls only; Classic elsewhere) */
 export type dragMechanic = "Classic" | "Sticky" | "Rails" | "Blend";
 
+/* Compact-screen (phone) chrome candidates, a TEMPORARY evaluation knob
+ * (the "lab" chip, compact layouts only; desktop is unaffected):
+ * - corners: the corner L-clusters, finger-sized, desktop-only experiments
+ *   trimmed away
+ * - fan: only the mode switch and help stay out; one corner mark fans the
+ *   rest out down the right edge
+ * - dock: every control moved down into one thumb row */
+export type chrome = "corners" | "fan" | "dock";
+
+/* Compact-only stage enlargement while the noolbox is folded (lab knob) */
+export type boost = 1 | 1.25 | 1.5;
+
 export type t = {
   sound: boolean;
   motion: motion;
@@ -45,6 +57,13 @@ export type t = {
   /* experimental: pin the noolbox to the screen's left edge (and the seed
    * icon up top) so stage/layout reflows stop pushing the flanks around */
   dockNoolbox: boolean;
+  /* compact layouts: the noolbox folds away (tap the seed) — remembered
+   * per mode, folded by default in drag mode where it's mostly a loadout,
+   * open in select mode where it's the way you act */
+  foldDrag: boolean;
+  foldSelect: boolean;
+  chrome: chrome;
+  boost: boost;
 };
 
 export type Action =
@@ -58,7 +77,14 @@ export type Action =
   | "ToggleDragMechanic"
   | "ToggleDragDebug"
   | "ToggleProjectionDrag"
-  | "ToggleDockNoolbox";
+  | "ToggleDockNoolbox"
+  | "ToggleFold"
+  | "ChromeCorners"
+  | "ChromeFan"
+  | "ChromeDock"
+  | "Boost1"
+  | "Boost125"
+  | "Boost150";
 
 export const init: t = {
   sound: true,
@@ -72,7 +98,13 @@ export const init: t = {
   dragDebug: false,
   projectionDrag: false,
   dockNoolbox: false,
+  foldDrag: true,
+  foldSelect: false,
+  chrome: "corners",
+  boost: 1.5,
 };
+
+export const folded = (s: t): boolean => (s.dragging ? s.foldDrag : s.foldSelect);
 
 export const update = (settings: t, action: Action): t => {
   switch (action) {
@@ -135,5 +167,21 @@ export const update = (settings: t, action: Action): t => {
       return { ...settings, projectionDrag: !settings.projectionDrag };
     case "ToggleDockNoolbox":
       return { ...settings, dockNoolbox: !settings.dockNoolbox };
+    case "ToggleFold":
+      return settings.dragging
+        ? { ...settings, foldDrag: !settings.foldDrag }
+        : { ...settings, foldSelect: !settings.foldSelect };
+    case "ChromeCorners":
+      return { ...settings, chrome: "corners" };
+    case "ChromeFan":
+      return { ...settings, chrome: "fan" };
+    case "ChromeDock":
+      return { ...settings, chrome: "dock" };
+    case "Boost1":
+      return { ...settings, boost: 1 };
+    case "Boost125":
+      return { ...settings, boost: 1.25 };
+    case "Boost150":
+      return { ...settings, boost: 1.5 };
   }
 };

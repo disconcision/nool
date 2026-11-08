@@ -1229,9 +1229,15 @@ v .transform-view .label {
   pointer-events: none;
   transition: opacity 0.15s ease;
 }
-#help:hover .panel {
+#help:hover .panel,
+#help.open .panel {
   opacity: 1;
   pointer-events: auto;
+}
+#help .panel .more a {
+  color: inherit;
+  text-decoration-color: #0a7d58;
+  text-underline-offset: 0.2em;
 }
 .Dark #help .panel {
   background: #131b33f2;
@@ -1253,6 +1259,14 @@ v .transform-view .label {
    candidates). */
 #seed.dragging .transform-view {
   cursor: pointer;
+}
+/* one-way loadout: the arrow, heavier than the hover arrows so it holds
+   its own beside the equals emoji once glowing */
+#seed.dragging .transform-arrow.drag-oneway {
+  font-size: 1.45em;
+  font-weight: 800;
+  line-height: 0.7;
+  align-items: center;
 }
 #seed.dragging .transform-arrow.drag-on {
   /* solid-white glyph (emoji can't be colored; black-then-invert can)
@@ -1662,7 +1676,16 @@ body:has(#main.Dark) {
 }
 
 /* Portrait: stack — stage on top, noolbox below (thumb-reachable).
-   Projection-specific #seed directions (TreeTop/Linear) still win. */
+   Projection-specific #seed directions (TreeTop/Linear) still win.
+   Portrait phones get a larger base than 6vw: at 6vw a 375px phone ran
+   the whole UI at under half desktop scale (35px rule rows, 9px arrows);
+   7.5vw gives ~44px rows. The vh cap keeps short phones (SE) from
+   overflowing in select mode, where stage + seed + open box all stack. */
+@media (max-width: 820px) and (orientation: portrait) {
+  #main {
+    font-size: clamp(1.05rem, min(7.5vw, 4.1vh), 3rem);
+  }
+}
 @media (max-width: 820px) and (orientation: portrait) {
   #seed {
     flex-direction: column-reverse;
@@ -1671,29 +1694,363 @@ body:has(#main.Dark) {
   }
 }
 
-/* Coarse pointers: keep tap targets finger-sized even at small em, and
-   spread the corner clusters so the bigger targets don't overlap. */
-@media (pointer: coarse) {
-  #settings-panel .icon {
-    width: max(0.5em, 30px);
-    padding: max(0.15em, 8px);
+/* ============ Compact layouts (phones): fold, chrome candidates ============
+   Everything below is gated on the same query as the em scaling above
+   (SettingsView.compact() mirrors it in JS); desktop is untouched. */
+
+/* Compact-only elements are absent by default. */
+#noolbox-spine,
+#fan-mark,
+#fan-scrim,
+#ui-lab,
+#mode-toast {
+  display: none;
+}
+
+@media (max-width: 820px), (max-height: 520px) {
+  :root {
+    --st: env(safe-area-inset-top, 0px);
+    --sr: env(safe-area-inset-right, 0px);
+    --sb: env(safe-area-inset-bottom, 0px);
+    --sl: env(safe-area-inset-left, 0px);
+    /* finger-sized hit box around a desktop-sized glyph */
+    --hit: 44px;
+    --glyph: 20px;
   }
-  #settings-panel .icon:nth-child(2) {
-    left: max(0.75em, 52px);
+
+  /* --- Folding: the seed folds the noolbox down to its spine --- */
+  #seed.folded #noolbox {
+    display: none;
   }
-  #settings-panel .icon:nth-child(3) {
-    top: max(0.75em, 52px);
+  #seed.folded #noolbox-spine {
+    display: flex;
   }
-  #settings-panel .icon:nth-child(5) {
-    right: max(0.75em, 52px);
+  /* the freed space goes to the stage (Drag's probe reads the same var) */
+  #seed.folded.boost-125 {
+    --stage-boost: 1.25;
   }
-  #settings-panel .icon:nth-child(6) {
-    top: max(0.75em, 52px);
+  #seed.folded.boost-15 {
+    --stage-boost: 1.5;
   }
-  #settings-panel .icon:nth-child(8) {
-    left: max(0.75em, 52px);
+  #noolbox-spine {
+    align-items: center;
+    justify-content: center;
+    gap: 0.2em;
+    font-size: 0.42em;
+    min-height: var(--hit);
+    padding: 0 0.9em;
+    box-sizing: border-box;
+    border-radius: 1.2em;
+    /* a faint teal well (the box's own tint, deepened) so the white
+       loadout marks read against the pale ground */
+    background: linear-gradient(180deg, #2f9c8a2e, #2f9c8a1c);
+    border-bottom: 0.06em solid #53f5ff88;
+    box-shadow:
+      inset 0 0.25em 0.5em #1f6f6222,
+      inset 0 -0.15em 0.2em #ffffff55;
+    cursor: pointer;
+    animation: spine-in 0.25s ease-out;
   }
-  #settings-panel .icon:nth-child(9) {
-    bottom: max(0.75em, 52px);
+  /* landscape phones: the stack is a row (unless the projection stacks
+     it), so the spine stands upright */
+  @media (orientation: landscape) {
+    #seed:not(.TreeTop):not(
+        :has(
+            #stage > .node-container.LinearPrefix,
+            #stage > .node-container.LinearInfix,
+            #stage > .node-container.LinearPostfix
+          )
+      )
+      #noolbox-spine {
+      flex-direction: column;
+      padding: 0.9em 0;
+      min-height: 0;
+      min-width: var(--hit);
+    }
+  }
+  .spine-mark {
+    line-height: 1;
+    opacity: 0.6;
+  }
+  .Dark #noolbox-spine {
+    background: linear-gradient(180deg, #9cf2e01f, #9cf2e012);
+  }
+  .spine-mark.drag-on {
+    opacity: 1;
+  }
+  #seed:not(.folded) #noolbox {
+    animation: spine-in 0.25s ease-out;
+  }
+  @keyframes spine-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* the seed: same look, a thumb-sized hit box (no layout change) */
+  #seed .icon2::after {
+    content: "";
+    position: absolute;
+    inset: -0.75em -0.5em;
+  }
+
+  /* --- Help: tappable, readable --- */
+  #help {
+    right: calc(var(--sr) + 6px);
+    bottom: calc(var(--sb) + 6px);
+  }
+  #help .badge {
+    font-size: 17px;
+    width: 32px;
+    height: 32px;
+    /* hit box */
+    outline: 6px solid transparent;
+  }
+  #help .panel {
+    font-size: 14px;
+    width: min(21em, calc(100vw - 32px));
+    max-width: none;
+  }
+
+  /* --- Shared icon sizing (all candidates) --- */
+  #settings-panel .icon,
+  #fan-mark {
+    width: var(--glyph);
+    height: var(--glyph);
+    padding: calc((var(--hit) - var(--glyph)) / 2);
+    scale: 1;
+  }
+  /* desktop-only experiments: the dock makes no sense on a phone */
+  #settings-panel .icon.s-dock {
+    display: none;
+  }
+
+  /* --- Candidate A: corners (L-clusters, finger-sized, trimmed) --- */
+  #settings-panel.chrome-corners .icon.s-mech,
+  #settings-panel.chrome-corners .icon.s-pulls {
+    display: none;
+  }
+  #settings-panel.chrome-corners .icon.s-mode {
+    left: var(--sl);
+    top: var(--st);
+  }
+  /* the help text calls the guides "the icon below the mode switch" */
+  #settings-panel.chrome-corners .icon.s-guides {
+    left: var(--sl);
+    top: calc(var(--st) + var(--hit));
+  }
+  #settings-panel.chrome-corners .icon.s-theme {
+    right: var(--sr);
+    top: var(--st);
+  }
+  #settings-panel.chrome-corners .icon.s-proj {
+    right: calc(var(--sr) + var(--hit));
+    top: var(--st);
+  }
+  #settings-panel.chrome-corners .icon.s-sym {
+    right: var(--sr);
+    top: calc(var(--st) + var(--hit));
+  }
+  #settings-panel.chrome-corners .icon.s-sound {
+    left: var(--sl);
+    bottom: var(--sb);
+  }
+  #settings-panel.chrome-corners .icon.s-reset {
+    left: calc(var(--sl) + var(--hit));
+    bottom: var(--sb);
+  }
+
+  /* --- Candidate B: fan (mode switch + one corner mark; the rest fan
+     down the right edge on tap) --- */
+  #settings-panel.chrome-fan .icon.s-mode {
+    left: var(--sl);
+    top: var(--st);
+  }
+  #settings-panel.chrome-fan ~ #fan-mark {
+    display: block;
+    position: fixed;
+    right: var(--sr);
+    top: var(--st);
+    filter: invert(1);
+    opacity: 0.9;
+    z-index: 92;
+    transition: rotate 0.25s ease;
+  }
+  #settings-panel.chrome-fan ~ #fan-mark.open {
+    rotate: -90deg;
+  }
+  #settings-panel.chrome-fan .icon:not(.s-mode) {
+    right: var(--sr);
+    left: auto;
+    bottom: auto;
+    top: var(--st);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 91;
+    filter: invert(1);
+    transition:
+      top 0.28s cubic-bezier(0.3, 1.4, 0.5, 1),
+      opacity 0.18s ease;
+    transition-delay: calc(var(--k, 1) * 18ms);
+  }
+  #settings-panel.chrome-fan.open .icon:not(.s-mode) {
+    top: calc(var(--st) + var(--k, 1) * var(--hit));
+    opacity: 0.95;
+    pointer-events: auto;
+  }
+  .Dark #settings-panel.chrome-fan .icon:not(.s-mode) {
+    filter: invert(1);
+  }
+  #settings-panel.chrome-fan .icon.s-guides { --k: 1; }
+  #settings-panel.chrome-fan .icon.s-theme { --k: 2; }
+  #settings-panel.chrome-fan .icon.s-proj { --k: 3; }
+  #settings-panel.chrome-fan .icon.s-sym { --k: 4; }
+  #settings-panel.chrome-fan .icon.s-sound { --k: 5; }
+  #settings-panel.chrome-fan .icon.s-reset { --k: 6; }
+  #settings-panel.chrome-fan .icon.s-mech { --k: 7; }
+  #settings-panel.chrome-fan .icon.s-pulls { --k: 8; }
+  /* the icon's invert(1) filter inverts its background too: #d5c4a3 at
+     ~30% renders as a translucent slate disc */
+  #settings-panel.chrome-fan.open .icon:not(.s-mode) {
+    border-radius: 50%;
+    background: #d5c4a33a;
+    backdrop-filter: blur(6px);
+  }
+  #settings-panel.chrome-fan ~ #fan-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: linear-gradient(to left, #1d2a4433, #1d2a4400 60%);
+    animation: spine-in 0.2s ease-out;
+  }
+
+  /* --- Candidate C: dock (everything moved down to one thumb row; help
+     takes the top-right corner) --- */
+  #settings-panel.chrome-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: var(--sb);
+    justify-content: center;
+    gap: 0;
+    z-index: 60;
+  }
+  #settings-panel.chrome-dock .icon {
+    position: static;
+    filter: none;
+    opacity: 0.72;
+  }
+  .Dark #settings-panel.chrome-dock .icon {
+    filter: invert(1);
+    opacity: 0.85;
+  }
+  #settings-panel.chrome-dock .icon.s-mech,
+  #settings-panel.chrome-dock .icon.s-pulls {
+    display: none;
+  }
+  /* group gaps: drag · view · system */
+  #settings-panel.chrome-dock .icon.s-theme,
+  #settings-panel.chrome-dock .icon.s-sound {
+    margin-left: 12px;
+  }
+  #main:has(#settings-panel.chrome-dock) #seed {
+    padding-bottom: calc(var(--hit) + var(--sb));
+    box-sizing: border-box;
+  }
+  #main:has(#settings-panel.chrome-dock) #help {
+    bottom: auto;
+    top: calc(var(--st) + 6px);
+  }
+  #main:has(#settings-panel.chrome-dock) #help .panel {
+    bottom: auto;
+    top: calc(100% + 0.5em);
+    border-radius: 1em 0.25em 1em 1em;
+  }
+
+  /* --- Mode toast: names the mode just switched to --- */
+  #mode-toast {
+    display: block;
+    position: fixed;
+    left: 50%;
+    top: calc(var(--st) + 64px);
+    translate: -50% 0;
+    z-index: 96;
+    pointer-events: none;
+    font: 600 14px/1 system-ui, sans-serif;
+    letter-spacing: 0.02em;
+    color: #2b2f55;
+    background: #ffffffd9;
+    padding: 0.6em 1em;
+    border-radius: 2em;
+    box-shadow: 0 0.2em 1.2em #2b2f5526;
+    animation: toast 1.3s ease both;
+  }
+  .Dark #mode-toast {
+    color: #d8e2ff;
+    background: #131b33e0;
+  }
+  @keyframes toast {
+    0% {
+      opacity: 0;
+      translate: -50% -6px;
+    }
+    12%,
+    75% {
+      opacity: 1;
+      translate: -50% 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* --- TEMPORARY lab chip (candidate evaluation) --- */
+  #ui-lab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    left: 50%;
+    top: calc(var(--st) + 8px);
+    translate: -50% 0;
+    z-index: 95;
+    font: 500 12px/1 system-ui, sans-serif;
+  }
+  #ui-lab button {
+    font: inherit;
+    color: #4a3d7a;
+    background: #ffffff8c;
+    border: 1px dashed #7a6cc0;
+    border-radius: 1em;
+    padding: 0.5em 0.85em;
+  }
+  #ui-lab .lab-toggle {
+    opacity: 0.7;
+  }
+  #ui-lab.open .lab-toggle {
+    opacity: 1;
+  }
+  #ui-lab .lab-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffffd0;
+    padding: 4px 4px 4px 10px;
+    border-radius: 1.4em;
+    box-shadow: 0 0.2em 1em #2b2f5522;
+    color: #4a3d7a;
+    white-space: nowrap;
+  }
+  #ui-lab .lab-row span {
+    margin-right: 4px;
+  }
+  #ui-lab .lab-row button.on {
+    background: #7a6cc0;
+    color: white;
+    border-style: solid;
   }
 }
+
