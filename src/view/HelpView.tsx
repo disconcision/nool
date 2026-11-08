@@ -40,10 +40,13 @@ export const HelpView: Component<{ dragging: boolean }> = (props) => {
         see if you can simplify the stage. the drag guides (the icon below the
         mode switch) help show where pulls can lead.
       </p>
-      {/* the nool menu/project page (site/ in this repo); absolute so it
-          resolves the same from /classic/ and every /classic/<branch>/ */}
+      {/* the nool notebook, the project page (site/ in this repo), published
+          on andrewblinn.com */}
       <p class="more">
-        <a href="/about/" onclick={(e) => e.stopPropagation()}>
+        <a
+          href="https://andrewblinn.com/nool/notebook/"
+          onclick={(e) => e.stopPropagation()}
+        >
           more nool →
         </a>
       </p>
