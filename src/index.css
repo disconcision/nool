@@ -1125,61 +1125,139 @@ v .transform-view .label {
   scale: 0.8;
 }
 
-/* Corner L-clusters (matching SettingsView order):
-   top-left: 1 drag mode · 2 drag mechanic · 3 drag debug ·
-             4 projection pulls · 5 dock (tall L down the left edge)
-   top-right: 6 theme · 7 projection · 8 symbols
-   bottom-left: 9 sound · 10 reset
+/* Corner L-clusters, each icon placed by its slot class (SettingsView):
+   top-left: drag mode · the flask (experiments menu) below it
+   top-right: theme · projection · symbols
+   bottom-left: sound · reset
    bottom-right: help badge (#help) */
-#settings-panel .icon:nth-child(1) {
+#settings-panel .icon.s-mode {
   left: 0;
   top: 0;
 }
-#settings-panel .icon:nth-child(2) {
-  left: 0.75em;
-  top: 0;
-}
-#settings-panel .icon:nth-child(3) {
+#settings-panel .icon.s-more {
   left: 0;
   top: 0.75em;
 }
-#settings-panel .icon:nth-child(4) {
-  left: 0;
-  top: 1.5em;
-}
-#settings-panel .icon:nth-child(5) {
-  left: 0;
-  top: 2.25em;
-}
-#settings-panel .icon:nth-child(6) {
+#settings-panel .icon.s-theme {
   right: 0;
   top: 0;
 }
-#settings-panel .icon:nth-child(7) {
+#settings-panel .icon.s-proj {
   right: 0.75em;
   top: 0;
 }
-#settings-panel .icon:nth-child(8) {
+#settings-panel .icon.s-sym {
   right: 0;
   top: 0.75em;
 }
-#settings-panel .icon:nth-child(9) {
+#settings-panel .icon.s-sound {
   left: 0;
   bottom: 0;
 }
-#settings-panel .icon:nth-child(10) {
+#settings-panel .icon.s-reset {
   left: 0.75em;
   bottom: 0;
 }
 /* Bottom pair reads black: white-on-green lacked contrast down there.
    Dark theme goes back to white (black would vanish). */
-#settings-panel .icon:nth-child(9),
-#settings-panel .icon:nth-child(10) {
+#settings-panel .icon.s-sound,
+#settings-panel .icon.s-reset {
   filter: none;
 }
-.Dark #settings-panel .icon:nth-child(9),
-.Dark #settings-panel .icon:nth-child(10) {
+.Dark #settings-panel .icon.s-sound,
+.Dark #settings-panel .icon.s-reset {
   filter: invert(1);
+}
+#settings-panel .icon.s-more.open {
+  opacity: 100%;
+}
+
+/* The flask's menu: the experimental toggles as text, each row showing
+   its current state; a click flips (or cycles) it and the menu stays
+   open. Placed (in JS) under or over the flask, away from the edges. */
+#more-menu {
+  position: fixed;
+  z-index: 97;
+  display: flex;
+  flex-direction: column;
+  min-width: 12em;
+  font-size: 0.3em;
+  font-family: system-ui, sans-serif;
+  line-height: 1.2;
+  background: #fffffff2;
+  color: #223;
+  border-radius: 0.25em 1em 1em 1em;
+  padding: 0.35em;
+  box-shadow: 0 0.2em 1.5em #00000033;
+  animation: menu-in 0.12s ease-out;
+}
+#menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 96;
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    translate: 0 -0.2em;
+  }
+}
+#more-menu .item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2em;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 0.6em;
+  padding: 0.45em 0.7em;
+  cursor: pointer;
+}
+#more-menu .item:hover {
+  background: #7a6cc01f;
+}
+#more-menu .item .v {
+  color: #6b5fb5;
+}
+#more-menu .chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3em;
+  padding: 0.45em 0.7em;
+  border-top: 1px solid #00000014;
+}
+#more-menu .chips span {
+  margin-right: auto;
+}
+#more-menu .chips button {
+  font: inherit;
+  color: #4a3d7a;
+  background: none;
+  border: 1px dashed #7a6cc0;
+  border-radius: 1em;
+  padding: 0.3em 0.6em;
+}
+#more-menu .chips button.on {
+  background: #7a6cc0;
+  color: white;
+  border-style: solid;
+}
+.Dark #more-menu {
+  background: #131b33f2;
+  color: #d8e2ff;
+}
+.Dark #more-menu .item .v {
+  color: #b6a9ff;
+}
+.Dark #more-menu .chips button {
+  color: #d8e2ff;
+}
+/* the layout candidates are phone-only; the dock is desktop-only */
+#more-menu .phone-only {
+  display: none;
 }
 
 /* Bottom-right help badge: unlike the corner icons this WANTS to be
@@ -1702,7 +1780,6 @@ body:has(#main.Dark) {
 #noolbox-spine,
 #fan-mark,
 #fan-scrim,
-#ui-lab,
 #mode-toast {
   display: none;
 }
@@ -1820,22 +1897,25 @@ body:has(#main.Dark) {
     padding: calc((var(--hit) - var(--glyph)) / 2);
     scale: 1;
   }
-  /* desktop-only experiments: the dock makes no sense on a phone */
-  #settings-panel .icon.s-dock {
+  /* the menu at phone size; the dock makes no sense on a phone, the
+     layout candidates only do here */
+  #more-menu {
+    font-size: 14px;
+  }
+  #more-menu .desk-only {
     display: none;
+  }
+  #more-menu .phone-only {
+    display: flex;
   }
 
-  /* --- Candidate A: corners (L-clusters, finger-sized, trimmed) --- */
-  #settings-panel.chrome-corners .icon.s-mech,
-  #settings-panel.chrome-corners .icon.s-pulls {
-    display: none;
-  }
+  /* --- Candidate A: corners (L-clusters, finger-sized) --- */
   #settings-panel.chrome-corners .icon.s-mode {
     left: var(--sl);
     top: var(--st);
   }
-  /* the help text calls the guides "the icon below the mode switch" */
-  #settings-panel.chrome-corners .icon.s-guides {
+  /* the help text puts the guides "in the menu below the mode switch" */
+  #settings-panel.chrome-corners .icon.s-more {
     left: var(--sl);
     top: calc(var(--st) + var(--hit));
   }
@@ -1901,14 +1981,12 @@ body:has(#main.Dark) {
   .Dark #settings-panel.chrome-fan .icon:not(.s-mode) {
     filter: invert(1);
   }
-  #settings-panel.chrome-fan .icon.s-guides { --k: 1; }
+  #settings-panel.chrome-fan .icon.s-more { --k: 1; }
   #settings-panel.chrome-fan .icon.s-theme { --k: 2; }
   #settings-panel.chrome-fan .icon.s-proj { --k: 3; }
   #settings-panel.chrome-fan .icon.s-sym { --k: 4; }
   #settings-panel.chrome-fan .icon.s-sound { --k: 5; }
   #settings-panel.chrome-fan .icon.s-reset { --k: 6; }
-  #settings-panel.chrome-fan .icon.s-mech { --k: 7; }
-  #settings-panel.chrome-fan .icon.s-pulls { --k: 8; }
   /* the icon's invert(1) filter inverts its background too: #d5c4a3 at
      ~30% renders as a translucent slate disc */
   #settings-panel.chrome-fan.open .icon:not(.s-mode) {
@@ -1945,10 +2023,6 @@ body:has(#main.Dark) {
   .Dark #settings-panel.chrome-dock .icon {
     filter: invert(1);
     opacity: 0.85;
-  }
-  #settings-panel.chrome-dock .icon.s-mech,
-  #settings-panel.chrome-dock .icon.s-pulls {
-    display: none;
   }
   /* group gaps: drag · view · system */
   #settings-panel.chrome-dock .icon.s-theme,
@@ -2004,53 +2078,6 @@ body:has(#main.Dark) {
     100% {
       opacity: 0;
     }
-  }
-
-  /* --- TEMPORARY lab chip (candidate evaluation) --- */
-  #ui-lab {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    position: fixed;
-    left: 50%;
-    top: calc(var(--st) + 8px);
-    translate: -50% 0;
-    z-index: 95;
-    font: 500 12px/1 system-ui, sans-serif;
-  }
-  #ui-lab button {
-    font: inherit;
-    color: #4a3d7a;
-    background: #ffffff8c;
-    border: 1px dashed #7a6cc0;
-    border-radius: 1em;
-    padding: 0.5em 0.85em;
-  }
-  #ui-lab .lab-toggle {
-    opacity: 0.7;
-  }
-  #ui-lab.open .lab-toggle {
-    opacity: 1;
-  }
-  #ui-lab .lab-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #ffffffd0;
-    padding: 4px 4px 4px 10px;
-    border-radius: 1.4em;
-    box-shadow: 0 0.2em 1em #2b2f5522;
-    color: #4a3d7a;
-    white-space: nowrap;
-  }
-  #ui-lab .lab-row span {
-    margin-right: 4px;
-  }
-  #ui-lab .lab-row button.on {
-    background: #7a6cc0;
-    color: white;
-    border-style: solid;
   }
 }
 

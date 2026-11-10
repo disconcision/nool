@@ -24,23 +24,38 @@ export const init: t = {
   transforms: Tools.init,
   size: 5,
   /* default loadout (by name, so toolbox reordering can't silently shift
-   * it). Additive identity is one-way, zero-REMOVING only (0+a → a):
-   * zero-adding candidates made every drag soupy, worst on touch. */
+   * it). The identities are one-way, identity-REMOVING only (0+a → a,
+   * 1·a → a): identity-adding candidates made every drag soupy, worst on
+   * touch. */
   dragActive: Tools.init.map((t): DragDir => default_dir(t.name)),
 };
 
 export function default_dir(name: string): DragDir {
   switch (name) {
     case "associate_plus":
+    case "associate_times":
     case "commute_plus":
     case "distribute_times_plus":
     case "inverse_plus":
-    case "identity_times":
       return "both";
     case "identity_plus":
+    case "identity_times":
       return "rev";
     default:
       return "off";
+  }
+}
+
+/* The defaults before 2026-11-09 (×-associativity off, ×1 both ways),
+ * for saves made before saves recorded their defaults (Persist). */
+export function default_dir_v1(name: string): DragDir {
+  switch (name) {
+    case "associate_times":
+      return "off";
+    case "identity_times":
+      return "both";
+    default:
+      return default_dir(name);
   }
 }
 

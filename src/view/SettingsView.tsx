@@ -33,6 +33,7 @@ import dock from "../assets/icons/dock.svg"
 import debug_on from "../assets/icons/noun-1831710.svg"
 import debug_off from "../assets/icons/noun-1831712.svg"
 import corner_mark from "../assets/icons/corner.svg"
+import flask from "../assets/icons/flask.svg"
 
 //TODO: qr code to disable id display
 
@@ -247,9 +248,12 @@ export const compact = (): boolean =>
   window.matchMedia("(max-width: 820px), (max-height: 520px)").matches;
 
 /* Corner clusters (an L or pair per corner, no 2x2 squares):
- * top-left the drag trio, top-right theme·projection·symbols,
- * bottom-left sound·reset, bottom-right the help badge (HelpView).
- * Order here must match the nth-child positioning in index.css.
+ * top-left the drag mode switch and, below it, the flask: a menu of the
+ * experimental toggles (drag guides, mechanic, projection pulls, dock;
+ * on phones also the layout-candidate switches), as text;
+ * top-right theme·projection·symbols, bottom-left sound·reset,
+ * bottom-right the help badge (HelpView). index.css places each icon by
+ * its slot class.
  * (The adjacent-possible preview toggle is intentionally unsurfaced;
  * see design/TODO.md — the feature is parked, its code retained.) */
 export const SettingsView: Component<{
@@ -268,7 +272,53 @@ export const SettingsView: Component<{
     clearTimeout(toast_timer);
     toast_timer = window.setTimeout(() => setToast(null), 1300);
   };
-  const [labOpen, setLabOpen] = createSignal(false);
+  /* the flask menu, placed by its icon (whichever corner or row the
+   * current chrome puts that in), opening away from the screen edges */
+  const [menuOpen, setMenuOpen] = createSignal(false);
+  const [menuAt, setMenuAt] = createSignal<Record<string, string>>({});
+  let flaskEl: HTMLImageElement | undefined;
+  const toggle_menu = () => {
+    if (menuOpen()) return setMenuOpen(false);
+    if (flaskEl) {
+      const r = flaskEl.getBoundingClientRect();
+      const at: Record<string, string> = {};
+      if (compact() && props.model.settings.chrome === "fan") {
+        /* in the fan, the flask is one of a column down the right edge:
+         * open beside it, not over the icons below */
+        at.right = `${window.innerWidth - r.left + 6}px`;
+        at.top = `${r.top}px`;
+      } else {
+        if (r.left + r.width / 2 < window.innerWidth / 2)
+          at.left = `${r.left}px`;
+        else at.right = `${window.innerWidth - r.right}px`;
+        if (r.top + r.height / 2 < window.innerHeight / 2)
+          at.top = `${r.bottom + 4}px`;
+        else at.bottom = `${window.innerHeight - r.top + 4}px`;
+      }
+      setMenuAt(at);
+    }
+    setMenuOpen(true);
+  };
+  const s = () => props.model.settings;
+  const onoff = (b: boolean) => (b ? "on" : "off");
+  const swallow = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const item = (label: string, value: () => string, act: Settings.Action, cls = "") => (
+    <button
+      class={`item ${cls}`}
+      title={action_title(act, s())}
+      onmousedown={swallow}
+      onpointerdown={(e) => {
+        swallow(e);
+        props.inject({ t: "setSetting", action: act });
+      }}
+    >
+      <span>{label}</span>
+      <span class="v">{value()}</span>
+    </button>
+  );
   const chip = (label: string, on: boolean, act: Settings.Action) => (
     <button
       classList={{ on }}
@@ -276,7 +326,10 @@ export const SettingsView: Component<{
         e.preventDefault();
         e.stopPropagation();
         if (!on) props.inject({ t: "setSetting", action: act });
+        /* a new controls layout moves the flask out from under the menu */
+        if (act.startsWith("Chrome")) setMenuOpen(false);
       }}
+      onmousedown={swallow}
     >
       {label}
     </button>
@@ -288,10 +341,17 @@ export const SettingsView: Component<{
     class={`chrome-${props.model.settings.chrome}${open() ? " open" : ""}`}
   >
     {icon(props.inject, props.model.settings, "ToggleDragging", announce_mode)}
-    {icon(props.inject, props.model.settings, "ToggleDragMechanic")}
-    {icon(props.inject, props.model.settings, "ToggleDragDebug")}
-    {icon(props.inject, props.model.settings, "ToggleProjectionDrag")}
-    {icon(props.inject, props.model.settings, "ToggleDockNoolbox")}
+    <img
+      ref={flaskEl}
+      class="icon s-more"
+      classList={{ open: menuOpen() }}
+      src={flask}
+      title="Experiments: drag guides, drag mechanic, projection pulls…"
+      onmousedown={(e) => {
+        swallow(e);
+        toggle_menu();
+      }}
+    />
     {icon(props.inject, props.model.settings, "ToggleDark")}
     {icon(props.inject, props.model.settings, "ToggleProjection")}
     {icon(props.inject, props.model.settings, "ToggleSymbols")}
@@ -334,33 +394,40 @@ export const SettingsView: Component<{
   <Show when={toast()}>
     <div id="mode-toast">{toast()}</div>
   </Show>
-  {/* TEMPORARY evaluation chip (compact layouts only) */}
-  <div id="ui-lab" classList={{ open: labOpen() }}>
-    <button
-      class="lab-toggle"
-      onpointerdown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setLabOpen(!labOpen());
+  <Show when={menuOpen()}>
+    <div
+      id="menu-scrim"
+      onmousedown={(e) => {
+        swallow(e);
+        setMenuOpen(false);
       }}
+      onpointerdown={(e) => e.stopPropagation()}
+    />
+    <div
+      id="more-menu"
+      style={menuAt()}
+      onmousedown={swallow}
+      onpointerdown={(e) => e.stopPropagation()}
     >
-      lab
-    </button>
-    <Show when={labOpen()}>
-      <div class="lab-row">
+      {item("drag guides", () => onoff(s().dragDebug), "ToggleDragDebug")}
+      {item("drag mechanic", () => s().dragMechanic.toLowerCase(), "ToggleDragMechanic")}
+      {item("projection pulls", () => onoff(s().projectionDrag), "ToggleProjectionDrag")}
+      {item("dock the noolbox", () => onoff(s().dockNoolbox), "ToggleDockNoolbox", "desk-only")}
+      {/* TEMPORARY layout candidates (compact layouts only) */}
+      <div class="chips phone-only">
         <span>controls</span>
-        {chip("corners", props.model.settings.chrome === "corners", "ChromeCorners")}
-        {chip("fan", props.model.settings.chrome === "fan", "ChromeFan")}
-        {chip("dock", props.model.settings.chrome === "dock", "ChromeDock")}
+        {chip("corners", s().chrome === "corners", "ChromeCorners")}
+        {chip("fan", s().chrome === "fan", "ChromeFan")}
+        {chip("dock", s().chrome === "dock", "ChromeDock")}
       </div>
-      <div class="lab-row">
+      <div class="chips phone-only">
         <span>folded stage</span>
-        {chip("1×", props.model.settings.boost === 1, "Boost1")}
-        {chip("1.25×", props.model.settings.boost === 1.25, "Boost125")}
-        {chip("1.5×", props.model.settings.boost === 1.5, "Boost150")}
+        {chip("1×", s().boost === 1, "Boost1")}
+        {chip("1.25×", s().boost === 1.25, "Boost125")}
+        {chip("1.5×", s().boost === 1.5, "Boost150")}
       </div>
-    </Show>
-  </div>
+    </div>
+  </Show>
     </>
   );
 };

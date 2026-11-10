@@ -37,7 +37,7 @@ export const HelpView: Component<{ dragging: boolean }> = (props) => {
         box. click one to transform your selection.
       </p>
       <p>
-        see if you can simplify the stage. the drag guides (the icon below the
+        see if you can simplify the stage. the drag guides (in the menu below the
         mode switch) help show where pulls can lead.
       </p>
       {/* the nool notebook, the project page (site/ in this repo), published

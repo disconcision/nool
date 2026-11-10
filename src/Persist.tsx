@@ -49,6 +49,7 @@ export const save_soon = (model: Model.t): void => {
           selection: model.stage.selection,
           settings: model.settings,
           dragActive: model.tools.dragActive,
+          dragDefaults: Model.init.tools.dragActive,
           size: model.tools.size,
           history: model.history,
         })
@@ -67,19 +68,36 @@ export const clear = (): void => {
 
 /* Loadouts were boolean[] (both directions on/off) before rules gained
  * one-way states. Migrate on/off to both/off, except rules whose new
- * default is one-way (additive identity → zero-removing only), which
- * adopt that default when on. Unknown shapes fall back to defaults. */
+ * default is one-way (the identities → identity-removing only), which
+ * adopt that default when on. Unknown shapes fall back to defaults.
+ *
+ * Saves also record the defaults they were made under, so when the
+ * defaults change, a rule still at its old default (never touched) takes
+ * the new one, and one the player set keeps their setting. Saves from
+ * before that record are read against the previous defaults. */
 const DIRS: ToolBox.DragDir[] = ["off", "both", "fwd", "rev"];
-const load_drag_dirs = (raw: unknown): ToolBox.DragDir[] => {
+const is_dir = (v: unknown): v is ToolBox.DragDir =>
+  DIRS.includes(v as ToolBox.DragDir);
+const load_drag_dirs = (
+  raw: unknown,
+  raw_defaults: unknown
+): ToolBox.DragDir[] => {
   const init = Model.init.tools.dragActive;
   if (!Array.isArray(raw) || raw.length !== init.length) return init;
+  const was: ToolBox.DragDir[] =
+    Array.isArray(raw_defaults) &&
+    raw_defaults.length === init.length &&
+    raw_defaults.every(is_dir)
+      ? raw_defaults
+      : Model.init.tools.transforms.map((t) => ToolBox.default_dir_v1(t.name));
   return raw.map((v, i) => {
     if (typeof v === "boolean") {
       if (!v) return "off";
       const d = init[i];
       return d === "fwd" || d === "rev" ? d : "both";
     }
-    return DIRS.includes(v) ? (v as ToolBox.DragDir) : init[i];
+    if (!is_dir(v)) return init[i];
+    return v === was[i] ? init[i] : v;
   });
 };
 
@@ -100,7 +118,7 @@ export const load = (): Model.t | null => {
       }),
       tools: {
         ...Model.init.tools,
-        dragActive: load_drag_dirs(s.dragActive),
+        dragActive: load_drag_dirs(s.dragActive, s.dragDefaults),
         size: s.size ?? Model.init.tools.size,
       },
       history: s.history ?? { past: [], future: [] },

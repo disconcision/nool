@@ -286,7 +286,12 @@ export const go = (
   setModel: SetStoreFunction<Model.t>,
   action: Action.t
 ): void => {
-  if (model.settings.sound) sound(model, action);
+  /* the sound toggle answers in its new state: unmuting clicks, muting
+   * is silent (everything else speaks only while sound was on) */
+  const toggling_sound =
+    action.t === "setSetting" && action.action === "ToggleSound";
+  if (toggling_sound ? !model.settings.sound : model.settings.sound)
+    sound(model, action);
   const result = update(model, action);
   if (result == "NoChange") {
     //Sound.noop();
