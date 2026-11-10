@@ -1,0 +1,227 @@
+/* The algebra studies, in the hub's look (site/index.html), which follows
+   the declarative dragging page's: Open Sans Light and Silkscreen, pills on
+   a pressable edge, the glove pointer, framed things with one wide corner;
+   nool's green in place of the page's red (#dc3400). Links light up as
+   andrewblinn.com's do: the drifting rainbow. */
+
+@font-face {
+  font-family: "Open Sans";
+  font-display: swap;
+  src: url("/fonts/OpenSans-Light.woff2") format("woff2");
+}
+
+:root {
+  --ink: #1d1d1f;
+  --muted: #6b6b70;
+  --rule: #e7e4dc;
+  --paper: #fdfcf8;
+  --accent: #0a7d58;
+  /* text Claude wrote as scaffolding, for Andrew to rewrite */
+  --scaffold: #e8770f;
+  /* andrewblinn.com's link rainbow (its style.css) */
+  --link-gradient: linear-gradient(-90deg, #ee7752 0%, #e73c7e 10%, #23a6d5 30%,
+      #23d5ab 50%, #23a6d5 70%, #e73c7e 90%, #ee7752 100%);
+  /* the pills' pressable edge: a shadow of the sky, not a gray */
+  --pill-edge: rgba(70, 60, 140, 0.3);
+}
+/* the rainbow drifts, as the homepage's does */
+@keyframes gradient {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 400% 0%;
+  }
+}
+
+body {
+  background: var(--paper);
+}
+
+.scaffold {
+  color: var(--scaffold);
+}
+
+.studies-page {
+  position: relative;
+  isolation: isolate;
+}
+/* the classic app's sky, a short wash behind the header */
+.studies-sky {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 26rem;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    #e5c1f9 0%,
+    #a6e0ff 40%,
+    #e8ffd7 72%,
+    var(--paper) 100%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.studies-header {
+  font-family: "Open Sans", system-ui, sans-serif;
+  color: var(--ink);
+}
+.studies-header a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.studies-header a:hover,
+.study a:hover {
+  color: white;
+  text-decoration: none;
+  background: var(--link-gradient);
+  background-size: 800% 800%;
+  animation: gradient 12s linear infinite alternate;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* back to the hub: the wordmark, small */
+.studies-header a.studies-home {
+  display: inline-block;
+  margin-bottom: 1.6rem;
+  color: var(--ink);
+  background: none;
+  transform-origin: top left;
+  transition: rotate 0.15s ease-out;
+}
+.studies-header a.studies-home:hover {
+  color: var(--ink);
+  background: none;
+  animation: none;
+  rotate: -2deg;
+}
+.studies-home img {
+  display: block;
+  height: 1.7rem;
+  width: auto;
+}
+
+.studies-kicker {
+  margin: 0;
+  font-family: "Silkscreen", "Cutive Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.studies-title {
+  margin: 0.2rem 0 0.7rem;
+  font-size: clamp(2.2rem, 6vw, 3rem);
+  line-height: 1.1;
+  font-weight: normal;
+  letter-spacing: -0.01em;
+}
+.studies-sub {
+  margin: 0 0 1.4rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+/* the demos, as the hub's pills: frosted over the sky, hand-drawn-ish
+   corners, on an edge they sink onto when pressed */
+.studies-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.studies-toc button {
+  font-family: "Silkscreen", "Cutive Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 0.2rem 0.75rem;
+  border-radius: 18px 12px 16px 10px / 12px 16px 10px 15px;
+  box-shadow: 0 3px 0 var(--pill-edge);
+  transform-origin: top left;
+  transition:
+    rotate 0.15s ease-out,
+    translate 0.06s ease-out;
+}
+.studies-toc button:nth-child(5n + 2) {
+  border-radius: 12px 18px 11px 17px / 16px 10px 15px 11px;
+}
+.studies-toc button:nth-child(5n + 3) {
+  border-radius: 16px 10px 18px 13px / 11px 15px 12px 17px;
+}
+.studies-toc button:nth-child(5n + 4) {
+  border-radius: 10px 17px 13px 18px / 15px 12px 17px 10px;
+}
+.studies-toc button:nth-child(5n + 5) {
+  border-radius: 17px 13px 10px 16px / 12px 17px 14px 11px;
+}
+.studies-toc button:hover {
+  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 3px 0 #033b29;
+  rotate: 1.5deg;
+}
+.studies-toc button:active {
+  translate: 0 3px;
+  box-shadow: none;
+}
+
+/* each demo's card (upstream's DemoCard): framed rather than shadowed,
+   the bottom right corner wide, its name in the pixel face */
+.study > div {
+  box-shadow: none;
+  border: 1px solid var(--rule);
+  border-radius: 8px 8px 28px 8px;
+}
+.study h2 {
+  font-family: "Silkscreen", "Cutive Mono", monospace;
+  font-weight: normal;
+  font-size: 1.05rem;
+}
+.study a {
+  padding: 0 0.15em;
+  border-radius: 0.1em 0.8em 0.1em 0.4em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .studies-header a:hover,
+  .study a:hover {
+    animation: none;
+  }
+}
+
+/* The pointer, wherever there's something to click or drag: a white
+   glove, pointing; pressed on, or dragging, a fist (the declarative
+   dragging page's cursors/). Important, to win over the inline cursors
+   the draggables set. */
+a[href],
+button,
+summary,
+[role="button"],
+[style*="cursor: pointer"],
+[style*="cursor: grab"],
+.wb-tap-stage {
+  cursor:
+    url("/cursors/glove.png") 2 2,
+    pointer !important;
+  cursor:
+    image-set(url("/cursors/glove.png") 1x, url("/cursors/glove@2x.png") 2x) 2 2,
+    pointer !important;
+}
+:root [style*="cursor: grab"]:active,
+:root .studies-toc button:active,
+:root body[style*="grabbing"],
+:root body[style*="grabbing"] * {
+  cursor:
+    url("/cursors/fist.png") 6 5,
+    grabbing !important;
+  cursor:
+    image-set(url("/cursors/fist.png") 1x, url("/cursors/fist@2x.png") 2x) 6 5,
+    grabbing !important;
+}

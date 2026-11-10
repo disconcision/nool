@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nool</title>
+  <meta name="description" content="nool makes math tweakable, tuggable, and fussable: a 2D interaction lab, a 3D game, and declarative-dragging algebra studies, by Andrew Blinn." />
+  <link rel="icon" type="image/svg+xml" href="seed.svg">
+  <!--
+    The nool project page, and the menu every nool thing links back to.
+    Its look follows declarative-dragging.github.io (home/index.html there):
+    Open Sans Light and Silkscreen, the pills on their pressable edge, the
+    glove pointer, framed things with one wide corner. nool's own: the green
+    accent, the classic app's sky (the pills frosted over it), and the
+    wordmark with its flare. Links light up as andrewblinn.com's do: the
+    drifting rainbow.
+
+    Text conventions while this is a draft:
+    - plain text is Andrew's own writing (sources in the orange notes)
+    - <span class="scaffold"> / class="scaffold" is placeholder prose
+      written by Claude: rewrite or cut it
+    - class="src" notes say where an excerpt came from; delete them once
+      the excerpt is kept
+  -->
+  <style>
+    @font-face {
+      font-family: "Open Sans";
+      font-display: swap;
+      src: url("fonts/OpenSans-Light.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Open Sans";
+      font-weight: bold;
+      font-display: swap;
+      src: url("fonts/OpenSans-Regular.ttf") format("truetype");
+    }
+    @font-face {
+      font-family: "Cutive Mono";
+      font-display: swap;
+      src: url("fonts/cutivemono.woff2") format("woff2");
+    }
+
+    :root {
+      --ink: #1d1d1f;
+      --muted: #6b6b70;
+      --rule: #e7e4dc;
+      --paper: #fdfcf8;
+      --card: #ffffff;
+      /* nool's green: the noolbox's equals sign, deepened for text */
+      --accent: #0a7d58;
+      /* reserved for draft prose that needs rewriting */
+      --scaffold: #e8770f;
+      /* andrewblinn.com's link rainbow (its style.css) */
+      --link-gradient: linear-gradient(-90deg, #ee7752 0%, #e73c7e 10%, #23a6d5 30%,
+          #23d5ab 50%, #23a6d5 70%, #e73c7e 90%, #ee7752 100%);
+      /* the pills' pressable edge: a shadow of the sky, not a gray */
+      --pill-edge: rgba(70, 60, 140, 0.3);
+    }
+    /* the rainbow drifts, as the homepage's does */
+    @keyframes gradient {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 400% 0%; }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      position: relative;
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Open Sans", system-ui, sans-serif;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    /* the classic app's sky: through the first screen and well into the
+       second, its green fading slowly to paper (never past the page's end) */
+    .sky {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: min(1.6 * (100svh + 14rem), 100%);
+      z-index: -1;
+      background: linear-gradient(180deg,
+          #e5c1f9 0%, #a6e0ff 22%, #e8ffd7 44%, #c9f7df 56%, 74%, var(--paper) 100%);
+      opacity: 0.6;
+    }
+
+    main {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.25rem 5rem;
+    }
+
+    .mono { font-family: "Cutive Mono", "Courier New", monospace; }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
+    }
+    /* a link, hovered, lights up in the homepage's drifting rainbow */
+    a:hover {
+      color: white;
+      text-decoration: none;
+      background: var(--link-gradient);
+      background-size: 800% 800%;
+      animation: gradient 12s linear infinite alternate;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55);
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    .scaffold { color: var(--scaffold); }
+    .src {
+      display: block;
+      color: var(--scaffold);
+      font-size: 0.8rem;
+      font-style: normal;
+      font-weight: normal;
+      font-family: "Open Sans", system-ui, sans-serif;
+      opacity: 0.9;
+    }
+
+    /* The wordmark (wordmark.svg): classic's n and infinity, and an l drawn
+       to match the old nooltext.png's, each stroke ending in its dot. Hovered
+       (or tapped), it flares as the 2023 logo did: added onto the sky, a
+       magenta glow blooming out from it for two seconds. */
+    h1 {
+      margin: 1rem 0 0.7rem;
+      line-height: 1;
+      font-size: 1rem;
+    }
+    .logo {
+      display: inline-block;
+      color: var(--ink);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logo img {
+      display: block;
+      height: clamp(2.9rem, 12vw, 4rem);
+      width: auto;
+      overflow: visible;
+    }
+    .logo:hover, .logo.flaring {
+      mix-blend-mode: plus-lighter;
+      animation: flare 2s linear;
+    }
+    @keyframes flare {
+      0% { filter: drop-shadow(0 0 2px magenta); }
+      20% { filter: drop-shadow(0 0 30px magenta); }
+      100% { filter: drop-shadow(0 0 150px magenta); }
+    }
+
+    .byline { margin: 0; font-size: 1.05rem; }
+
+    /* Pills with hand-drawn-ish corners, each a little different, gray on a
+       pressable edge; lit (hovered), each takes a color of its own. As on
+       the declarative dragging page, in nool's colors. */
+    nav.links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1.85rem 0 2.2rem;
+    }
+    .links a {
+      font-family: "Silkscreen", "Cutive Mono", monospace;
+      font-size: 0.874rem;
+      text-decoration: none;
+      border: 1px solid var(--ink);
+      padding: 0.25rem 0.85rem;
+      border-radius: 18px 12px 16px 10px / 12px 16px 10px 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      transform-origin: top left;
+      transition: rotate 0.15s ease-out, translate 0.06s ease-out;
+    }
+    .links a svg { width: 1.05em; height: 1.05em; fill: currentColor; }
+    .links a:nth-child(2) { border-radius: 12px 18px 11px 17px / 16px 10px 15px 11px; }
+    .links a:nth-child(3) { border-radius: 16px 10px 18px 13px / 11px 15px 12px 17px; }
+    .links a:nth-child(4) { border-radius: 10px 17px 13px 18px / 15px 12px 17px 10px; }
+    .links a:nth-child(5) { border-radius: 17px 13px 10px 16px / 12px 17px 14px 11px; }
+    .links a:hover { border-color: transparent; rotate: 1.5deg; }
+
+    .links a:not(.icon) { box-shadow: 0 3px 0 var(--pill-edge); }
+    /* frosted rather than gray, so the sky shows through */
+    .links a:not(.primary):not(.icon) {
+      background: rgba(255, 255, 255, 0.5);
+      border-color: rgba(255, 255, 255, 0.7);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+    .links a.primary { background: var(--ink); color: white; border-color: var(--ink); }
+    .links a.primary svg { width: 0.8em; height: 0.8em; }
+    .links a.primary { --lit: #0a7d58; --lit-edge: #033b29; }
+    .links a.pill-classic { --lit: #6f5ce0; --lit-edge: #2d2270; }
+    .links a.pill-studies { --lit: #d0399f; --lit-edge: #5f0f45; }
+    .links a:not(.icon):hover {
+      color: white;
+      background: var(--lit);
+      border-color: var(--lit);
+      box-shadow: 0 3px 0 var(--lit-edge);
+      animation: none;
+      text-shadow: none;
+    }
+    .links a:not(.icon):active { translate: 0 3px; box-shadow: none; }
+    /* the two repos: the GitHub mark, then each one's name, unboxed, wrapping
+       as one */
+    .links .code {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding-inline: 0.45rem;
+      font-family: "Silkscreen", "Cutive Mono", monospace;
+      font-size: 0.874rem;
+    }
+    .links .code svg { width: 1.05em; height: 1.05em; fill: currentColor; }
+    .links .code a {
+      font-size: 1em;
+      border: 0;
+      padding: 0 0.2em;
+      border-radius: 0.15em 0.6em 0.15em 0.4em;
+    }
+
+    .hook {
+      font-size: clamp(1.5rem, 4.2vw, 1.9rem);
+      line-height: 1.3;
+      margin: 0 0 1rem;
+    }
+    .lede { font-size: 1.2rem; line-height: 1.55; }
+    .lede p { margin: 0 0 0.9rem; }
+
+    h2 {
+      font-weight: normal;
+      font-size: 1.5rem;
+      margin: 3.2rem 0 0.6rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid #d6d2c6;
+    }
+
+    /* demo cards, after the declarative dragging page's: a framed picture,
+       its name in the pixel face under it, the card tipping a little when
+       hovered */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin: 1.4rem 0 0.6rem;
+    }
+    .cards.ways { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .card {
+      display: block;
+      min-width: 0;
+      text-decoration: none;
+      transform-origin: top left;
+      transition: rotate 0.15s ease-out;
+    }
+    .card:hover {
+      background: none;
+      color: inherit;
+      animation: none;
+      text-shadow: none;
+      rotate: 1.5deg;
+    }
+    .card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: #f9fbfa;
+    }
+    .ways .card img { aspect-ratio: 4 / 3; }
+    .card .name {
+      display: block;
+      width: fit-content;
+      margin: 0.3rem auto 0;
+      padding: 0 0.3em;
+      border-radius: 0.15em 0.6em 0.15em 0.4em;
+      font-family: "Silkscreen", "Cutive Mono", monospace;
+      text-align: center;
+      font-size: 0.76rem;
+    }
+    .ways .card .name { font-size: 0.85rem; margin-top: 0.45rem; }
+    /* hovered, the card's name lights up as a link does */
+    .card:hover .name {
+      color: white;
+      background: var(--link-gradient);
+      background-size: 800% 800%;
+      animation: gradient 12s linear infinite alternate;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55);
+    }
+    .card .d {
+      display: block;
+      margin-top: 0.15rem;
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+    .card .d.scaffold { color: var(--scaffold); }
+
+    blockquote {
+      position: relative;
+      margin: 1.2rem 0;
+      padding: 0.2rem 0 0.2rem calc(1.1rem + 3px);
+    }
+    /* the quote bar is drawn rather than a border, so its ends can be rounded */
+    blockquote::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+    blockquote cite {
+      display: block;
+      font-style: normal;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-top: 0.4rem;
+    }
+    blockquote cite a { text-decoration-color: currentColor; }
+    blockquote.verse { white-space: pre-line; }
+
+    figure { margin: 1.4rem 0; }
+    figure img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    figcaption {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    figure.whiteboard img { border: 1px solid #b3aea3; }
+    /* the live whiteboard (src/home/whiteboard.tsx): on touch screens it
+       stays scrollable until tapped awake */
+    .tap-dormant svg { touch-action: pan-y !important; }
+    @media (hover: none), (pointer: coarse) {
+      figure.whiteboard { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    }
+
+    /* framed things: small corners but one, the bottom right, rounded wide */
+    figure img, .card img { border-bottom-right-radius: 28px; }
+
+    /* the grow sketches: a grid of small framed squares, each tipping when
+       hovered and opening larger (in the lightbox) when clicked; the
+       second set in one row of equal heights, each at its own aspect */
+    .sketches {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    .sketches a {
+      display: block;
+      min-width: 0;
+      text-decoration: none;
+      transform-origin: top left;
+      transition: rotate 0.15s ease-out;
+    }
+    .sketches a:hover { background: none; animation: none; rotate: 1.5deg; }
+    .sketches img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border: 1px solid var(--rule);
+      border-radius: 6px 6px 18px 6px;
+      background: #f3f1ec;
+    }
+    .sketches.more { display: flex; }
+    .sketches.more a { flex: var(--ar) 1 0; }
+    .sketches.more img { aspect-ratio: var(--ar); }
+    .sketch-set + .sketch-set { margin-top: -0.4rem; }
+
+    dialog.lightbox {
+      padding: 0;
+      border: 0;
+      background: none;
+      max-width: 94vw;
+      max-height: 94vh;
+      overflow: visible;
+    }
+    dialog.lightbox::backdrop { background: rgba(29, 29, 31, 0.78); }
+    dialog.lightbox img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: min(94vw, 1100px);
+      max-height: 90vh;
+      border-radius: 8px 8px 28px 8px;
+    }
+
+    .note { font-size: 0.85rem; color: var(--muted); }
+    .note.scaffold { color: var(--scaffold); }
+
+    ul.plain { padding-left: 1.1rem; }
+    ul.plain li { margin: 0.25rem 0; }
+
+    footer { margin-top: 3.5rem; font-size: 0.85rem; color: var(--muted); }
+
+    /* The pointer, wherever there's something to click or drag: a white
+       glove, pointing; pressed on, or dragging, a fist (the declarative
+       dragging page's cursors/). Important, to win over the inline cursors
+       the draggables set. */
+    a[href], button, summary, [role="button"], .logo, [style*="cursor: pointer"], [style*="cursor: grab"], .wb-tap-stage {
+      cursor: url("cursors/glove.png") 2 2, pointer !important;
+      cursor: -webkit-image-set(url("cursors/glove.png") 1x, url("cursors/glove@2x.png") 2x) 2 2, pointer !important;
+      cursor: image-set(url("cursors/glove.png") 1x, url("cursors/glove@2x.png") 2x) 2 2, pointer !important;
+    }
+    :root [style*="cursor: grab"]:active, :root .links a:active,
+    :root body[style*="grabbing"], :root body[style*="grabbing"] * {
+      cursor: url("cursors/fist.png") 6 5, grabbing !important;
+      cursor: -webkit-image-set(url("cursors/fist.png") 1x, url("cursors/fist@2x.png") 2x) 6 5, grabbing !important;
+      cursor: image-set(url("cursors/fist.png") 1x, url("cursors/fist@2x.png") 2x) 6 5, grabbing !important;
+    }
+
+    @media (max-width: 560px) {
+      body { font-size: 17px; }
+      main { padding: 2.4rem 1rem 4rem; }
+      .links a { padding: 0.25rem 0.7rem; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards.ways { grid-template-columns: 1fr; gap: 1.3rem; }
+      .sketches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .sketches.more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sketches.more img { aspect-ratio: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .logo:hover, .logo.flaring { animation: none; }
+      a:hover, .card:hover .name { animation: none; }
+    }
+  </style>
+  <!-- the small labels' pixel face (the pills, the cards' names) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap">
+</head>
+
+<body>
+  <div class="sky" aria-hidden="true"></div>
+  <main>
+
+    <h1><span class="logo" tabindex="-1"><img src="wordmark.svg" alt="nool" width="7430" height="1812"></span></h1>
+    <p class="byline"><a href="https://andrewblinn.com/">Andrew Blinn</a></p>
+
+    <nav class="links" aria-label="Links">
+      <a class="primary" href="https://nool.ing/"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 2l14 8-14 8z"/></svg>play supernool</a>
+      <a class="pill-classic" href="https://nool.ing/classic/">nool classic</a>
+      <a class="pill-studies" href="studies/">algebra studies</a>
+      <span class="code" title="the code, on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><a class="icon" href="https://github.com/disconcision/nool">nool</a><span aria-hidden="true">/</span><a class="icon" href="https://github.com/disconcision/supernool">supernool</a></span>
+    </nav>
+
+    <p class="hook">nool makes math tweakable, tuggable, and fussable.</p>
+    <div class="lede">
+      <p>
+        It's been a long-standing goal of mine to make abstract symbol manipulation more tangible. nool is one
+        attempt at this. It's similar to <a href="https://graspablemath.com/">Graspable Math</a>, but attempts a
+        higher level of generality: making arbitrary rewrite rules tactile, as opposed to bespoke per-rule
+        transformations.
+        <span class="src">from your message, 2026-11-08, lightly tidied</span>
+      </p>
+      <p>
+        This page is a living notebook, charting my development of the concept.
+        <span class="src">from your message, 2026-11-08, lightly tidied</span>
+      </p>
+      <p>
+        it's a work in progress. there isn't much to do yet. but you can bop it.
+        <span class="src">from nool classic's help panel</span>
+      </p>
+      <p class="scaffold">
+        There are three ways in so far: the game, the lab it grew out of, and a set of small
+        dragging studies.
+      </p>
+    </div>
+
+    <div class="cards ways">
+      <a class="card" href="https://nool.ing/">
+        <img src="shots/supernool.jpg" alt="supernool: an isometric clearing of moss and rocks; a yellow-cloaked figure with two floating hands stands before a tree whose branch points are plus and times signs, with numbers and variables at its tips." loading="lazy">
+        <span class="name">supernool</span>
+        <span class="d">the super/3d version of nool.</span>
+      </a>
+      <a class="card" href="https://nool.ing/classic/">
+        <img src="shots/classic.jpg" alt="nool classic: a noolbox of rewrite rules on the left, the infinity seed in the middle, and a nested expression of pluses, times, mushrooms, dice, a cloud, a virus and a bee on the right, over a pastel gradient." loading="lazy">
+        <span class="name">nool classic</span>
+        <span class="d">interaction and symbolic manipulation lab.</span>
+      </a>
+      <a class="card" href="studies/">
+        <img src="shots/tiny-nool.webp" alt="A tiny nool: nested boxes for (minus mushroom plus star) plus turtle." loading="lazy">
+        <span class="name">algebra studies</span>
+        <span class="d scaffold">nool-shaped demos from Dragology, kept here to iterate on.</span>
+      </a>
+    </div>
+
+    <h2>Where it came from</h2>
+    <figure class="sketch-set">
+      <div class="sketches">
+        <a href="sketches/01-words.webp"><img src="sketches/thumb/01-words.webp" alt="The expression written out in words: m squared minus m, all over 5 m minus 5." loading="lazy"></a>
+        <a href="sketches/02-fraction.webp"><img src="sketches/thumb/02-fraction.webp" alt="As a fraction, (m² − m) over (5m − 5), each part bracketed in red." loading="lazy"></a>
+        <a href="sketches/03-faces.webp"><img src="sketches/thumb/03-faces.webp" alt="As faces: smiling orange circles for m and clusters of dots for numbers, above and below a fraction bar." loading="lazy"></a>
+        <a href="sketches/04-boxes.webp"><img src="sketches/thumb/04-boxes.webp" alt="As nested boxes in green, yellow and grey: m, 2 and m above; 5, m and 5 below." loading="lazy"></a>
+        <a href="sketches/05-stars.webp"><img src="sketches/thumb/05-stars.webp" alt="As a branching tree on its side, its leaves blue stars and dots." loading="lazy"></a>
+        <a href="sketches/06-fruit.webp"><img src="sketches/thumb/06-fruit.webp" alt="As two fruit trees, one hanging above a blue ground line and one growing below it, bearing pink apples and berries." loading="lazy"></a>
+        <a href="sketches/07-prefix.webp"><img src="sketches/thumb/07-prefix.webp" alt="In prefix notation, ÷(−(∧(m 2) m) −(·(5 m) 5)), the parentheses in red." loading="lazy"></a>
+        <a href="sketches/08-boxes-side.webp"><img src="sketches/thumb/08-boxes-side.webp" alt="As boxes stacked on their side, in blue and yellow." loading="lazy"></a>
+        <a href="sketches/09-question-tree.webp"><img src="sketches/thumb/09-question-tree.webp" alt="As a bare tree on the ground, its fruit question marks and dots, coloured tan and teal." loading="lazy"></a>
+        <a href="sketches/10-flames.webp"><img src="sketches/thumb/10-flames.webp" alt="As a candelabra above a blue ground line, its leaves orange flames." loading="lazy"></a>
+        <a href="sketches/11-circles.webp"><img src="sketches/thumb/11-circles.webp" alt="In infix, ((m∧2)−m)÷((5·m)−5), each operator circled, with a row of red circles above sized by depth." loading="lazy"></a>
+        <a href="sketches/12-creature.webp"><img src="sketches/thumb/12-creature.webp" alt="As a symmetric creature in orange and yellow, with blue flowers and pink dots around it." loading="lazy"></a>
+        <a href="sketches/13-crystal.webp"><img src="sketches/thumb/13-crystal.webp" alt="As a crystal or molecule: red and green bonds, blue gems for leaves." loading="lazy"></a>
+        <a href="sketches/14-totem.webp"><img src="sketches/thumb/14-totem.webp" alt="As a vertical totem of operator circles, glowing purple." loading="lazy"></a>
+        <a href="sketches/15-ovals.webp"><img src="sketches/thumb/15-ovals.webp" alt="As nested ovals in pastel pink, yellow and green: m², minus, m above; 5, m, minus, 5 below." loading="lazy"></a>
+      </div>
+      <figcaption>
+        grow sketches, April 2017.<span class="scaffold"> One expression, (m² − m) ÷ (5m − 5), drawn
+        fifteen ways. (grow: the concept, before it was nool.)</span>
+      </figcaption>
+    </figure>
+    <figure class="sketch-set">
+      <div class="sketches more">
+        <a href="sketches/boxtree-interface.webp" style="--ar: 1.217"><img src="sketches/thumb/boxtree-interface.webp" alt="A sheet titled GROW boxtree interface: grids of nested boxes coloured purple, pink and green." loading="lazy"></a>
+        <a href="sketches/tangled-trees.webp" style="--ar: 1"><img src="sketches/thumb/tangled-trees.webp" alt="Circles of operators and numbers joined by cyan lines, captioned TANGLED TREES BAR YOUR WAY." loading="lazy"></a>
+        <a href="sketches/grow-logo.webp" style="--ar: 1.509"><img src="sketches/thumb/grow-logo.webp" alt="The word grow in black brush lettering, glowing cyan, with 1/0 and ONE OVER ZERO beneath it." loading="lazy"></a>
+        <a href="sketches/organic-tree.webp" style="--ar: 1.333"><img src="sketches/thumb/organic-tree.webp" alt="An organic branching tree drawn in coloured pencil, its nodes recoloured magenta and green." loading="lazy"></a>
+      </div>
+      <figcaption class="scaffold">
+        More grow: the boxtree interface sheet, tangled trees, the grow 1/0 logo, and an organic tree.
+        Some of these were first drawn in 2012–13 and coloured later.
+      </figcaption>
+    </figure>
+    <dialog class="lightbox" aria-label="Sketch, enlarged"><img alt=""></dialog>
+    <blockquote>
+      Back in 2022, I had a prototype of a game aimed at making math more tangible, a long-running obsession of
+      mine. It had a lot going for it, but the fundamental mechanic, based on selecting transformations from a menu,
+      lacked the juicy tactility I craved. I eventually came up with a primitive version of what would become
+      model-driven dragging, but implementing it seemed daunting, so it sat on my whiteboard for the next two years,
+      haunting me every time I went to make a sandwich.
+      <cite>— from <a href="https://declarative-dragging.github.io/">Declarative Dragging</a></cite>
+    </blockquote>
+    <figure class="whiteboard" id="whiteboard-figure">
+      <img src="whiteboard-2023-06.webp" width="1400" height="1131" loading="lazy"
+        alt="A whiteboard titled 'nool' covered in small algebraic expression trees, with arrows showing how each rewrite rule would be dragged, a section labelled CONFLICT, and a row labelled DISAMBIGUATION STAGE listing choice tree, overlap-click, default-drag and split-drag." />
+      <figcaption>
+        The whiteboard, June 2023.<span class="scaffold wb-hint-before"> Both are also
+        <a href="studies/#/demos/whiteboard">a study of their own</a>.</span>
+      </figcaption>
+    </figure>
+
+    <h2>Algebra studies</h2>
+    <p class="scaffold">
+      Demos from Dragology and the declarative dragging page, copied here so they can change without touching
+      the library. Each one is a small nool: trees you rewrite by dragging.
+    </p>
+    <div class="cards">
+      <a class="card" href="studies/#/demos/tiny-nool">
+        <img src="shots/tiny-nool.webp" alt="Nested boxes for (minus mushroom plus star) plus turtle." loading="lazy">
+        <span class="name">tiny nool</span>
+      </a>
+      <a class="card" href="studies/#/demos/animate-algebra-tree">
+        <img src="shots/animate-algebra.webp" alt="An algebra tree of emoji under plus, times and minus." loading="lazy">
+        <span class="name">animate algebra</span>
+      </a>
+      <a class="card" href="studies/#/demos/animate-algebra-stage-builder">
+        <img src="shots/stage-builder.webp" alt="The stage builder: palettes of operators and emoji atoms beside a built expression, times of a plus and a die." loading="lazy">
+        <span class="name">stage builder</span>
+      </a>
+      <a class="card" href="studies/#/demos/animate-algebra-tree-macro">
+        <img src="shots/macro-recorder.webp" alt="The macro recorder mid-recording, outlined in purple: a palette of operators and atoms, an empty rule list, and the tree being rearranged." loading="lazy">
+        <span class="name">macro recorder</span>
+      </a>
+    </div>
+    <p class="note scaffold">All five, live, in the <a href="studies/">studies gallery</a>.</p>
+
+    <h2>Where it's going</h2>
+    <p class="scaffold">
+      Suggested excerpts, all yours; keep, trim or cut.
+    </p>
+    <blockquote>
+      The game is a structured tutorial system for a general world manipulation and creation engine.
+      <span class="src">from a design conversation, 2026-07-31 (rules as inventory → macros and tactics → the game world itself written in the rewriting system)</span>
+    </blockquote>
+    <blockquote class="verse">things to pick up for the sake of picking up
+      things that move in strange ways
+      things that you can fall into
+      things that you remember even when you dont know what it was about
+      <span class="src">from your notes, 2024-04-06 (the same note continues: "and i would like you to try being nool")</span>
+    </blockquote>
+    <blockquote>
+      Exploring tangibility and explorability in expository math and meta-math with nool and furl.
+      <span class="src">from a fellowship application</span>
+    </blockquote>
+
+    <h2>Related</h2>
+    <ul class="plain">
+      <li><a href="https://declarative-dragging.github.io/">Declarative Dragging</a>
+        <span class="scaffold">— the approach nool's drag mode is modelled on, and its library, Dragology (UIST 2026).</span></li>
+      <li><a href="https://hazel.org/">Hazel</a>
+        <span class="scaffold">— a programming environment where every edit keeps your code meaningful.</span></li>
+    </ul>
+
+    <footer>
+      nool is far from done but perhaps it is
+      <span class="src">from your notes, 2024-04-06</span>
+    </footer>
+
+  </main>
+  <script>
+    // the wordmark's flare on a touch screen, where there's no hover: a tap
+    // plays it once
+    {
+      const logo = document.querySelector(".logo");
+      logo.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "mouse") return;
+        logo.classList.remove("flaring");
+        void logo.offsetWidth;
+        logo.classList.add("flaring");
+      });
+      logo.addEventListener("animationend", () => logo.classList.remove("flaring"));
+    }
+    // a sketch, clicked, opens larger over the page; a click anywhere (or
+    // Escape) closes it. Without this, the links open the images themselves.
+    {
+      const box = document.querySelector("dialog.lightbox");
+      const big = box.querySelector("img");
+      for (const a of document.querySelectorAll(".sketches a")) {
+        a.addEventListener("click", (e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+          e.preventDefault();
+          big.src = a.getAttribute("href");
+          big.alt = a.querySelector("img").alt;
+          box.showModal();
+        });
+      }
+      box.addEventListener("click", () => box.close());
+    }
+  </script>
+  <script type="module">
+    import { mountWhiteboard } from "/src/home/whiteboard.tsx";
+    mountWhiteboard(document.getElementById("whiteboard-figure"));
+  </script>
+</body>
+</html>
