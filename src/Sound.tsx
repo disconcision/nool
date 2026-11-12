@@ -6,6 +6,29 @@ import chchiu from "./assets/sfx/chchiu-out.wav";
 import shwoph from "./assets/sfx/shwo-ph-out.wav";
 import tiup from "./assets/sfx/tiup-comm-out.wav";
 
+/* Unlocking audio. The AudioContext starts suspended; Chrome lets a node's
+ * start() wake it once the page has had any user gesture, but iOS Safari
+ * plays nothing until resume() is called from inside a gesture handler
+ * (touchend/click/keydown; a 1-frame silent buffer seals it on older iOS).
+ * iOS also re-suspends ("interrupted") after the tab is backgrounded, so
+ * every gesture re-checks rather than unlocking once. Capture phase: the
+ * context is resuming before the handler that plays the sound runs.
+ * (iPhone's silent switch still mutes Web Audio; that is left alone.) */
+const unlock_audio = () => {
+  if (Tone.getContext().state === "running") return;
+  Tone.start().catch(() => {});
+  try {
+    const raw = Tone.getContext().rawContext as unknown as AudioContext;
+    const src = raw.createBufferSource();
+    src.buffer = raw.createBuffer(1, 1, raw.sampleRate);
+    src.connect(raw.destination);
+    src.start(0);
+  } catch (_) {}
+};
+if (typeof window !== "undefined")
+  for (const ev of ["touchend", "pointerup", "mousedown", "click", "keydown"])
+    window.addEventListener(ev, unlock_audio, { capture: true, passive: true });
+
 let revsfx = new Tone.Reverb({ decay: 4, wet: 0.3 }).toDestination();
 
 export type Sfxbank = "pew" | "pshew" | "klohk" | "chchiu" | "shwoph" | "tiup";

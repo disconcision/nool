@@ -25,19 +25,25 @@ export const Seed: Component<{ model: Model.t; inject: Action.Inject }> = (
       (Settings.folded(props.model.settings) ? " folded" : "") +
       ` boost-${String(props.model.settings.boost).replace(".", "")}`
     }
-    onmousedown={(e) => {
-      e.preventDefault();
+    /* Background presses clear the selection on POINTERdown, the event the
+     * nodes and noolbox claim (each stops its propagation). On mousedown
+     * this misfired on iPhone: iOS Safari still sends the compatibility
+     * mousedown after a tap even when pointerdown was cancelled, so a tap
+     * that selected a node bubbled here a moment later and unselected it.
+     * mousedown is kept only to stop text selection and focus moves. */
+    onpointerdown={() => {
       /* drag mode has no selection mechanic; background clicks are inert */
       if (!props.model.settings.dragging)
         props.inject({ t: "unsetSelections" });
     }}
+    onmousedown={(e) => e.preventDefault()}
   >
     <ToolsView model={props.model} inject={props.inject} />
     <div
       class="icon2"
       /* the strike sounds in BOTH modes; stopping the bubble keeps the
          background's unselect pluck from doubling it */
-      onmousedown={(e) => {
+      onpointerdown={(e) => {
         e.preventDefault();
         e.stopPropagation();
         /* compact layouts: the seed folds/unfolds the noolbox (the
